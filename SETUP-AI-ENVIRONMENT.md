@@ -104,15 +104,17 @@ O diretório canônico continua sendo `%USERPROFILE%\.agents\skills`. Depois que
 - **Instalação**: se a pasta estiver ausente, executa `[INSTALL] <skill>`.
 - **Atualização explícita (`-Update`)**: aciona clonagem upstream em staging temporário, validação, backup, substituição atômica e rollback automático em caso de falha.
 - **Preservação**: Skills externas ou manuais em `%USERPROFILE%\.agents\skills` são identificadas e preservadas intactas com `[PRESERVE EXTERNAL] <external-skill>`.
-- **Interoperabilidade com Google Antigravity IDE (Antigravity compatibility targets)**:
+- **Interoperabilidade Multi-IA (Antigravity IDE, OpenAI Codex, Claude Code, Gemini CLI)**:
   - `%USERPROFILE%\.agents\skills`: fonte canônica física única das Skills do AI Dev Machine.
-  - `~/.gemini/antigravity/skills`: caminho de descoberta usado/documentado pelo Antigravity IDE.
-  - `~/.gemini/config/skills`: *compatibility target* mantido para versões ou documentações do ecossistema Google que ainda utilizem esse caminho.
-  - O script cria e valida Directory Junctions individuais para ambos os *Antigravity compatibility targets*, maximizando a interoperabilidade sem duplicar arquivos físicos. São sempre os mesmos arquivos físicos em `%USERPROFILE%\.agents\skills`.
+  - `~/.gemini/antigravity/skills` e `~/.gemini/config/skills`: caminhos de descoberta do Antigravity IDE e Gemini CLI.
+  - `~/.codex/skills`: caminho de descoberta do OpenAI Codex e ChatGPT Desktop.
+  - `~/.claude/skills`: caminho de descoberta do Claude Code e Claude Desktop.
+  - O script cria e valida Directory Junctions individuais para todos os destinos de integração, garantindo que todas as IAs descubram as Skills sem duplicar arquivos físicos.
   - Não cria pastas intermediárias (ex.: `skills/gerenciadas/`).
-  - Se a junction correta já existir: `[ANTIGRAVITY / PRESENT] <skill>`.
-  - Se a junction estiver ausente: cria e reporta `[ANTIGRAVITY / LINK] <skill>`.
-  - Se o destino já existir como pasta normal ou apontar para outro local: preserva e reporta `[ANTIGRAVITY / CONFLICT / PRESERVED] <skill>`. Conflitos impedem status final de sucesso.
+  - Se a junction correta já existir: `[INTEGRATION / PRESENT] <skill>`.
+  - Se a junction estiver ausente: cria e reporta `[INTEGRATION / LINK] <skill>`.
+  - Se o destino já existir como pasta normal ou apontar para outro local: preserva e reporta `[INTEGRATION / CONFLICT / PRESERVED] <skill>`. Conflitos impedem status final de sucesso.
+  - **Suporte a Workspace (`-WorkspacePath`)**: quando executado com `-WorkspacePath <caminho>`, cria a junction `.agents` dentro do diretório do projeto, permitindo leitura direta das skills dentro das fronteiras de segurança de qualquer IDE.
 
 As Skills gerenciadas são:
 

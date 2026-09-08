@@ -29,12 +29,13 @@ Prompt universal, autocontido, com inventário, regras de preservação, fontes 
 
 ### `install-skills.ps1`
 
-Única automação própria do projeto. Gerencia deterministicamente as 16 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE sem duplicar arquivos:
+Única automação própria do projeto. Gerencia deterministicamente as 16 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code sem duplicar arquivos:
 
-- **Por padrão (idempotente)**: se as 16 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para o Google Antigravity IDE.
+- **Por padrão (idempotente)**: se as 16 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para Antigravity IDE, Codex e Claude.
 - **Auto-reparo**: repara automaticamente pastas de Skills corrompidas (`[REPAIR]`).
 - **Atualização explícita (`-Update`)**: baixa e sincroniza as versões mais recentes dos repositórios oficiais upstream com clone temporário, backup atômico e rollback.
-- **Interoperabilidade com Antigravity IDE**: cria e valida Directory Junctions individuais para os Antigravity compatibility targets (`~/.gemini/antigravity/skills` e `~/.gemini/config/skills`), mantendo `%USERPROFILE%\.agents\skills` como fonte canônica física única, sem duplicar arquivos.
+- **Interoperabilidade Multi-IA**: cria e valida Directory Junctions individuais para os alvos de integração (`~/.gemini/antigravity/skills`, `~/.gemini/config/skills`, `~/.codex/skills`, `~/.claude/skills`), mantendo `%USERPROFILE%\.agents\skills` como fonte canônica física única, sem duplicar arquivos.
+- **Suporte a Workspace (`-WorkspacePath`)**: vincula a pasta `.agents` diretamente a qualquer workspace/projeto para visibilidade nativa e total permissão de leitura pelas IAs.
 - **Preservação de externas**: qualquer Skill não gerenciada é mantida intacta (`[PRESERVE EXTERNAL]`).
 
 Uso:
@@ -45,6 +46,9 @@ Uso:
 
 # Execução padrão idempotente (valida e cria junctions se faltarem, sem rede)
 .\install-skills.ps1
+
+# Vincular automaticamente as Skills no workspace de um projeto
+.\install-skills.ps1 -WorkspacePath "c:\caminho\para\novo-projeto"
 
 # Atualização explícita baixando upstream
 .\install-skills.ps1 -Update

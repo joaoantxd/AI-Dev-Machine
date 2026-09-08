@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$DryRun,
-    [switch]$Update
+    [switch]$Update,
+    [string]$WorkspacePath
 )
 
 Set-StrictMode -Version Latest
@@ -10,14 +11,16 @@ $ErrorActionPreference = 'Stop'
 # Fonte canonica fisica das Skills do AI Dev Machine: %USERPROFILE%\.agents\skills
 $SkillsRoot = Join-Path $env:USERPROFILE '.agents\skills'
 
-# Antigravity compatibility targets:
-# - ~/.gemini/antigravity/skills: caminho de descoberta usado/documentado pelo Antigravity IDE
-# - ~/.gemini/config/skills: compatibility target para versoes/documentacao do ecossistema Google
-# O script cria Directory Junctions individuais para ambos para maximizar a interoperabilidade
-# sem duplicar arquivos fisicos (sao sempre os mesmos arquivos em ~/.agents/skills).
-$AntigravityRoots = @(
+# Integration compatibility targets para IAs (Antigravity IDE, Gemini CLI, OpenAI Codex, Claude Code):
+# - ~/.gemini/antigravity/skills: caminho documentado pelo Antigravity IDE
+# - ~/.gemini/config/skills: caminho de descoberta do ecossistema Google/Antigravity
+# - ~/.codex/skills: caminho de descoberta do OpenAI Codex / ChatGPT Desktop
+# - ~/.claude/skills: caminho de descoberta do Claude Code / Claude Desktop
+$IntegrationRoots = @(
     Join-Path $env:USERPROFILE '.gemini\antigravity\skills'
     Join-Path $env:USERPROFILE '.gemini\config\skills'
+    Join-Path $env:USERPROFILE '.codex\skills'
+    Join-Path $env:USERPROFILE '.claude\skills'
 )
 
 $Managed = @(
@@ -220,24 +223,23 @@ foreach ($workspace in @($repoCache.Values)) {
     if (Test-Path -LiteralPath $workspace) { Remove-Item -LiteralPath $workspace -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
-Write-Host 'ANTIGRAVITY IDE SKILLS INTEGRATION'
-$antigravityConflicts = @()
+Write-Host 'MULTI-AI SKILLS INTEGRATION (Antigravity, Codex, Claude)'
+$integrationConflicts = @()
 
 foreach ($skill in $Managed) {
     $sourceSkill = Join-Path $SkillsRoot $skill.Name
     $sourceValid = Test-SkillDirectory -Path $sourceSkill -ExpectedName $skill.Name
 
     if (-not $sourceValid) {
-        $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): Skill de origem ausente ou invalida no repositorio canonico"
-        Write-Host "[ANTIGRAVITY / ERROR] $($skill.Name)"
+        $integrationConflicts += "[INTEGRATION / ERROR] $($skill.Name): Skill de origem ausente ou invalida no repositorio canonico"
+        Write-Host "[INTEGRATION / ERROR] $($skill.Name)"
         continue
     }
 
     $skillHasConflict = $false
-    $skillNeedsLink = $false
     $skillAllPresent = $true
 
-    foreach ($root in $AntigravityRoots) {
+    foreach ($root in $IntegrationRoots) {
         $targetPath = Join-Path $root $skill.Name
         if (Test-Path -LiteralPath $targetPath) {
             if (Test-IsCorrectJunction -Path $targetPath -ExpectedTarget $sourceSkill) {
@@ -247,21 +249,20 @@ foreach ($skill in $Managed) {
                 $skillAllPresent = $false
             }
         } else {
-            $skillNeedsLink = $true
             $skillAllPresent = $false
         }
     }
 
     if ($skillHasConflict) {
-        $antigravityConflicts += "[ANTIGRAVITY / CONFLICT / PRESERVED] $($skill.Name)"
-        Write-Host "[ANTIGRAVITY / CONFLICT / PRESERVED] $($skill.Name)"
+        $integrationConflicts += "[INTEGRATION / CONFLICT / PRESERVED] $($skill.Name)"
+        Write-Host "[INTEGRATION / CONFLICT / PRESERVED] $($skill.Name)"
     } elseif ($skillAllPresent) {
-        Write-Host "[ANTIGRAVITY / PRESENT] $($skill.Name)"
+        Write-Host "[INTEGRATION / PRESENT] $($skill.Name)"
     } elseif ($DryRun) {
-        Write-Host "[ANTIGRAVITY / WOULD LINK] $($skill.Name)"
+        Write-Host "[INTEGRATION / WOULD LINK] $($skill.Name)"
     } else {
         $linkSuccess = $true
-        foreach ($root in $AntigravityRoots) {
+        foreach ($root in $IntegrationRoots) {
             $targetPath = Join-Path $root $skill.Name
             if (-not (Test-Path -LiteralPath $targetPath)) {
                 try {
@@ -272,18 +273,80 @@ foreach ($skill in $Managed) {
                     $linkOutput = cmd /c "mklink /J `"$targetPath`" `"$sourceSkill`"" 2>&1
                     if ($LASTEXITCODE -ne 0 -or -not (Test-IsCorrectJunction -Path $targetPath -ExpectedTarget $sourceSkill)) {
                         $linkSuccess = $false
-                        $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): Falha ao criar junction em $targetPath ($linkOutput)"
+                        $integrationConflicts += "[INTEGRATION / ERROR] $($skill.Name): Falha ao criar junction em $targetPath ($linkOutput)"
                     }
                 } catch {
                     $linkSuccess = $false
-                    $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): $($_.Exception.Message)"
+                    $integrationConflicts += "[INTEGRATION / ERROR] $($skill.Name): $($_.Exception.Message)"
                 }
             }
         }
         if ($linkSuccess) {
-            Write-Host "[ANTIGRAVITY / LINK] $($skill.Name)"
+            Write-Host "[INTEGRATION / LINK] $($skill.Name)"
         } else {
-            Write-Host "[ANTIGRAVITY / ERROR] $($skill.Name)"
+            Write-Host "[INTEGRATION / ERROR] $($skill.Name)"
+        }
+    }
+}
+
+# Global AI Rules integration (Antigravity Global Rules Root)
+$globalRulesDir = Join-Path $env:USERPROFILE '.gemini\config\rules'
+$globalRuleFile = Join-Path $globalRulesDir 'ai-dev-machine.md'
+if (-not (Test-Path -LiteralPath $globalRulesDir -PathType Container)) {
+    if (-not $DryRun) { $null = New-Item -ItemType Directory -Path $globalRulesDir -Force }
+}
+if (-not (Test-Path -LiteralPath $globalRuleFile)) {
+    if ($DryRun) {
+        Write-Host "[GLOBAL RULE / WOULD CREATE] ai-dev-machine.md"
+    } else {
+        $ruleContent = @"
+# AI Dev Machine — Global Agent Rules
+
+## Global Skills Architecture
+This development machine has 16 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+
+## Automatic Workspace Linking
+When starting work in any project workspace:
+1. Check if the `.agents` folder/junction exists in the workspace root.
+2. If `.agents` does NOT exist in the workspace, automatically create a Directory Junction to `%USERPROFILE%\.agents` and ensure `.agents/` is in `.gitignore`:
+   ```powershell
+   cmd /c "mklink /J .agents $env:USERPROFILE\.agents"
+   ```
+3. This grants immediate, unrestricted access to all `SKILL.md` files within the workspace sandbox without manual user intervention.
+
+## Core Operational Principles
+- **Context Engineering**: Keep context lean, follow progressive disclosure, and load only the documentation/skills needed for the specific task.
+- **Verification Before Completion**: Never declare a task complete without actual evidence (typecheck, tests, build, or command output).
+- **Systematic Debugging**: Investigate root cause before making speculative edits.
+- **Security**: Never expose secrets, hardcode API keys, or weaken security policies.
+"@
+        Set-Content -Path $globalRuleFile -Value $ruleContent -Encoding utf8
+        Write-Host "[GLOBAL RULE / CREATED] ai-dev-machine.md"
+    }
+} else {
+    Write-Host "[GLOBAL RULE / PRESENT] ai-dev-machine.md"
+}
+
+# Workspace linking se WorkspacePath for fornecido ou se executado dentro de um workspace
+$targetWorkspace = if ($WorkspacePath) { (Resolve-Path $WorkspacePath).Path } else { $null }
+if ($targetWorkspace) {
+    Write-Host "WORKSPACE INTEGRATION: $targetWorkspace"
+    $workspaceAgents = Join-Path $targetWorkspace '.agents'
+    $canonicalAgents = Join-Path $env:USERPROFILE '.agents'
+    if (Test-Path -LiteralPath $workspaceAgents) {
+        if (Test-IsCorrectJunction -Path $workspaceAgents -ExpectedTarget $canonicalAgents) {
+            Write-Host "[WORKSPACE / PRESENT] .agents junction"
+        } else {
+            Write-Host "[WORKSPACE / CONFLICT / PRESERVED] .agents ja existe como pasta independente"
+        }
+    } elseif ($DryRun) {
+        Write-Host "[WORKSPACE / WOULD LINK] .agents -> $canonicalAgents"
+    } else {
+        $null = cmd /c "mklink /J `"$workspaceAgents`" `"$canonicalAgents`"" 2>&1
+        if (Test-IsCorrectJunction -Path $workspaceAgents -ExpectedTarget $canonicalAgents) {
+            Write-Host "[WORKSPACE / LINKED] .agents -> $canonicalAgents"
+        } else {
+            Write-Host "[WORKSPACE / ERROR] Falha ao criar junction .agents no workspace"
         }
     }
 }
@@ -293,11 +356,11 @@ if ($DryRun) {
     Write-Host 'DRY RUN'
     exit 0
 }
-if ($failures.Count -eq 0 -and $antigravityConflicts.Count -eq 0) {
+if ($failures.Count -eq 0 -and $integrationConflicts.Count -eq 0) {
     Write-Host 'SUCCESS'
     exit 0
 }
 Write-Host 'INCOMPLETE'
 $failures | ForEach-Object { Write-Host $_ }
-$antigravityConflicts | ForEach-Object { Write-Host $_ }
+$integrationConflicts | ForEach-Object { Write-Host $_ }
 exit 1

@@ -310,14 +310,23 @@ Skills primeiro. Quando necessário, use Semgrep para SAST, Trivy para container
 
 Quando começar:
 
-1. crie estrutura mínima;
-2. inicialize Git desde o início quando apropriado;
+1. crie a estrutura mínima do diretório do projeto;
+2. inicialize Git e vincule as Skills globais criando a junction `.agents` no workspace apontando para `%USERPROFILE%\.agents` (adicionando `.agents/` ao `.gitignore`);
 3. escolha o package manager;
 4. instale somente dependências necessárias;
 5. configure lint, typecheck e testes relevantes;
 6. crie a arquitetura inicial;
 7. implemente incrementalmente;
 8. valide cada unidade lógica importante.
+
+> **Dica de comando para vincular `.agents` no novo projeto:**
+> ```powershell
+> cmd /c "mklink /J .agents $env:USERPROFILE\.agents"
+> ```
+> Ou executando no diretório do AI Dev Machine:
+> ```powershell
+> .\install-skills.ps1 -WorkspacePath "<caminho-do-novo-projeto>"
+> ```
 
 Não crie centenas de arquivos vazios, abstrações especulativas ou serviços sem necessidade.
 
