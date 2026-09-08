@@ -81,14 +81,38 @@ Não atualize apenas porque existe uma versão mais nova. Se o gerenciador inter
 
 ## Skills globais
 
-O diretório canônico é `%USERPROFILE%\.agents\skills`. Depois que Git estiver funcionando, no diretório deste repositório:
+O diretório canônico continua sendo `%USERPROFILE%\.agents\skills`. Depois que Git estiver funcionando, no diretório deste repositório:
 
 ```powershell
+# Simulação somente leitura
 .\install-skills.ps1 -DryRun
+
+# Execução padrão idempotente (sem rede se as Skills já estiverem íntegras)
 .\install-skills.ps1
+
+# Atualização explícita com download de repositórios upstream
+.\install-skills.ps1 -Update
+
+# Simulação de atualização
+.\install-skills.ps1 -Update -DryRun
 ```
 
-Revise o dry-run antes da execução real. O script é a fonte canônica das 16 Skills gerenciadas; não instale cópias manuais diferentes. Skills externas ou desconhecidas devem permanecer intactas.
+### Comportamento do `install-skills.ps1`
+
+- **Idempotência por padrão**: sem `-Update`, se a Skill existir e seu `SKILL.md` for válido, o script emite `[SKIP / PRESENT] <skill>` e não consome rede nem toca no disco.
+- **Auto-reparo**: se a pasta existir mas estiver corrompida ou incompleta, o script executa `[REPAIR] <skill>`.
+- **Instalação**: se a pasta estiver ausente, executa `[INSTALL] <skill>`.
+- **Atualização explícita (`-Update`)**: aciona clonagem upstream em staging temporário, validação, backup, substituição atômica e rollback automático em caso de falha.
+- **Preservação**: Skills externas ou manuais em `%USERPROFILE%\.agents\skills` são identificadas e preservadas intactas com `[PRESERVE EXTERNAL] <external-skill>`.
+- **Interoperabilidade com Google Antigravity IDE (Antigravity compatibility targets)**:
+  - `%USERPROFILE%\.agents\skills`: fonte canônica física única das Skills do AI Dev Machine.
+  - `~/.gemini/antigravity/skills`: caminho de descoberta usado/documentado pelo Antigravity IDE.
+  - `~/.gemini/config/skills`: *compatibility target* mantido para versões ou documentações do ecossistema Google que ainda utilizem esse caminho.
+  - O script cria e valida Directory Junctions individuais para ambos os *Antigravity compatibility targets*, maximizando a interoperabilidade sem duplicar arquivos físicos. São sempre os mesmos arquivos físicos em `%USERPROFILE%\.agents\skills`.
+  - Não cria pastas intermediárias (ex.: `skills/gerenciadas/`).
+  - Se a junction correta já existir: `[ANTIGRAVITY / PRESENT] <skill>`.
+  - Se a junction estiver ausente: cria e reporta `[ANTIGRAVITY / LINK] <skill>`.
+  - Se o destino já existir como pasta normal ou apontar para outro local: preserva e reporta `[ANTIGRAVITY / CONFLICT / PRESERVED] <skill>`. Conflitos impedem status final de sucesso.
 
 As Skills gerenciadas são:
 
@@ -113,15 +137,56 @@ As Skills gerenciadas são:
 
 Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço.
 
-## MCPs
+## MCPs no Google Antigravity IDE e Gemini CLI
 
-Configure somente no formato oficial atual de cada agente, fazendo backup e merge:
+### Descoberta e consumo de MCPs no Antigravity IDE
 
-- Base: Context7 e Chrome DevTools.
-- Next.js: Next DevTools disponível sob demanda.
-- Sob demanda: Supabase MCP, GitHub MCP, Vercel MCP, Semgrep MCP, Playwright MCP e Graphify MCP.
+O Google Antigravity IDE consome MCPs através de três camadas de configuração:
 
-Disponível sob demanda não significa sempre ativo. Não sobrescreva configurações inteiras e preserve MCPs externos.
+1. **Configuração Global (compartilhada com Gemini CLI)**:
+   - Caminho: `%USERPROFILE%\.gemini\config\mcp_config.json`
+   - Formato padrão JSON:
+     ```json
+     {
+       "mcpServers": {
+         "<server-name>": {
+           "command": "npx",
+           "args": ["-y", "<package>", "..."],
+           "env": { ... }
+         }
+       }
+     }
+     ```
+   - Persistência pela UI: alterações feitas em *Additional Options > MCP Servers* ou via comandos de configuração persistem neste arquivo global.
+
+2. **Integrações e Plugins Nativos do Antigravity**:
+   - Caminho: `%USERPROFILE%\.gemini\config\plugins/<plugin-name>/` (ou integrações embutidas no IDE)
+   - Recursos nativos do IDE e plugins podem expor ferramentas, suporte a browser/dev tools e agentes embutidos declarados em seus respectivos manifests.
+
+3. **Configuração por Workspace**:
+   - Caminho: `<workspace-root>/.agents/mcp_config.json`
+   - Aplicável para MCPs específicos de tecnologia ou repositório (ex.: Next DevTools, Playwright local).
+
+### Mapeamento dos MCPs do AI-Dev-Machine
+
+| MCP | Tipo | Escopo Antigravity | Transporte | Pacote / Comando | Observações de Integração |
+|---|---|---|---|---|---|
+| **Context7** | Base | Global (`~/.gemini/config/mcp_config.json`) | stdio | `npx -y @upstash/context7-mcp@latest` | Documentação oficial de bibliotecas atualizadas. Funcional sem API key (rate-limited); chave opcional via variável `CONTEXT7_API_KEY`. |
+| **Chrome DevTools** | Base | Integração nativa no Antigravity / Global | Nativo / stdio | Fluxo integrado no IDE / fallback oficial | Chrome DevTools possui integração/suporte nativo no fluxo de browser do Antigravity IDE. Se essa integração oficial estiver disponível e funcional, usar a integração existente e reportar `[MCP / PRESENT / SKIP] Chrome DevTools`, sem configurar um segundo Chrome DevTools MCP redundante. Caso a integração nativa não esteja disponível, consultar a documentação oficial atual e configurar o mecanismo recomendado, evitando duplicar tooling de browser. |
+| **Next DevTools** | Next.js | Por workspace (`<workspace>/.agents/mcp_config.json`) | stdio | `npx -y @next/dev-tools-mcp` | Ativar sob demanda apenas em projetos Next.js. Não configurar globalmente para evitar overhead em projetos de outros frameworks. |
+| **Supabase** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `npx -y @supabase/mcp-server` | Requer credenciais (`SUPABASE_ACCESS_TOKEN`). Reportar `[MCP / AUTH PENDING]` até o usuário fornecer tokens. |
+| **GitHub** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `npx -y @modelcontextprotocol/server-github` | Integração direta com API do GitHub. Recomendado usar `gh` CLI na linha de base e acionar o MCP somente para automações complexas. Requer `GITHUB_PERSONAL_ACCESS_TOKEN`. |
+| **Vercel** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `npx -y @vercel/mcp` | Gerenciamento de deployments e projetos Vercel. Requer `VERCEL_TOKEN`. |
+| **Semgrep** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `npx -y @semgrep/mcp@latest` | Análise estática profunda de segurança. Usar CLI local por padrão; acionar MCP sob demanda. |
+| **Playwright** | Sob demanda | Por workspace (`<workspace>/.agents/mcp_config.json`) | stdio | `npx -y @anthropic/mcp-playwright` | Automação e navegação profunda para agentes. Na maioria dos fluxos, o `Playwright CLI` e a integração nativa de browser do Antigravity suprem as necessidades. |
+| **Graphify** | Sob demanda | Por workspace (`<workspace>/.agents/mcp_config.json`) | stdio | `graphify mcp` | Análise gráfica de dependências e arquitetura de código. Configurar sob demanda apenas em repositórios complexos. |
+
+### Regras de Idempotência e Segurança para MCPs
+
+- **Preservação de configurações existentes**: nunca substituir arquivos de configuração inteiros. Sempre ler o JSON existente, fazer backup (`.bak`), realizar merge sob a chave `"mcpServers"` e gravar mantendo servidores não mapeados.
+- **Detecção de MCP já presente**: se o servidor já estiver declarado em `mcp_config.json`, emitir `[MCP / PRESENT] <mcp>` e não sobrescrever.
+- **Autenticação pendente**: se o MCP exigir credenciais obrigatórias que ainda não estão no ambiente, reportar `[MCP / AUTH PENDING] <mcp>`. Não falhar o setup global.
+- **Progressive Disclosure**: manter MCPs sob demanda configurados mas inativos até serem solicitados pelo contexto da tarefa.
 
 ## Multi-agent e divulgação progressiva
 

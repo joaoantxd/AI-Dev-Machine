@@ -1,10 +1,25 @@
-﻿[CmdletBinding()]
-param([switch]$DryRun)
+[CmdletBinding()]
+param(
+    [switch]$DryRun,
+    [switch]$Update
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Fonte canonica fisica das Skills do AI Dev Machine: %USERPROFILE%\.agents\skills
 $SkillsRoot = Join-Path $env:USERPROFILE '.agents\skills'
+
+# Antigravity compatibility targets:
+# - ~/.gemini/antigravity/skills: caminho de descoberta usado/documentado pelo Antigravity IDE
+# - ~/.gemini/config/skills: compatibility target para versoes/documentacao do ecossistema Google
+# O script cria Directory Junctions individuais para ambos para maximizar a interoperabilidade
+# sem duplicar arquivos fisicos (sao sempre os mesmos arquivos em ~/.agents/skills).
+$AntigravityRoots = @(
+    Join-Path $env:USERPROFILE '.gemini\antigravity\skills'
+    Join-Path $env:USERPROFILE '.gemini\config\skills'
+)
+
 $Managed = @(
     [pscustomobject]@{ Name = 'context-engineering'; Repo = 'addyosmani/agent-skills'; SourceType = 'discover-by-skill-name'; Adapter = 'discover-by-skill-name'; ExpectedName = 'context-engineering' }
     [pscustomobject]@{ Name = 'prompt-master'; Repo = 'nidhinjs/prompt-master'; SourceType = 'repo-root'; Subpath = '.'; ExpectedName = 'prompt-master' }
@@ -51,27 +66,27 @@ function Resolve-SkillPath {
     $expectedName = if ($Skill.PSObject.Properties.Name -contains 'ExpectedName') { $Skill.ExpectedName } else { $Skill.Name }
     if ($subpath) {
         $candidate = Join-Path $RepositoryPath ($subpath -replace '/', '\')
-        if (-not (Test-SkillDirectory -Path $candidate -ExpectedName $expectedName)) { throw "Upstream structure changed: $($Skill.Name) — subpath esperado: $subpath" }
+        if (-not (Test-SkillDirectory -Path $candidate -ExpectedName $expectedName)) { throw "Upstream structure changed: $($Skill.Name) - subpath esperado: $subpath" }
         return $candidate
     }
     $skillMatches = @(Get-ChildItem -LiteralPath $RepositoryPath -Directory -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ieq $Skill.Name -and (Test-SkillDirectory -Path $_.FullName -ExpectedName $expectedName) } |
         Select-Object -ExpandProperty FullName)
-    if ($skillMatches.Count -ne 1) { throw "subpath não pôde ser resolvido de forma única (encontrados: $($skillMatches.Count))" }
+    if ($skillMatches.Count -ne 1) { throw "subpath nao pode ser resolvido de forma unica (encontrados: $($skillMatches.Count))" }
     return $skillMatches[0]
 }
 
 function New-GraphifyStaging {
     param([Parameter(Mandatory)]$Skill, [Parameter(Mandatory)][string]$RepositoryPath, [Parameter(Mandatory)][string]$StagingPath)
     $source = Join-Path $RepositoryPath 'graphify\skill-agents.md'
-    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Upstream structure changed: graphify — subpath esperado: graphify/skill-agents.md' }
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Upstream structure changed: graphify - subpath esperado: graphify/skill-agents.md' }
     $null = New-Item -ItemType Directory -Path $StagingPath -Force
     Copy-Item -LiteralPath $source -Destination (Join-Path $StagingPath 'SKILL.md') -Force
     $references = Join-Path $RepositoryPath 'graphify\skills\agents\references'
     if (Test-Path -LiteralPath $references -PathType Container) {
         Copy-Item -LiteralPath $references -Destination (Join-Path $StagingPath 'references') -Recurse -Force
     }
-    if (-not (Test-SkillDirectory -Path $StagingPath -ExpectedName $Skill.Name)) { throw 'Graphify: validação da Skill em staging falhou' }
+    if (-not (Test-SkillDirectory -Path $StagingPath -ExpectedName $Skill.Name)) { throw 'Graphify: validacao da Skill em staging falhou' }
     return $StagingPath
 }
 
@@ -93,12 +108,29 @@ function Set-ManagedSkill {
         if ($hadExisting) { Copy-Item -LiteralPath $destination -Destination $backup -Recurse -Force; Remove-Item -LiteralPath $destination -Recurse -Force }
         $null = New-Item -ItemType Directory -Path $destination -Force
         Copy-Item -Path (Join-Path $SourcePath '*') -Destination $destination -Recurse -Force
-        if (-not (Test-SkillDirectory -Path $destination -ExpectedName $Skill.Name)) { throw 'validação pós-cópia falhou' }
+        if (-not (Test-SkillDirectory -Path $destination -ExpectedName $Skill.Name)) { throw 'validacao pos-copia falhou' }
     } catch {
         if (Test-Path -LiteralPath $destination) { Remove-Item -LiteralPath $destination -Recurse -Force -ErrorAction SilentlyContinue }
         if ($hadExisting -and (Test-Path -LiteralPath $backup)) { Move-Item -LiteralPath $backup -Destination $destination -Force }
         throw
     } finally { if (Test-Path -LiteralPath $backup) { Remove-Item -LiteralPath $backup -Recurse -Force -ErrorAction SilentlyContinue } }
+}
+
+function Test-IsCorrectJunction {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$ExpectedTarget)
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if (-not $item) { return $false }
+    if ($item.LinkType -ne 'Junction') { return $false }
+    if (-not $item.Target) { return $false }
+    $targetPath = if ($item.Target -is [array]) { $item.Target[0] } else { $item.Target }
+    try {
+        $normActual = [IO.Path]::GetFullPath($targetPath).TrimEnd('\', '/')
+        $normExpected = [IO.Path]::GetFullPath($ExpectedTarget).TrimEnd('\', '/')
+        return ($normActual -ieq $normExpected)
+    } catch {
+        return $false
+    }
 }
 
 Write-Host 'MANAGED SKILLS'
@@ -115,19 +147,46 @@ try {
     Write-Host "[ERROR] git --version: $($_.Exception.Message)"
     exit 2
 }
-if ($DryRun -and -not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) { Write-Host "[CHECK] diretório ausente: $SkillsRoot (não será criado em dry-run)" }
-elseif (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) { $null = New-Item -ItemType Directory -Path $SkillsRoot -Force }
+
+if ($DryRun -and -not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) {
+    Write-Host "[CHECK] diretorio ausente: $SkillsRoot (nao sera criado em dry-run)"
+} elseif (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) {
+    $null = New-Item -ItemType Directory -Path $SkillsRoot -Force
+}
 
 $repoCache = @{}
 $failures = @()
+
 foreach ($skill in $Managed) {
     $destination = Join-Path $SkillsRoot $skill.Name
-    $present = Test-SkillDirectory -Path $destination -ExpectedName $skill.Name
+    $exists = Test-Path -LiteralPath $destination -PathType Container
+    $present = if ($exists) { Test-SkillDirectory -Path $destination -ExpectedName $skill.Name } else { $false }
+    $isCorrupted = $exists -and (-not $present)
+
     if ($DryRun) {
-        if ($present) { Write-Host "[PRESENT / MANAGED] $($skill.Name)" }
-        else { Write-Host "[WOULD INSTALL] $($skill.Name) from $($skill.Repo)" }
+        if ($Update) {
+            if ($exists) { Write-Host "[WOULD UPDATE] $($skill.Name) from $($skill.Repo)" }
+            else { Write-Host "[WOULD INSTALL] $($skill.Name) from $($skill.Repo)" }
+        } else {
+            if ($present) { Write-Host "[SKIP / PRESENT] $($skill.Name)" }
+            elseif ($isCorrupted) { Write-Host "[WOULD REPAIR] $($skill.Name)" }
+            else { Write-Host "[WOULD INSTALL] $($skill.Name) from $($skill.Repo)" }
+        }
         continue
     }
+
+    # If -Update is not requested and the skill is already healthy, SKIP without touching network
+    if (-not $Update -and $present) {
+        Write-Host "[SKIP / PRESENT] $($skill.Name)"
+        continue
+    }
+
+    $actionLabel = if ($Update) {
+        if ($exists) { 'UPDATE' } else { 'INSTALL' }
+    } else {
+        if ($isCorrupted) { 'REPAIR' } else { 'INSTALL' }
+    }
+
     try {
         if (-not $repoCache.ContainsKey($skill.Repo)) {
             $repoWorkspace = Join-Path ([IO.Path]::GetTempPath()) ("aidev-repo-{0}" -f [guid]::NewGuid().ToString('N'))
@@ -142,7 +201,8 @@ foreach ($skill in $Managed) {
             $staging = Join-Path $repoPath '.aidev-graphify-staging'
             New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
         } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
-        Write-Host "[$(if ($present) { 'UPDATE' } else { 'INSTALL' })] $($skill.Name)"
+
+        Write-Host "[$actionLabel] $($skill.Name)"
         Set-ManagedSkill -Skill $skill -SourcePath $sourcePath
         Write-Host "[OK] $($skill.Name)"
     } catch {
@@ -153,12 +213,91 @@ foreach ($skill in $Managed) {
     }
 }
 
-foreach ($external in @(Get-ChildItem -LiteralPath $SkillsRoot -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin @($Managed.Name) })) { Write-Host "[PRESERVE EXTERNAL] $($external.Name)" }
-foreach ($workspace in @($repoCache.Values)) { if (Test-Path -LiteralPath $workspace) { Remove-Item -LiteralPath $workspace -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($external in @(Get-ChildItem -LiteralPath $SkillsRoot -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin @($Managed.Name) })) {
+    Write-Host "[PRESERVE EXTERNAL] $($external.Name)"
+}
+foreach ($workspace in @($repoCache.Values)) {
+    if (Test-Path -LiteralPath $workspace) { Remove-Item -LiteralPath $workspace -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+Write-Host 'ANTIGRAVITY IDE SKILLS INTEGRATION'
+$antigravityConflicts = @()
+
+foreach ($skill in $Managed) {
+    $sourceSkill = Join-Path $SkillsRoot $skill.Name
+    $sourceValid = Test-SkillDirectory -Path $sourceSkill -ExpectedName $skill.Name
+
+    if (-not $sourceValid) {
+        $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): Skill de origem ausente ou invalida no repositorio canonico"
+        Write-Host "[ANTIGRAVITY / ERROR] $($skill.Name)"
+        continue
+    }
+
+    $skillHasConflict = $false
+    $skillNeedsLink = $false
+    $skillAllPresent = $true
+
+    foreach ($root in $AntigravityRoots) {
+        $targetPath = Join-Path $root $skill.Name
+        if (Test-Path -LiteralPath $targetPath) {
+            if (Test-IsCorrectJunction -Path $targetPath -ExpectedTarget $sourceSkill) {
+                # Already correct junction
+            } else {
+                $skillHasConflict = $true
+                $skillAllPresent = $false
+            }
+        } else {
+            $skillNeedsLink = $true
+            $skillAllPresent = $false
+        }
+    }
+
+    if ($skillHasConflict) {
+        $antigravityConflicts += "[ANTIGRAVITY / CONFLICT / PRESERVED] $($skill.Name)"
+        Write-Host "[ANTIGRAVITY / CONFLICT / PRESERVED] $($skill.Name)"
+    } elseif ($skillAllPresent) {
+        Write-Host "[ANTIGRAVITY / PRESENT] $($skill.Name)"
+    } elseif ($DryRun) {
+        Write-Host "[ANTIGRAVITY / WOULD LINK] $($skill.Name)"
+    } else {
+        $linkSuccess = $true
+        foreach ($root in $AntigravityRoots) {
+            $targetPath = Join-Path $root $skill.Name
+            if (-not (Test-Path -LiteralPath $targetPath)) {
+                try {
+                    $parent = Split-Path -Parent $targetPath
+                    if (-not (Test-Path -LiteralPath $parent -PathType Container)) {
+                        $null = New-Item -ItemType Directory -Path $parent -Force
+                    }
+                    $linkOutput = cmd /c "mklink /J `"$targetPath`" `"$sourceSkill`"" 2>&1
+                    if ($LASTEXITCODE -ne 0 -or -not (Test-IsCorrectJunction -Path $targetPath -ExpectedTarget $sourceSkill)) {
+                        $linkSuccess = $false
+                        $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): Falha ao criar junction em $targetPath ($linkOutput)"
+                    }
+                } catch {
+                    $linkSuccess = $false
+                    $antigravityConflicts += "[ANTIGRAVITY / ERROR] $($skill.Name): $($_.Exception.Message)"
+                }
+            }
+        }
+        if ($linkSuccess) {
+            Write-Host "[ANTIGRAVITY / LINK] $($skill.Name)"
+        } else {
+            Write-Host "[ANTIGRAVITY / ERROR] $($skill.Name)"
+        }
+    }
+}
 
 Write-Host 'RESULT:'
-if ($DryRun) { Write-Host 'DRY RUN' ; exit 0 }
-if ($failures.Count -eq 0) { Write-Host 'SUCCESS'; exit 0 }
+if ($DryRun) {
+    Write-Host 'DRY RUN'
+    exit 0
+}
+if ($failures.Count -eq 0 -and $antigravityConflicts.Count -eq 0) {
+    Write-Host 'SUCCESS'
+    exit 0
+}
 Write-Host 'INCOMPLETE'
 $failures | ForEach-Object { Write-Host $_ }
+$antigravityConflicts | ForEach-Object { Write-Host $_ }
 exit 1

@@ -29,13 +29,28 @@ Prompt universal, autocontido, com inventário, regras de preservação, fontes 
 
 ### `install-skills.ps1`
 
-Única automação própria do projeto. Instala ou atualiza as 16 Skills gerenciadas em `%USERPROFILE%\.agents\skills`, preservando qualquer Skill externa ou desconhecida.
+Única automação própria do projeto. Gerencia deterministicamente as 16 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE sem duplicar arquivos:
+
+- **Por padrão (idempotente)**: se as 16 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para o Google Antigravity IDE.
+- **Auto-reparo**: repara automaticamente pastas de Skills corrompidas (`[REPAIR]`).
+- **Atualização explícita (`-Update`)**: baixa e sincroniza as versões mais recentes dos repositórios oficiais upstream com clone temporário, backup atômico e rollback.
+- **Interoperabilidade com Antigravity IDE**: cria e valida Directory Junctions individuais para os Antigravity compatibility targets (`~/.gemini/antigravity/skills` e `~/.gemini/config/skills`), mantendo `%USERPROFILE%\.agents\skills` como fonte canônica física única, sem duplicar arquivos.
+- **Preservação de externas**: qualquer Skill não gerenciada é mantida intacta (`[PRESERVE EXTERNAL]`).
 
 Uso:
 
 ```powershell
+# Simulação somente leitura da execução padrão
 .\install-skills.ps1 -DryRun
+
+# Execução padrão idempotente (valida e cria junctions se faltarem, sem rede)
 .\install-skills.ps1
+
+# Atualização explícita baixando upstream
+.\install-skills.ps1 -Update
+
+# Simulação da atualização explícita
+.\install-skills.ps1 -Update -DryRun
 ```
 
 O script exige apenas PowerShell, Git e acesso HTTPS ao GitHub. Ele não instala programas, CLIs, dependências do Windows ou MCPs.
@@ -82,7 +97,7 @@ Os métodos e versões devem ser confirmados na documentação oficial atual da 
 ### Base
 
 - Context7
-- Chrome DevTools
+- Chrome DevTools (possui integração nativa no fluxo de browser do Antigravity IDE; não configurar MCP redundante se a integração já estiver disponível)
 
 ### Sob demanda
 
@@ -143,19 +158,21 @@ Quando ainda não existe código, repositório ou arquitetura:
 
 ## Atualizar Skills
 
-Primeiro simule:
+Para atualizar as Skills gerenciadas a partir dos repositórios oficiais upstream, use a flag `-Update`:
+
+Primeiro simule a atualização:
 
 ```powershell
-.\install-skills.ps1 -DryRun
+.\install-skills.ps1 -Update -DryRun
 ```
 
-Depois, se o plano estiver correto:
+Depois execute a atualização real:
 
 ```powershell
-.\install-skills.ps1
+.\install-skills.ps1 -Update
 ```
 
-O sincronizador usa clones temporários, valida `SKILL.md`, atualiza somente diretórios gerenciados e restaura a versão anterior se uma atualização falhar.
+O sincronizador usa clones temporários, valida `SKILL.md`, atualiza somente diretórios gerenciados, restaura a versão anterior se uma atualização falhar e revalida as junctions do Google Antigravity IDE. Se executado sem `-Update`, o script verifica e mantém as Skills locais sem fazer requisições de rede.
 
 ## Segurança
 
