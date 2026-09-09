@@ -29,9 +29,9 @@ Prompt universal, autocontido, com inventário, regras de preservação, fontes 
 
 ### `install-skills.ps1`
 
-Única automação própria do projeto. Gerencia deterministicamente as 21 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code sem duplicar arquivos:
+Única automação própria do projeto. Gerencia deterministicamente as 26 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code sem duplicar arquivos:
 
-- **Por padrão (idempotente)**: se as 21 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para Antigravity IDE, Codex e Claude.
+- **Por padrão (idempotente)**: se as 26 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para Antigravity IDE, Codex e Claude.
 - **Auto-reparo**: repara automaticamente pastas de Skills corrompidas (`[REPAIR]`).
 - **Atualização explícita (`-Update`)**: baixa e sincroniza as versões mais recentes dos repositórios oficiais upstream com clone temporário, backup atômico e rollback.
 - **Interoperabilidade Multi-IA**: cria e valida Directory Junctions individuais para os alvos de integração (`~/.gemini/antigravity/skills`, `~/.gemini/config/skills`, `~/.codex/skills`, `~/.claude/skills`), mantendo `%USERPROFILE%\.agents\skills` como fonte canônica física única, sem duplicar arquivos.
@@ -68,7 +68,7 @@ Prompt greenfield para usar sempre que um projeto novo for iniciado. Primeiro vo
 - aplicativos desktop: ChatGPT Desktop/Codex, Claude Desktop e Google Antigravity IDE;
 - CLIs de IA: Codex CLI, Claude Code, GitHub Copilot CLI, Gemini CLI e Antigravity CLI quando suportado;
 - ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Graphify, Semgrep, Trivy e Gitleaks;
-- 21 Skills globais gerenciadas;
+- 26 Skills globais gerenciadas;
 - MCPs base e catálogo sob demanda.
 
 Os métodos e versões devem ser confirmados na documentação oficial atual da máquina real.
@@ -98,6 +98,11 @@ Os métodos e versões devem ser confirmados na documentação oficial atual da 
 | codebase-design | mattpocock/skills | Vocabulário e princípios de design de módulos profundos |
 | improve-codebase-architecture | mattpocock/skills | Identificação de atrito e refatoração arquitetural |
 | cybersecurity-review | ericmjl/skills | Auditoria abrangente em 9 dimensões de segurança |
+| security-review | bestdeejay-design/agent-skills | Orquestração de scanners reais (Semgrep, Trivy, Gitleaks, etc.) |
+| review-skills | tomzx/agents | Auditoria da biblioteca de skills (duplicatas, links, gaps) |
+| skill-security-review | klh/speedy-claude | Auditoria de segurança antes de instalar skills de terceiros |
+| domain-modeling | mattpocock/skills | Modelagem de domínio e linguagem ubíqua |
+| resolving-merge-conflicts | mattpocock/skills | Resolução estruturada de conflitos de merge e rebase |
 
 `finding-google-skills` não instala o catálogo Google inteiro. `graphify` usa somente a variante de Agent Skills. `caveman` não instala proxy, hooks ou serviço always-on.
 

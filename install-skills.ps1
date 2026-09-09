@@ -45,6 +45,11 @@ $Managed = @(
     [pscustomobject]@{ Name = 'codebase-design'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/codebase-design'; ExpectedName = 'codebase-design' }
     [pscustomobject]@{ Name = 'improve-codebase-architecture'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/improve-codebase-architecture'; ExpectedName = 'improve-codebase-architecture' }
     [pscustomobject]@{ Name = 'cybersecurity-review'; Repo = 'ericmjl/skills'; SourceType = 'subpath'; Subpath = 'skills/cybersecurity-review'; ExpectedName = 'cybersecurity-review' }
+    [pscustomobject]@{ Name = 'security-review'; Repo = 'bestdeejay-design/agent-skills'; SourceType = 'subpath'; Subpath = 'skills/security-review'; ExpectedName = 'security-review' }
+    [pscustomobject]@{ Name = 'review-skills'; Repo = 'tomzx/agents'; SourceType = 'subpath'; Subpath = 'skills/review-skills'; ExpectedName = 'review-skills' }
+    [pscustomobject]@{ Name = 'skill-security-review'; Repo = 'klh/speedy-claude'; SourceType = 'subpath'; Subpath = 'skills/skill-security-review'; ExpectedName = 'skill-security-review' }
+    [pscustomobject]@{ Name = 'domain-modeling'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/domain-modeling'; ExpectedName = 'domain-modeling' }
+    [pscustomobject]@{ Name = 'resolving-merge-conflicts'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/resolving-merge-conflicts'; ExpectedName = 'resolving-merge-conflicts' }
 )
 
 function Test-SkillDirectory {
@@ -308,7 +313,7 @@ if (-not (Test-Path -LiteralPath $globalRuleFile)) {
 # AI Dev Machine — Global Agent Rules
 
 ## Global Skills Architecture
-This development machine has 21 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+This development machine has 26 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
 
 ## Automatic Workspace Linking
 When starting work in any project workspace:

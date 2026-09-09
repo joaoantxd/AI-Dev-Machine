@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 21 Skills gerenciadas.
+Estas são minhas 26 Skills gerenciadas.
 
 ## Core
 
@@ -174,6 +174,14 @@ Use para bugs difíceis, intermitentes ou regressões de performance. Segue o lo
 ### code-review
 
 Use para revisão de código em dois eixos paralelos (Standards vs Spec) entre a branch atual e um commit/branch base, reportando conformidade com padrões do repositório e fidelidade à especificação/issue.
+
+### resolving-merge-conflicts
+
+Use para resolução estruturada e metódica de conflitos de merge e rebase no Git, preservando a semântica e a intenção de ambas as branches.
+
+### review-skills
+
+Use para auditar a própria biblioteca de skills do ambiente, detectando duplicações, referências quebradas, dependências circulares, skills órfãs, gaps e composabilidade.
 
 ### verification-before-completion
 
@@ -225,6 +233,14 @@ Use somente quando o risco justificar threat modeling real, especialmente em arq
 
 Use para auditoria e revisão aprofundada de segurança em 9 dimensões: injeção, autenticação/autorização, secrets, supply chain, criptografia, API/SSRF, logs/recursos, segurança de IA/LLM e protocolos/infraestrutura.
 
+### security-review
+
+Use para orquestrar e interpretar scanners reais de segurança (Semgrep, Gitleaks, OSV-Scanner, Trivy, Checkov, Bandit, npm audit), unificando relatórios em schema normalizado.
+
+### skill-security-review
+
+Use como auditoria de segurança obrigatória antes de instalar qualquer skill, plugin ou MCP de terceiros, verificando exfiltração, comandos destrutivos, prompt injection e fraude.
+
 ## GOOGLE
 
 ### finding-google-skills
@@ -245,6 +261,10 @@ Use para vocabulário e princípios de design de módulos profundos (comportamen
 
 Use para mapear atritos arquiteturais e oportunidades de aprofundamento (deepening) de módulos em uma base de código, gerando relatório visual e orientando refatorações.
 
+### domain-modeling
+
+Use para construir e refinar o modelo de domínio do projeto (`CONTEXT.md`, ADRs, glossário ubíquo e divisão coerente de módulos de negócio).
+
 ## BROWSER
 
 ### playwright
@@ -261,7 +281,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 21 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 26 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
