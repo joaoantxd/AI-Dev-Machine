@@ -10,7 +10,7 @@ Execute o trabalho diretamente no computador usando terminal e ferramentas ofici
 2. Preservar programas, CLIs, Skills, MCPs, configurações e arquivos existentes.
 3. Instalar somente dependências ausentes, usando documentação oficial atual.
 4. Instalar os aplicativos desktop, CLIs e ferramentas de desenvolvimento listados abaixo.
-5. Executar `install-skills.ps1` para sincronizar as 28 Skills gerenciadas.
+5. Executar `install-skills.ps1` para sincronizar as 29 Skills gerenciadas.
 6. Configurar MCPs compatíveis, como base ou sob demanda.
 7. Validar cada item com seu comando real de versão/estado.
 8. Deixar logins interativos para o usuário.
@@ -148,6 +148,7 @@ As Skills gerenciadas são:
 | resolving-merge-conflicts | mattpocock/skills | `skills/engineering/resolving-merge-conflicts` |
 | devils-advocate | Mathews-Tom/armory | `skills/devils-advocate` |
 | impeccable | pbakaus/impeccable | `.agents/skills/impeccable` |
+| calm | Eilodon/CALM | adapter `calm-adapter` |
 
 Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço.
 
@@ -194,6 +195,7 @@ O Google Antigravity IDE consome MCPs através de três camadas de configuraçã
 | **Semgrep** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `semgrep mcp` | Análise estática profunda de segurança. O executável local `semgrep.exe` já fornece subcomando nativo `mcp` via stdio. |
 | **Playwright** | Sob demanda | Por workspace (`<workspace>/.agents/mcp_config.json`) | stdio | `npx -y @anthropic/mcp-playwright` | Automação e navegação profunda para agentes. Na maioria dos fluxos, o `Playwright CLI` e a integração nativa de browser do Antigravity suprem as necessidades. |
 | **Graphify** | Sob demanda | Por workspace (`<workspace>/.agents/mcp_config.json`) | stdio | `graphify mcp` | Análise gráfica de dependências e arquitetura de código. Configurar sob demanda apenas em repositórios complexos. |
+| **CALM** | Sob demanda | Global / Workspace (desativado por padrão) | stdio | `npx -y @eilodon/calm-mcp serve` | Coding Agent Liveness Map: call graphs reais (24 linguagens, 13 com call graph por padrão), liveness e write safety gates. Configurar sob demanda para análise de impacto e safe edits. |
 
 ### Regras de Idempotência e Segurança para MCPs
 
@@ -226,7 +228,7 @@ Valide cada componente com seu comando real e produza um relatório com:
 - Desktop Apps: nome e status;
 - AI CLIs: nome, versão e status;
 - Development Tools: nome, versão e status;
-- Skills: as 28 gerenciadas e as externas preservadas;
+- Skills: as 29 gerenciadas e as externas preservadas;
 - MCPs: configurado, disponível sob demanda ou não suportado;
 - Authentication: logins pendentes;
 - Problems: limitações, erros, permissões ou bloqueios de rede.

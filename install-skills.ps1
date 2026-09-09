@@ -52,6 +52,7 @@ $Managed = @(
     [pscustomobject]@{ Name = 'resolving-merge-conflicts'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/resolving-merge-conflicts'; ExpectedName = 'resolving-merge-conflicts' }
     [pscustomobject]@{ Name = 'devils-advocate'; Repo = 'Mathews-Tom/armory'; SourceType = 'subpath'; Subpath = 'skills/devils-advocate'; ExpectedName = 'devils-advocate' }
     [pscustomobject]@{ Name = 'impeccable'; Repo = 'pbakaus/impeccable'; SourceType = 'subpath'; Subpath = '.agents/skills/impeccable'; ExpectedName = 'impeccable' }
+    [pscustomobject]@{ Name = 'calm'; Repo = 'Eilodon/CALM'; SourceType = 'adapter'; Adapter = 'calm-adapter'; ExpectedName = 'calm' }
 )
 
 function Test-SkillDirectory {
@@ -102,6 +103,20 @@ function New-GraphifyStaging {
         Copy-Item -LiteralPath $references -Destination (Join-Path $StagingPath 'references') -Recurse -Force
     }
     if (-not (Test-SkillDirectory -Path $StagingPath -ExpectedName $Skill.Name)) { throw 'Graphify: validacao da Skill em staging falhou' }
+    return $StagingPath
+}
+
+function New-CalmStaging {
+    param([Parameter(Mandatory)]$Skill, [Parameter(Mandatory)][string]$RepositoryPath, [Parameter(Mandatory)][string]$StagingPath)
+    $sourceDir = Join-Path $RepositoryPath 'plugins\calm\skills\calm-guide'
+    $sourceSkill = Join-Path $sourceDir 'SKILL.md'
+    if (-not (Test-Path -LiteralPath $sourceSkill -PathType Leaf)) { throw 'Upstream structure changed: CALM - subpath esperado: plugins/calm/skills/calm-guide/SKILL.md' }
+    $null = New-Item -ItemType Directory -Path $StagingPath -Force
+    Copy-Item -Path (Join-Path $sourceDir '*') -Destination $StagingPath -Recurse -Force
+    $skillContent = Get-Content -LiteralPath (Join-Path $StagingPath 'SKILL.md') -Raw -Encoding utf8
+    $skillContent = $skillContent -replace '(?m)^name:\s*calm-guide\s*$', 'name: calm'
+    Set-Content -LiteralPath (Join-Path $StagingPath 'SKILL.md') -Value $skillContent -Encoding utf8
+    if (-not (Test-SkillDirectory -Path $StagingPath -ExpectedName $Skill.Name)) { throw 'CALM: validacao da Skill em staging falhou' }
     return $StagingPath
 }
 
@@ -215,6 +230,9 @@ foreach ($skill in $Managed) {
         $sourcePath = if ($adapter -eq 'graphify-agents') {
             $staging = Join-Path $repoPath '.aidev-graphify-staging'
             New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
+        } elseif ($adapter -eq 'calm-adapter') {
+            $staging = Join-Path $repoPath '.aidev-calm-staging'
+            New-CalmStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
         } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
 
         Write-Host "[$actionLabel] $($skill.Name)"
@@ -315,7 +333,7 @@ if (-not (Test-Path -LiteralPath $globalRuleFile)) {
 # AI Dev Machine — Global Agent Rules
 
 ## Global Skills Architecture
-This development machine has 28 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+This development machine has 29 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
 
 ## Automatic Workspace Linking
 When starting work in any project workspace:

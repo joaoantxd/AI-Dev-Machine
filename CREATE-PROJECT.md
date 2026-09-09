@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 28 Skills gerenciadas.
+Estas são minhas 29 Skills gerenciadas.
 
 ## Core
 
@@ -273,6 +273,10 @@ Use para mapear atritos arquiteturais e oportunidades de aprofundamento (deepeni
 
 Use para construir e refinar o modelo de domínio do projeto (`CONTEXT.md`, ADRs, glossário ubíquo e divisão coerente de módulos de negócio).
 
+### calm
+
+Use para orientação de fluxo e liveness mapping de código (Coding Agent Liveness Map). Auxilia no workflow de 8 estágios (`repo_overview` → `locate` → `source` → `callers` → `edit_context` → `edit_symbol`/`edit_lines` → `diff_impact` → `session_context`), consulta de call graphs reais e write-safety gates para evitar quebras em símbolos centrais (hubs).
+
 ## BROWSER
 
 ### playwright
@@ -289,7 +293,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 28 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 29 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
@@ -324,7 +328,8 @@ Devem estar disponíveis/preparados:
 * Vercel MCP;
 * Semgrep MCP;
 * Playwright MCP;
-* Graphify MCP.
+* Graphify MCP;
+* CALM MCP (Coding Agent Liveness Map).
 
 Disponível não significa sempre ativo. Não carregue todos; ative somente quando o projeto/tarefa realmente precisar. Isso faz parte do Progressive Disclosure.
 
@@ -334,7 +339,7 @@ Disponível não significa sempre ativo. Não carregue todos; ative somente quan
 
 ## Código
 
-`rg` → `ast-grep` → leitura direcionada → Graphify quando análise estrutural maior for necessária.
+`rg` → `ast-grep` → leitura direcionada → Graphify / CALM quando análise estrutural ou call graph de impacto forem necessários.
 
 ## Documentação
 
