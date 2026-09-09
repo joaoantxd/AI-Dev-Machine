@@ -40,6 +40,11 @@ $Managed = @(
     [pscustomobject]@{ Name = 'graphify'; Repo = 'Graphify-Labs/graphify'; Branch = 'v8'; SourceType = 'graphify-adapter'; Adapter = 'graphify-agents'; ExpectedName = 'graphify' }
     [pscustomobject]@{ Name = 'playwright'; Repo = 'openai/skills'; SourceType = 'subpath'; Subpath = 'skills/.curated/playwright'; ExpectedName = 'playwright' }
     [pscustomobject]@{ Name = 'caveman'; Repo = 'JuliusBrussee/caveman'; SourceType = 'subpath'; Subpath = 'skills/caveman'; ExpectedName = 'caveman' }
+    [pscustomobject]@{ Name = 'diagnosing-bugs'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/diagnosing-bugs'; ExpectedName = 'diagnosing-bugs' }
+    [pscustomobject]@{ Name = 'code-review'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/code-review'; ExpectedName = 'code-review' }
+    [pscustomobject]@{ Name = 'codebase-design'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/codebase-design'; ExpectedName = 'codebase-design' }
+    [pscustomobject]@{ Name = 'improve-codebase-architecture'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/improve-codebase-architecture'; ExpectedName = 'improve-codebase-architecture' }
+    [pscustomobject]@{ Name = 'cybersecurity-review'; Repo = 'ericmjl/skills'; SourceType = 'subpath'; Subpath = 'skills/cybersecurity-review'; ExpectedName = 'cybersecurity-review' }
 )
 
 function Test-SkillDirectory {
@@ -303,7 +308,7 @@ if (-not (Test-Path -LiteralPath $globalRuleFile)) {
 # AI Dev Machine — Global Agent Rules
 
 ## Global Skills Architecture
-This development machine has 16 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+This development machine has 21 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
 
 ## Automatic Workspace Linking
 When starting work in any project workspace:

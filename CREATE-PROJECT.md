@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 16 Skills gerenciadas.
+Estas são minhas 21 Skills gerenciadas.
 
 ## Core
 
@@ -166,6 +166,14 @@ Use para criação de prompts, workflows com IA, agentes, context engineering e 
 ### systematic-debugging
 
 Use quando houver bug, comportamento inesperado, teste quebrado ou causa raiz desconhecida. Priorize investigação antes de alterações aleatórias.
+
+### diagnosing-bugs
+
+Use para bugs difíceis, intermitentes ou regressões de performance. Segue o loop disciplinado de Matt Pocock: feedback loop estrito antes de teorizar, reprodução e minimização, hipóteses falsificáveis ranqueadas, instrumentação direcionada, teste de regressão e limpeza.
+
+### code-review
+
+Use para revisão de código em dois eixos paralelos (Standards vs Spec) entre a branch atual e um commit/branch base, reportando conformidade com padrões do repositório e fidelidade à especificação/issue.
 
 ### verification-before-completion
 
@@ -213,6 +221,10 @@ Use em partes relevantes envolvendo autenticação, autorização, APIs, sessõe
 
 Use somente quando o risco justificar threat modeling real, especialmente em arquitetura sensível, autenticação complexa, dados importantes, integrações externas ou grande superfície de ataque.
 
+### cybersecurity-review
+
+Use para auditoria e revisão aprofundada de segurança em 9 dimensões: injeção, autenticação/autorização, secrets, supply chain, criptografia, API/SSRF, logs/recursos, segurança de IA/LLM e protocolos/infraestrutura.
+
 ## GOOGLE
 
 ### finding-google-skills
@@ -224,6 +236,14 @@ Se escolhermos tecnologias Google — Google Cloud, Firebase, Gemini, Android, C
 ### graphify
 
 Use somente quando uma análise estrutural maior realmente ajudar: projeto grande, dependências complexas, impacto transversal ou relações difíceis entre módulos. Não use Graphify como primeira ferramenta.
+
+### codebase-design
+
+Use para vocabulário e princípios de design de módulos profundos (comportamento rico atrás de interfaces concisas, seams limpos, testabilidade e localidade).
+
+### improve-codebase-architecture
+
+Use para mapear atritos arquiteturais e oportunidades de aprofundamento (deepening) de módulos em uma base de código, gerando relatório visual e orientando refatorações.
 
 ## BROWSER
 
@@ -241,7 +261,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 16 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 21 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
