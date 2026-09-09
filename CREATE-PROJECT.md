@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 27 Skills gerenciadas.
+Estas são minhas 28 Skills gerenciadas.
 
 ## Core
 
@@ -211,7 +211,11 @@ Use para criar interfaces, transformar direção visual em implementação, evit
 
 Use para revisar acessibilidade, UX, consistência, usabilidade e qualidade objetiva.
 
-Quando apropriado: `ui-ux-pro-max` → `frontend-design` → implementação → `web-design-guidelines`. Não é obrigatório usar todas em mudanças pequenas.
+### impeccable
+
+Use para elevar a qualidade estética e funcional de interfaces frontend, eliminando o padrão genérico de IA ("AI slop"). Traz vocabulário de design diretor (Paul Bakaus), suporte a cores OKLCH, tipografia intencional, hierarquia espacial, micro-interações, auditoria e comandos de polimento/crítica visual.
+
+Quando apropriado: `ui-ux-pro-max` → `frontend-design` / `impeccable` → implementação → `web-design-guidelines`. Não é obrigatório usar todas em mudanças pequenas.
 
 ## BACKEND / DATABASE
 
@@ -285,7 +289,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 27 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 28 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
