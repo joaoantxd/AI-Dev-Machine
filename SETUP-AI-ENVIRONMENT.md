@@ -10,7 +10,7 @@ Execute o trabalho diretamente no computador usando terminal e ferramentas ofici
 2. Preservar programas, CLIs, Skills, MCPs, configurações e arquivos existentes.
 3. Instalar somente dependências ausentes, usando documentação oficial atual.
 4. Instalar os aplicativos desktop, CLIs e ferramentas de desenvolvimento listados abaixo.
-5. Executar `install-skills.ps1` para sincronizar as 26 Skills gerenciadas.
+5. Executar `install-skills.ps1` para sincronizar as 27 Skills gerenciadas.
 6. Configurar MCPs compatíveis, como base ou sob demanda.
 7. Validar cada item com seu comando real de versão/estado.
 8. Deixar logins interativos para o usuário.
@@ -146,6 +146,7 @@ As Skills gerenciadas são:
 | skill-security-review | klh/speedy-claude | `skills/skill-security-review` |
 | domain-modeling | mattpocock/skills | `skills/engineering/domain-modeling` |
 | resolving-merge-conflicts | mattpocock/skills | `skills/engineering/resolving-merge-conflicts` |
+| devils-advocate | Mathews-Tom/armory | `skills/devils-advocate` |
 
 Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço.
 
@@ -224,7 +225,7 @@ Valide cada componente com seu comando real e produza um relatório com:
 - Desktop Apps: nome e status;
 - AI CLIs: nome, versão e status;
 - Development Tools: nome, versão e status;
-- Skills: as 26 gerenciadas e as externas preservadas;
+- Skills: as 27 gerenciadas e as externas preservadas;
 - MCPs: configurado, disponível sob demanda ou não suportado;
 - Authentication: logins pendentes;
 - Problems: limitações, erros, permissões ou bloqueios de rede.

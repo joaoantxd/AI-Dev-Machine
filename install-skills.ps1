@@ -50,6 +50,7 @@ $Managed = @(
     [pscustomobject]@{ Name = 'skill-security-review'; Repo = 'klh/speedy-claude'; SourceType = 'subpath'; Subpath = 'skills/skill-security-review'; ExpectedName = 'skill-security-review' }
     [pscustomobject]@{ Name = 'domain-modeling'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/domain-modeling'; ExpectedName = 'domain-modeling' }
     [pscustomobject]@{ Name = 'resolving-merge-conflicts'; Repo = 'mattpocock/skills'; SourceType = 'subpath'; Subpath = 'skills/engineering/resolving-merge-conflicts'; ExpectedName = 'resolving-merge-conflicts' }
+    [pscustomobject]@{ Name = 'devils-advocate'; Repo = 'Mathews-Tom/armory'; SourceType = 'subpath'; Subpath = 'skills/devils-advocate'; ExpectedName = 'devils-advocate' }
 )
 
 function Test-SkillDirectory {
@@ -313,7 +314,7 @@ if (-not (Test-Path -LiteralPath $globalRuleFile)) {
 # AI Dev Machine — Global Agent Rules
 
 ## Global Skills Architecture
-This development machine has 26 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+This development machine has 27 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
 
 ## Automatic Workspace Linking
 When starting work in any project workspace:

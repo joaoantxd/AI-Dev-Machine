@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 26 Skills gerenciadas.
+Estas são minhas 27 Skills gerenciadas.
 
 ## Core
 
@@ -182,6 +182,10 @@ Use para resolução estruturada e metódica de conflitos de merge e rebase no G
 ### review-skills
 
 Use para auditar a própria biblioteca de skills do ambiente, detectando duplicações, referências quebradas, dependências circulares, skills órfãs, gaps e composabilidade.
+
+### devils-advocate
+
+Use para desafiar de forma adversarial planos, decisões arquiteturais e código antes de irem para produção. Aplica pre-mortem, inversão, questionamento socrático e análise de pontos cegos para expor modos de falha não evidentes.
 
 ### verification-before-completion
 
@@ -281,7 +285,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 26 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 27 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
