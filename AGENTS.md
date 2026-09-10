@@ -17,7 +17,30 @@ O **AI-Dev-Machine** é um kit portátil e determinístico para configurar, reco
 
 ---
 
-## 2. Catálogo Completo das 29 Skills Gerenciadas
+## 2. Principais Skills & Catálogo das 29 Skills Gerenciadas
+
+### 🌟 Principais Skills (Núcleo Operacional)
+
+Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser carregadas simultaneamente; devem ser utilizadas conforme a fase e o tipo da tarefa:
+
+#### Navegação e execução
+- **`graphify`**: Ferramenta primária para compreender arquitetura, dependências, módulos e fluxo do sistema antes de explorar arquivos manualmente.
+- **`calm`**: Mantém o mapa operacional da tarefa: objetivo, progresso, evidências, findings, próximos passos e STOP conditions.
+- **`context-engineering`**: Use quando a tarefa possuir contexto significativo, múltiplos módulos ou risco de context bloat.
+
+#### Implementação e raciocínio
+- **`diagnosing-bugs`**: Skill principal para bugs, regressões e comportamento inesperado. (Não combinar automaticamente com `systematic-debugging`).
+- **`codebase-design`**: Skill principal para criação ou alteração relevante de módulos, interfaces e boundaries.
+- **`devils-advocate`**: Use antes de consolidar decisões técnicas importantes para questionar premissas, complexidade, riscos e alternativas.
+- **`security-best-practices`**: Use durante alterações que afetem autenticação, autorização, APIs, dados, secrets, permissões ou outras superfícies sensíveis.
+
+#### Revisão e conclusão
+- **`code-review`**: Revise o diff e sua aderência à arquitetura, padrões, especificação e qualidade antes de fechar uma alteração relevante.
+- **`verification-before-completion`**: Obrigatória antes de declarar a tarefa concluída. Exija evidência proporcional ao escopo: testes, typecheck, lint, build, browser, queries ou outros checks relevantes.
+
+---
+
+### 📚 Catálogo Completo das 29 Skills
 
 O ambiente global gerencia 29 Skills distribuídas em `%USERPROFILE%\.agents\skills` e integradas a todas as IAs por junctions:
 

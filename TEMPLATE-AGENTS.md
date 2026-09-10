@@ -104,11 +104,49 @@ pnpm build
 
 ---
 
-## 7. Catálogo das 29 Skills Disponíveis & Ativação (Progressive Disclosure)
+## 7. Principais Skills & Catálogo das 29 Skills Disponíveis (Progressive Disclosure)
 
-O ambiente global possui **29 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa:
+O ambiente global possui **29 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
 
-### A. Core, Diagnóstico e Metodologia
+---
+
+### 🌟 Principais Skills (Núcleo Operacional)
+
+Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser carregadas simultaneamente; devem ser utilizadas conforme a fase e o tipo da tarefa.
+
+#### Navegação e execução
+
+- **`graphify`**
+  - Ferramenta primária para compreender arquitetura, dependências, módulos e fluxo do sistema antes de explorar arquivos manualmente.
+- **`calm`**
+  - Mantém o mapa operacional da tarefa: objetivo, progresso, evidências, findings, próximos passos e STOP conditions.
+- **`context-engineering`**
+  - Use quando a tarefa possuir contexto significativo, múltiplos módulos ou risco de context bloat.
+
+#### Implementação e raciocínio
+
+- **`diagnosing-bugs`**
+  - Skill principal para bugs, regressões e comportamento inesperado.
+  - Não combinar automaticamente com `systematic-debugging`.
+- **`codebase-design`**
+  - Skill principal para criação ou alteração relevante de módulos, interfaces e boundaries.
+- **`devils-advocate`**
+  - Use antes de consolidar decisões técnicas importantes para questionar premissas, complexidade, riscos e alternativas.
+- **`security-best-practices`**
+  - Use durante alterações que afetem autenticação, autorização, APIs, dados, secrets, permissões ou outras superfícies sensíveis.
+
+#### Revisão e conclusão
+
+- **`code-review`**
+  - Revise o diff e sua aderência à arquitetura, padrões, especificação e qualidade antes de fechar uma alteração relevante.
+- **`verification-before-completion`**
+  - Obrigatória antes de declarar a tarefa concluída.
+  - Exija evidência proporcional ao escopo: testes, typecheck, lint, build, browser, queries ou outros checks relevantes.
+
+---
+
+### 📚 Catálogo Completo das 29 Skills por Categoria
+
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
 | **`context-engineering`** | Início de tarefas, contexto longo, degradação de qualidade | Curadoria de contexto enxuto, hierarquia de regras e foco do modelo |
