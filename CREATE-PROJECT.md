@@ -385,7 +385,7 @@ Não crie centenas de arquivos vazios, abstrações especulativas ou serviços s
 
 ## AGENTS.md DO NOVO PROJETO
 
-Depois que stack e arquitetura estiverem suficientemente definidas, crie um `AGENTS.md` pequeno e específico para o novo projeto. Ele pode conter objetivo, stack, arquitetura, comandos, convenções, restrições, testes e regras de segurança.
+Depois que stack e arquitetura estiverem suficientemente definidas, crie um `AGENTS.md` pequeno e específico para o novo projeto. Utilize como base o modelo padrão [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md) disponível no AI-Dev-Machine, adaptando-o com objetivo, stack real, comandos, convenções, restrições e testes do novo repositório.
 
 Não copie este documento inteiro nem a lista completa das Skills/MCPs globais para esse arquivo.
 

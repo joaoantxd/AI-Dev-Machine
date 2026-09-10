@@ -63,6 +63,14 @@ O script exige apenas PowerShell, Git e acesso HTTPS ao GitHub. Ele não instala
 
 Prompt greenfield para usar sempre que um projeto novo for iniciado. Primeiro você explica a ideia do produto; depois entrega este arquivo à IA para orientar a escolha de stack, arquitetura, Skills, MCPs e ferramentas usando Progressive Disclosure. Ele não presume código ou repositório existentes.
 
+### `TEMPLATE-AGENTS.md`
+
+Modelo universal e padronizado de `AGENTS.md` para qualquer novo projeto criado com IA. Fornece seções prontas para stack, comandos, convenções de código, regras de segurança, ativação de skills por Progressive Disclosure e checklist de verificação.
+
+### `AGENTS.md`
+
+Instruções operacionais específicas para assistentes e agentes de IA que atuam neste próprio repositório (`AI-Dev-Machine`), garantindo respeito à idempotência, ausência de caminhos hardcoded e interoperabilidade multi-IA.
+
 ## O que será configurado pela IA
 
 - aplicativos desktop: ChatGPT Desktop/Codex, Claude Desktop e Google Antigravity IDE;
