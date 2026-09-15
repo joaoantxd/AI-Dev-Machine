@@ -1,7 +1,7 @@
 # AGENTS.md — [Nome do Projeto]
 
 > **Instruções Operacionais para Agentes de IA**  
-> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **29 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
+> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **30 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
 
 ---
 
@@ -104,9 +104,9 @@ pnpm build
 
 ---
 
-## 7. Principais Skills & Catálogo das 29 Skills Disponíveis (Progressive Disclosure)
+## 7. Principais Skills & Catálogo das 30 Skills Disponíveis (Progressive Disclosure)
 
-O ambiente global possui **29 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
+O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
 
 ---
 
@@ -130,6 +130,9 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
   - Não combinar automaticamente com `systematic-debugging`.
 - **`codebase-design`**
   - Skill principal para criação ou alteração relevante de módulos, interfaces e boundaries.
+- **`ponytail`**
+  - Antídoto contra overengineering e complexidade acidental.
+  - Aplica a escada de necessidade YAGNI para produzir a solução mais simples, enxuta e funcional.
 - **`devils-advocate`**
   - Use antes de consolidar decisões técnicas importantes para questionar premissas, complexidade, riscos e alternativas.
 - **`security-best-practices`**
@@ -145,7 +148,7 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
 
 ---
 
-### 📚 Catálogo Completo das 29 Skills por Categoria
+### 📚 Catálogo Completo das 30 Skills por Categoria
 
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
@@ -155,6 +158,7 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
 | **`diagnosing-bugs`** | Bugs difíceis, regressões de desempenho, heisenbugs | Ciclo estruturado de diagnóstico e isolamento de hipóteses |
 | **`verification-before-completion`** | Imediatamente antes de declarar qualquer tarefa concluída | Exige evidências reais (typecheck, tests, build) antes de afirmar sucesso |
 | **`caveman`** | Quando o usuário pedir respostas compactas ou "be brief" | Redução drástica de tokens verbosos mantendo rigor técnico |
+| **`ponytail`** | Evitar overengineering, código excessivo, boilerplate, modo sênior YAGNI | Aplica a escada de necessidade YAGNI: reuso, stdlib e plataforma nativa antes de código customizado ou dependências |
 
 ### B. Arquitetura, Design de Módulos & Engenharia de Código
 | Skill | Quando Ativar / Trigger | Finalidade |

@@ -151,7 +151,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 29 Skills gerenciadas.
+Estas são minhas 30 Skills gerenciadas.
 
 ## Core
 
@@ -190,6 +190,10 @@ Use para desafiar de forma adversarial planos, decisões arquiteturais e código
 ### verification-before-completion
 
 Antes de declarar uma tarefa concluída, obtenha evidência real apropriada: teste, build, typecheck, execução, browser, query ou output.
+
+### ponytail
+
+Use para combater overengineering, complexidade desnecessária e boilerplate. Canaliza o modo sênior preguiçoso/minimalista aplicando a escada YAGNI: questionar se a tarefa precisa existir, reutilizar código do projeto, preferir a biblioteca padrão e recursos nativos da plataforma antes de novas abstrações ou dependências, gerando a menor quantidade possível de código que resolva o problema com robustez.
 
 ## FRONTEND
 
@@ -293,7 +297,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 29 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 30 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 

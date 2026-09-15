@@ -1,6 +1,6 @@
 # AI Dev Machine — Instruções Operacionais para Agentes (AGENTS.md)
 
-Este documento define as diretrizes, arquitetura, catálogo de **29 Skills** gerenciadas e convenções operacionais para agentes e assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Gemini CLI, Cursor, Windsurf) trabalhando no repositório **AI-Dev-Machine**.
+Este documento define as diretrizes, arquitetura, catálogo de **30 Skills** gerenciadas e convenções operacionais para agentes e assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Gemini CLI, Cursor, Windsurf) trabalhando no repositório **AI-Dev-Machine**.
 
 ---
 
@@ -11,13 +11,13 @@ O **AI-Dev-Machine** é um kit portátil e determinístico para configurar, reco
 ### Arquivos Centrais do Repositório:
 - [`SETUP-AI-ENVIRONMENT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/SETUP-AI-ENVIRONMENT.md): Prompt universal e autocontido de bootstrapping da máquina (inventário, ferramentas, CLIs, MCPs e validação).
 - [`CREATE-PROJECT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/CREATE-PROJECT.md): Prompt greenfield para criação de novos projetos com Progressive Disclosure.
-- [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo todas as 29 skills, a ser adotado em todo novo projeto gerado.
-- [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 29 Skills canônicas e orquestração de Directory Junctions multi-IA.
+- [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo todas as 30 skills, a ser adotado em todo novo projeto gerado.
+- [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 30 Skills canônicas e orquestração de Directory Junctions multi-IA.
 - [`README.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/README.md): Documentação voltada para humanos.
 
 ---
 
-## 2. Principais Skills & Catálogo das 29 Skills Gerenciadas
+## 2. Principais Skills & Catálogo das 30 Skills Gerenciadas
 
 ### 🌟 Principais Skills (Núcleo Operacional)
 
@@ -31,6 +31,7 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
 #### Implementação e raciocínio
 - **`diagnosing-bugs`**: Skill principal para bugs, regressões e comportamento inesperado. (Não combinar automaticamente com `systematic-debugging`).
 - **`codebase-design`**: Skill principal para criação ou alteração relevante de módulos, interfaces e boundaries.
+- **`ponytail`**: Antídoto contra overengineering e complexidade acidental. Aplica a escada YAGNI (eliminar código desnecessário, reusar código existente, preferir stdlib/plataforma nativa e gerar o mínimo de código funcional).
 - **`devils-advocate`**: Use antes de consolidar decisões técnicas importantes para questionar premissas, complexidade, riscos e alternativas.
 - **`security-best-practices`**: Use durante alterações que afetem autenticação, autorização, APIs, dados, secrets, permissões ou outras superfícies sensíveis.
 
@@ -40,9 +41,9 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
 
 ---
 
-### 📚 Catálogo Completo das 29 Skills
+### 📚 Catálogo Completo das 30 Skills
 
-O ambiente global gerencia 29 Skills distribuídas em `%USERPROFILE%\.agents\skills` e integradas a todas as IAs por junctions:
+O ambiente global gerencia 30 Skills distribuídas em `%USERPROFILE%\.agents\skills` e integradas a todas as IAs por junctions:
 
 1. **`context-engineering`**: Curadoria de contexto enxuto, Progressive Disclosure e foco de atenção.
 2. **`prompt-master`**: Engenharia e calibração sistemática de prompts para modelos de linguagem.
@@ -73,6 +74,7 @@ O ambiente global gerencia 29 Skills distribuídas em `%USERPROFILE%\.agents\ski
 27. **`skill-security-review`**: Auditoria prévia obrigatória para instalação de novas skills de terceiros.
 28. **`review-skills`**: Auditoria de integridade, ausência de duplicatas e dependências órfãs de skills.
 29. **`playwright`**: Automação e testes de browser real via CLI para validação E2E.
+30. **`ponytail`**: Modo sênior minimalista/YAGNI para cortar código supérfluo, dependências desnecessárias e overengineering.
 
 ---
 
