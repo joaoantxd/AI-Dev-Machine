@@ -104,7 +104,66 @@ pnpm build
 
 ---
 
-## 7. Principais Skills & Catálogo das 30 Skills Disponíveis (Progressive Disclosure)
+---
+
+## 7. Ordem Operacional Obrigatória para o Agente
+
+Para manter o desenvolvimento rigoroso, ágil e livre de "Agent Soup" ou "Skill Soup", siga esta ordem em trabalhos substanciais:
+
+1. **Ler integralmente este `AGENTS.md`**: Regras, limites e comandos do projeto.
+2. **Graphify para navegação arquitetural**: Quando o escopo envolver múltiplos módulos, dependências ou entender fluxo estrutural.
+3. **CALM para mapa de execução**: Em tarefas longas/complexas, mantenha o mapa operacional (objetivo, evidências, findings, STOP conditions, próximo passo).
+4. **Avaliar necessidade de Especialista (QUEM)**: Avalie se a tarefa realmente demanda um especialista de domínio ou se o agente atual é suficiente.
+5. **Selecionar as Skills Mínimas Necessárias (COMO)**: Escolha apenas as ferramentas e runbooks indispensáveis para a fase atual.
+6. **Consultar documentação externa (Context7)**: Apenas quando documentação de APIs mutáveis exigir confirmação.
+7. **Abrir apenas os arquivos necessários**: Evite leitura indiscriminada; consulte o grafo antes.
+8. **Implementar**: Escreva o menor código funcional que resolva o problema (YAGNI / `ponytail`).
+9. **Testar proporcionalmente ao risco**: Testes automatizados ou validações manuais rigorosas.
+10. **Revisar o trabalho**: Avaliar aderência a padrões e requisitos (`code-review`).
+11. **`verification-before-completion`**: Obrigatório fornecer evidências reais antes de declarar sucesso.
+12. **Relatório objetivo**: Comunicar o que foi feito, evidências e próximos passos.
+13. **STOP**: Concluiu o escopo autorizado? Pare imediatamente.
+
+> [!TIP]
+> **Regra de Bom Senso**: Em alterações mecânicas e triviais (ex.: rename, correção de 2 linhas, ajuste pontual de CSS), **NÃO** crie overhead artificial de Graphify, CALM ou delegação de especialistas.
+
+---
+
+## 8. Distinção Conceitual: Regras vs. Especialistas vs. Métodos
+
+> - **Instalada não significa carregada.**
+> - **Disponível não significa necessária.**
+> - **Evite Skill Soup e Agent Soup.**
+
+- **`AGENTS.md`**: Define regras operacionais, precedência e invariantes do projeto.
+- **Agency Agents (QUEM)**: Define o especialista — papel, perspectiva, responsabilidade e entregáveis de domínio.
+- **Skills (COMO)**: Define o método procedimental de execução — instruções passo a passo, runbooks e comandos.
+- **Graphify**: Responde *como este sistema está estruturado e como suas partes se relacionam*.
+- **CALM**: Responde *onde estamos nesta execução, o que sabemos e qual o próximo passo seguro*.
+
+---
+
+## 9. Camada de Especialistas (Agency Agents)
+
+O ambiente disponibiliza 7 especialistas sob demanda em `.agents/agents/`:
+
+| Especialista | Slug | Domínio | Quando Ativar |
+|---|---|---|---|
+| **Software Architect** | `software-architect` | Arquitetura | Decisões de alto nível, bounded contexts, ADRs e trade-offs estruturais. |
+| **Backend Architect** | `backend-architect` | Backend / APIs | Contratos OpenAPI/gRPC, resiliência distribuída e migrações zero-downtime. |
+| **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, WCAG AA e Core Web Vitals. |
+| **Database Optimizer** | `database-optimizer` | Banco de Dados | Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices e schema design. |
+| **Security Architect** | `security-architect` | Segurança | Modelagem de ameaças, trust boundaries e superfícies de ataque. |
+| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | E2E Playwright determinístico, isolamento de fixtures e suites sem flake. |
+| **DevOps Automator** | `devops-automator` | DevOps / Infra | CI/CD GitHub Actions, Docker, IaC e pipelines de entrega contínua. |
+
+### 🛑 Regra de Delegação:
+- **NÃO delegar**: rename, pequenos ajustes de CSS, configuração simples, alteração mecânica de poucas linhas.
+- **DELEGAR**: decisões arquiteturais relevantes, segurança, banco complexo, frontend de alta complexidade, QA crítico.
+
+---
+
+## 10. Principais Skills & Catálogo das 30 Skills Disponíveis (Progressive Disclosure)
 
 O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
 
@@ -205,7 +264,7 @@ Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser ca
 
 ---
 
-## 8. Protocolo de Verificação (Antes de Concluir)
+## 11. Protocolo de Verificação (Antes de Concluir)
 
 Antes de declarar qualquer funcionalidade, refatoração ou correção como concluída:
 

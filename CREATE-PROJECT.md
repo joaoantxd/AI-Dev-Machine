@@ -115,6 +115,10 @@ Explique brevemente as decisões mais importantes.
 
 ## Ferramentas do meu ambiente que serão úteis
 
+### Especialistas (Agency Agents)
+
+Liste somente se houver justificativa clara para adotar a perspectiva de um especialista (ex.: `software-architect` para decisões de arquitetura inicial, `backend-architect` para APIs/migrações, `frontend-developer` para UI rica). Se a tarefa for direta, o agente atual resolve sem especialista.
+
 ### Skills
 
 Liste somente as Skills que pretende usar inicialmente e o motivo.
@@ -129,7 +133,7 @@ Liste as ferramentas relevantes.
 
 ## Não necessário agora
 
-Mencione somente ferramentas importantes que conscientemente decidiu não ativar.
+Mencione somente ferramentas/especialistas importantes que conscientemente decidiu não ativar.
 
 Não faça uma apresentação enorme. Depois comece a construir quando a direção estiver suficientemente clara.
 
@@ -383,6 +387,7 @@ Quando começar:
 > Ou executando no diretório do AI Dev Machine:
 > ```powershell
 > .\install-skills.ps1 -WorkspacePath "<caminho-do-novo-projeto>"
+> .\install-agents.ps1 -WorkspacePath "<caminho-do-novo-projeto>"
 > ```
 
 Não crie centenas de arquivos vazios, abstrações especulativas ou serviços sem necessidade.

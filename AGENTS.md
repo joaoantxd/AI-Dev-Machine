@@ -11,13 +11,46 @@ O **AI-Dev-Machine** é um kit portátil e determinístico para configurar, reco
 ### Arquivos Centrais do Repositório:
 - [`SETUP-AI-ENVIRONMENT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/SETUP-AI-ENVIRONMENT.md): Prompt universal e autocontido de bootstrapping da máquina (inventário, ferramentas, CLIs, MCPs e validação).
 - [`CREATE-PROJECT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/CREATE-PROJECT.md): Prompt greenfield para criação de novos projetos com Progressive Disclosure.
-- [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo todas as 30 skills, a ser adotado em todo novo projeto gerado.
+- [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo catálogo de skills e especialistas, a ser adotado em todo novo projeto gerado.
 - [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 30 Skills canônicas e orquestração de Directory Junctions multi-IA.
+- [`install-agents.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-agents.ps1): Automação determinística e idempotente para gerenciamento dos 7 Especialistas do Agency Agents em `%USERPROFILE%\.agents\agents`.
 - [`README.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/README.md): Documentação voltada para humanos.
 
 ---
 
-## 2. Principais Skills & Catálogo das 30 Skills Gerenciadas
+## 2. Distinção Conceitual: Regras vs. Especialistas vs. Métodos
+
+Para manter o ambiente disciplinado e evitar "Agent Soup" ou "Skill Soup":
+
+- **`AGENTS.md` (A LEI)**: Define regras operacionais, precedência, fluxo e invariantes do projeto. É a fonte primária de autoridade.
+- **Agency Agents (QUEM)**: Define o especialista — papel, perspectiva de domínio, padrões mentais e entregáveis técnicos arquitetados.
+- **Skills (COMO)**: Define o método procedimental de execução — instruções passo a passo, runbooks e uso de ferramentas.
+- **Graphify (ONDE ESTÁ)**: Responde como o sistema está estruturado e como suas partes se relacionam (dependências e comunidades).
+- **CALM (ONDE ESTAMOS)**: Responde onde estamos nesta execução, o que já sabemos, o que falta e qual é o próximo passo seguro.
+
+---
+
+## 3. Catálogo dos 7 Especialistas Selecionados (Agency Agents)
+
+O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USERPROFILE%\.agents\agents`:
+
+| Especialista | Slug | Domínio | Quando Ativar (Trigger) | Skills Relacionadas |
+|---|---|---|---|---|
+| **Software Architect** | `software-architect` | Arquitetura | Decisões de arquitetura macro, bounded contexts (DDD), trade-off matrices e ADRs. | `codebase-design`, `domain-modeling`, `graphify`, `devils-advocate` |
+| **Backend Architect** | `backend-architect` | Backend / APIs | Governança de contratos de API (OpenAPI/gRPC), migrações zero-downtime, resiliência distribuída. | `supabase`, `security-best-practices` |
+| **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, acessibilidade WCAG 2.1 AA e Core Web Vitals. | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `vercel-react-best-practices` |
+| **Database Optimizer** | `database-optimizer` | Banco de Dados | Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices (B-tree, GIN), N+1 e pooling. | `supabase-postgres-best-practices`, `supabase` |
+| **Security Architect** | `security-architect` | Segurança | Threat modeling, superfícies de ataque, trust boundaries e defesa em profundidade. | `security-threat-model`, `cybersecurity-review`, `security-review` |
+| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | Arquitetura de testes E2E resilientes, eliminação de flakes, fixtures isoladas e CI. | `playwright`, `verification-before-completion` |
+| **DevOps Automator** | `devops-automator` | DevOps / Infra | Automação de CI/CD (GitHub Actions), Docker, IaC e pipelines de release. | `verification-before-completion` |
+
+### 🛑 Regra Estrita de Delegação (YAGNI / Ponytail)
+- **NUNCA DELEGAR PARA**: rename de variáveis, pequenos ajustes de CSS, correções triviais já diagnosticadas, mudanças localizadas de poucas linhas ou documentações simples.
+- **DELEGAR APENAS PARA**: problemas que exijam perspectiva de domínio substancial (ex: redesenho de banco, novo modelo de autorização, arquitetura de módulo complexo).
+
+---
+
+## 4. Principais Skills & Catálogo das 30 Skills Gerenciadas
 
 ### 🌟 Principais Skills (Núcleo Operacional)
 
@@ -78,28 +111,29 @@ O ambiente global gerencia 30 Skills distribuídas em `%USERPROFILE%\.agents\ski
 
 ---
 
-## 3. Comandos Principais
+## 5. Comandos Principais
 
 ```powershell
-# Simulação somente leitura da validação de Skills
+# Sincronização e validação das 30 Skills (DryRun e execução padrão)
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -DryRun
-
-# Execução padrão idempotente (validação e junctions, sem rede se integro)
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1
 
-# Vincular Skills no workspace de um projeto alvo
+# Sincronização e validação dos 7 Especialistas (DryRun e execução padrão)
+powershell -ExecutionPolicy Bypass -File .\install-agents.ps1 -DryRun
+powershell -ExecutionPolicy Bypass -File .\install-agents.ps1
+
+# Vincular Skills e Agents no workspace de um projeto alvo
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -WorkspacePath "c:\caminho\do\projeto"
+powershell -ExecutionPolicy Bypass -File .\install-agents.ps1 -WorkspacePath "c:\caminho\do\projeto"
 
 # Atualização explícita baixando upstream oficial
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -Update
-
-# Simulação da atualização upstream
-powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -Update -DryRun
+powershell -ExecutionPolicy Bypass -File .\install-agents.ps1 -Update
 ```
 
 ---
 
-## 4. Regras Operacionais Estritas para Agentes
+## 6. Regras Operacionais Estritas para Agentes
 
 1. **Zero Caminhos Hardcoded**:
    - **NUNCA** use caminhos absolutos com nomes de usuário específicos (como `C:\Users\joao...` ou `C:\Users\CONTABILIDADE...`).
@@ -107,11 +141,12 @@ powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -Update -DryRun
 
 2. **Idempotência e Preservação**:
    - Não remova configurações desconhecidas nem substitua arquivos existentes sem necessidade.
-   - Qualquer modificação no `install-skills.ps1` deve preservar o comportamento de auto-reparo e preservação de skills externas (`[PRESERVE EXTERNAL]`).
+   - Qualquer modificação nos scripts deve preservar o comportamento de auto-reparo e preservação de conteúdo externo (`[PRESERVE EXTERNAL]`).
 
-3. **Interoperabilidade Multi-IA**:
-   - As skills canônicas residem exclusivamente em `%USERPROFILE%\.agents\skills`.
-   - Todas as integrações (Antigravity, Codex, Claude Code, Workspaces) utilizam Directory Junctions (`mklink /J`), evitando duplicação de dados.
+3. **Interoperabilidade Multi-IA com Validação Real**:
+   - As skills canônicas residem em `%USERPROFILE%\.agents\skills`.
+   - Os agentes canônicos residem em `%USERPROFILE%\.agents\agents`.
+   - Directory Junctions só são criadas para ferramentas com descoberta nativa comprovada (`~/.claude/agents`, `~/.gemini/agents`). Ferramentas como Antigravity e Codex utilizam roteamento declarativo via `AGENTS.md`.
 
 4. **Higiene de Repositório**:
    - A pasta `.agents` no workspace é um link local (junction) e **deve permanecer no `.gitignore`**. Nunca faça commit de `.agents/`.

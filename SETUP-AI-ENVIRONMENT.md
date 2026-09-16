@@ -11,9 +11,10 @@ Execute o trabalho diretamente no computador usando terminal e ferramentas ofici
 3. Instalar somente dependências ausentes, usando documentação oficial atual.
 4. Instalar os aplicativos desktop, CLIs e ferramentas de desenvolvimento listados abaixo.
 5. Executar `install-skills.ps1` para sincronizar as 30 Skills gerenciadas.
-6. Configurar MCPs compatíveis, como base ou sob demanda.
-7. Validar cada item com seu comando real de versão/estado.
-8. Deixar logins interativos para o usuário.
+6. Executar `install-agents.ps1` para sincronizar os 7 Especialistas do Agency Agents.
+7. Configurar MCPs compatíveis, como base ou sob demanda.
+8. Validar cada item com seu comando real de versão/estado.
+9. Deixar logins interativos para o usuário.
 
 ## Regras obrigatórias
 
@@ -152,6 +153,52 @@ As Skills gerenciadas são:
 | ponytail | DietrichGebert/ponytail | `skills/ponytail` |
 
 Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies.
+
+## Especialistas globais (Agency Agents)
+
+O diretório canônico dos Especialistas é `%USERPROFILE%\.agents\agents`. O script `install-agents.ps1` gerencia de forma determinística e idempotente o catálogo selecionado de 7 especialistas originários de `msitarzewski/agency-agents`:
+
+```powershell
+# Simulação somente leitura
+.\install-agents.ps1 -DryRun
+
+# Execução padrão idempotente (sem rede se os agentes já estiverem íntegros)
+.\install-agents.ps1
+
+# Atualização explícita com download upstream
+.\install-agents.ps1 -Update
+
+# Simulação de atualização
+.\install-agents.ps1 -Update -DryRun
+
+# Vincular ao workspace de um projeto alvo
+.\install-agents.ps1 -WorkspacePath "c:\caminho\do\projeto"
+```
+
+### Comportamento do `install-agents.ps1`
+
+- **Idempotência por padrão**: sem `-Update`, se o agente existir e seu cabeçalho for válido, o script emite `[SKIP / PRESENT] <slug>` e não acessa a rede.
+- **Auto-reparo**: se o arquivo estiver corrompido, executa `[REPAIR] <slug>`.
+- **Instalação**: se ausente, clona upstream temporariamente e instala com `[INSTALL] <slug>`.
+- **Atualização explícita (`-Update`)**: baixa a versão oficial mais recente, valida, substitui atomicamente com backup e realiza rollback em caso de falha.
+- **Preservação de agentes externos**: qualquer `.md` não gerenciado em `%USERPROFILE%\.agents\agents` é preservado com `[PRESERVE EXTERNAL]`.
+- **Compatibilidade Multi-IA Comprovada**:
+  - Claude Code (`~/.claude/agents`): suporte nativo comprovado a subagentes markdown; junction direta para `%USERPROFILE%\.agents\agents`.
+  - Gemini CLI (`~/.gemini/agents`): suporte nativo comprovado a subagentes markdown; junction direta para `%USERPROFILE%\.agents\agents`.
+  - OpenAI Codex e Google Antigravity: utilizam roteamento declarativo e consulta sob demanda via `AGENTS.md` (sem junctions fantasma desnecessárias).
+  - Workspaces: `-WorkspacePath` vincula de forma segura exclusivamente `.agents\agents`, sem substituir ou apagar a pasta `.agents` ou `.agents\skills`.
+
+### Especialistas gerenciados:
+
+| Especialista | Slug | Repositório | Arquivo Upstream |
+|---|---|---|---|
+| Software Architect | `software-architect` | msitarzewski/agency-agents | `engineering/engineering-software-architect.md` |
+| Backend Architect | `backend-architect` | msitarzewski/agency-agents | `engineering/engineering-backend-architect.md` |
+| Frontend Developer | `frontend-developer` | msitarzewski/agency-agents | `engineering/engineering-frontend-developer.md` |
+| Database Optimizer | `database-optimizer` | msitarzewski/agency-agents | `engineering/engineering-database-optimizer.md` |
+| Security Architect | `security-architect` | msitarzewski/agency-agents | `security/security-architect.md` |
+| Test Automation Engineer | `test-automation-engineer` | msitarzewski/agency-agents | `testing/testing-test-automation-engineer.md` |
+| DevOps Automator | `devops-automator` | msitarzewski/agency-agents | `engineering/engineering-devops-automator.md` |
 
 ## MCPs no Google Antigravity IDE e Gemini CLI
 
