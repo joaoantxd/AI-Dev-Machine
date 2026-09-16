@@ -59,9 +59,17 @@ Prompt greenfield para usar sempre que um projeto novo for iniciado. Primeiro vo
 
 Modelo universal e padronizado de `AGENTS.md` para qualquer novo projeto criado com IA. Fornece seções prontas para stack, comandos, convenções de código, regras de segurança, ativação de skills por Progressive Disclosure e checklist de verificação.
 
+### `TEMPLATE-GEMINI.md`
+
+Modelo nativo e padronizado de `GEMINI.md` para projetos no ecossistema Google Antigravity e Gemini CLI, contendo a Regra Zero de disparo obrigatório de skills e apontando para as regras canônicas de `AGENTS.md`.
+
 ### `AGENTS.md`
 
 Instruções operacionais específicas para assistentes e agentes de IA que atuam neste próprio repositório (`AI-Dev-Machine`), garantindo respeito à idempotência, ausência de caminhos hardcoded e interoperabilidade multi-IA.
+
+### `GEMINI.md`
+
+Ponto de entrada primário e regras nativas para Google Antigravity e Gemini CLI atuando no repositório `AI-Dev-Machine`.
 
 ## O que será configurado pela IA
 

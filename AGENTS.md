@@ -53,6 +53,8 @@ O **AI-Dev-Machine** é um kit portátil e determinístico para configurar, reco
 - [`SETUP-AI-ENVIRONMENT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/SETUP-AI-ENVIRONMENT.md): Prompt universal e autocontido de bootstrapping da máquina (inventário, ferramentas, CLIs, MCPs e validação).
 - [`CREATE-PROJECT.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/CREATE-PROJECT.md): Prompt greenfield para criação de novos projetos com Progressive Disclosure.
 - [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo catálogo de skills e especialistas, a ser adotado em todo novo projeto gerado.
+- [`TEMPLATE-GEMINI.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-GEMINI.md): Template nativo padrão de `GEMINI.md` para projetos no ecossistema Google Antigravity e Gemini CLI.
+- [`GEMINI.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/GEMINI.md): Ponto de entrada e instruções nativas para Google Antigravity e Gemini CLI neste repositório.
 - [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 30 Skills canônicas e orquestração de Directory Junctions multi-IA.
 - [`install-agents.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-agents.ps1): Automação determinística e idempotente para gerenciamento dos 7 Especialistas do Agency Agents em `%USERPROFILE%\.agents\agents`.
 - [`README.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/README.md): Documentação voltada para humanos.

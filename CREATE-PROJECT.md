@@ -394,7 +394,7 @@ Não crie centenas de arquivos vazios, abstrações especulativas ou serviços s
 
 ## AGENTS.md & GEMINI.md DO NOVO PROJETO
 
-Depois que stack e arquitetura estiverem suficientemente definidas, crie um `AGENTS.md` e um `GEMINI.md` pequenos e específicos para o novo projeto. Utilize como base o modelo padrão [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md) disponível no AI-Dev-Machine, adaptando-o com objetivo, stack real, comandos, convenções, restrições e testes do novo repositório:
+Depois que stack e arquitetura estiverem suficientemente definidas, crie um `AGENTS.md` e um `GEMINI.md` pequenos e específicos para o novo projeto. Utilize como base os modelos padrão [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md) e [`TEMPLATE-GEMINI.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-GEMINI.md) disponíveis no AI-Dev-Machine, adaptando-os com objetivo, stack real, comandos, convenções, restrições e testes do novo repositório:
 
 * `AGENTS.md`: Arquivo canônico lido por Codex, Claude Code, Cursor e Antigravity (com a Regra Zero no topo absoluto).
 * `GEMINI.md`: Arquivo de descoberta primária para Google Antigravity e Gemini CLI, contendo a Regra Zero e apontando para `AGENTS.md`.
