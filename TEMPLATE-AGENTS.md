@@ -176,7 +176,10 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 > Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca (`grep_search`, `find_by_name`), comandos de terminal ou edição de código, o agente **É OBRIGADO A**:
 >
 > 1. **AVALIAR O CATÁLOGO DAS 30 SKILLS** (§10.2) e selecionar obrigatoriamente a melhor skill (ou combinação mínima) para o domínio da tarefa:
->    - **Arquitetura, Navegação, Módulos e Dependências**: ➔ `graphify` (*Se a pasta `graphify-out/` existir na raiz do projeto, É TERMINANTEMENTE PROIBIDO fazer buscas cegas com `grep` antes de consultar o grafo*).
+>    - **Arquitetura, Navegação, Módulos e Dependências ➔ `graphify` (OBRIGATÓRIO EM TODOS OS PROJETOS)**:
+      * `graphify` é a ferramenta mandatória de inteligência estrutural.
+      * Se a pasta `graphify-out/` existir na raiz do projeto, **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listagens manuais antes de consultar o grafo de conhecimento.
+      * Se `graphify-out/` ainda não existir, o agente deve carregar `.agents/skills/graphify/SKILL.md` e orientar a exploração via grafo ou gerá-lo.
 >    - **Mapeamento de Tarefas Longas, Call Graph e Diffs**: ➔ `calm`.
 >    - **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
 >    - **Novo Código, Refatoração, Redução de Complexidade ou YAGNI**: ➔ `ponytail` (modo minimalista sênior) e `codebase-design`.
