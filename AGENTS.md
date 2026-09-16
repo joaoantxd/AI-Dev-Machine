@@ -52,34 +52,39 @@ O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USER
 
 ## 4. Principais Skills & Catálogo das 30 Skills Gerenciadas
 
-### 🛑 Protocolo Obrigatório de Pré-Voo: Seleção e Ativação da Melhor Skill
+### 🛑 Protocolo Obrigatório de Pré-Voo: Núcleo Mandatório Universal & Seleção de Skills
 
 > ⚠️ **INVARIANTE DE EXECUÇÃO ABSOLUTA**:
 > O agente **NUNCA DEVE** esperar o usuário pedir "use a skill X".
-> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca (`grep_search`, `find_by_name`), comandos de terminal ou edição de código, o agente **É OBRIGADO A**:
+> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca (`grep_search`, `find_by_name`), comandos de terminal ou edição de código, o agente **É OBRIGADO A CARREGAR E SEGUIR O NÚCLEO UNIVERSAL**:
 >
-> 1. **AVALIAR O CATÁLOGO DAS 30 SKILLS** (abaixo) e selecionar obrigatoriamente a melhor skill (ou combinação mínima) para o domínio da tarefa:
->    - **Arquitetura, Navegação, Módulos e Dependências ➔ `graphify` (OBRIGATÓRIO EM TODOS OS PROJETOS)**:
-      * `graphify` é a ferramenta mandatória de inteligência estrutural.
-      * Se a pasta `graphify-out/` existir na raiz do projeto, **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listagens manuais antes de consultar o grafo de conhecimento.
-      * Se `graphify-out/` ainda não existir, o agente deve carregar `.agents/skills/graphify/SKILL.md` e orientar a exploração via grafo ou gerá-lo.
->    - **Mapeamento de Tarefas Longas, Call Graph e Diffs**: ➔ `calm`.
->    - **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
->    - **Novo Código, Refatoração, Redução de Complexidade ou YAGNI**: ➔ `ponytail` (modo minimalista sênior) e `codebase-design`.
->    - **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
->    - **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
->    - **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
->    - **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
->    - **Automação de Navegador / Testes E2E**: ➔ `playwright`.
->    - **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
->    - **Revisão de Código e PRs**: ➔ `code-review`.
->    - **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
->    - **Modelagem de Domínio e Linguagem Ubíqua**: ➔ `domain-modeling`.
->    - **Pré-Conclusão e Entrega**: ➔ `verification-before-completion` (*The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação*).
+> 1. **`graphify` + `calm` — A Dupla Mandatória de Inteligência & Execução (OBRIGATÓRIO EM TODOS OS PROJETOS)**:
+>    - **`graphify` (ONDE ESTÁ)**: Inteligência estrutural, relacionamentos e dependências.
+>      * Se a pasta `graphify-out/` existir na raiz do projeto, **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listagens manuais antes de consultar o grafo de conhecimento.
+>      * Se `graphify-out/` ainda não existir, o agente deve carregar `.agents/skills/graphify/SKILL.md` e orientar a exploração via grafo ou gerá-lo.
+>    - **`calm` (ONDE ESTAMOS & IMPACTO SEGURO)**: Coding Agent Liveness Map e workflow de edição segura.
+>      * Toda tarefa que envolva múltiplos passos, mapeamento de chamadas (call graph), refatoração ou alteração de código **DEVE** carregar `.agents/skills/calm/SKILL.md` para seguir a sequência segura: `locate` → `source` → `callers` → `edit_context` → `diff_impact`.
 >
-> 2. **CARREGAR O `SKILL.MD` CORRESPONDENTE VIA `view_file`**:
->    - O agente **DEVE** ler as instruções do `SKILL.md` da skill selecionada antes de executar a ação.
->    - É terminantemente proibido pular o carregamento sob a alegação de "já saber como fazer".
+> 2. **`ponytail` — O Padrão Mandatório de Código (OBRIGATÓRIO AO ESCREVER OU REFATORAR)**:
+>    - Carregue `.agents/skills/ponytail/SKILL.md`. Todo código novo ou refatorado deve seguir YAGNI radical: cortar código supérfluo, usar o que já existe, preferir stdlib e recursos nativos da linguagem antes de adicionar abstrações, classes vazias ou novas dependências.
+>
+> 3. **`verification-before-completion` — O Gate Mandatório de Conclusão (OBRIGATÓRIO ANTES DA ENTREGA)**:
+>    - Carregue `.agents/skills/verification-before-completion/SKILL.md`. *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação executados nesta rodada.*
+>
+> 4. **Ativação Obrigatória da Skill Especializada de Domínio**:
+>    - Além do núcleo universal acima, avalie o catálogo das 30 skills e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
+>      * **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
+>      * **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
+>      * **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
+>      * **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
+>      * **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
+>      * **Automação de Navegador / Testes E2E**: ➔ `playwright`.
+>      * **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
+>      * **Revisão de Código e PRs**: ➔ `code-review`.
+>      * **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
+>      * **Modelagem de Domínio e Linguagem Ubíqua**: ➔ `domain-modeling`.
+>
+> É terminantemente proibido pular o carregamento do `SKILL.md` sob a alegação de "já saber como fazer".
 
 
 ---
