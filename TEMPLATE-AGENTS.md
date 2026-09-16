@@ -169,41 +169,32 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 
 ---
 
-### 🌟 Principais Skills (Núcleo Operacional)
+### 🛑 Protocolo Obrigatório de Pré-Voo: Seleção e Ativação da Melhor Skill
 
-Estas Skills formam o núcleo operacional do ambiente. Elas não precisam ser carregadas simultaneamente; devem ser utilizadas conforme a fase e o tipo da tarefa.
+> ⚠️ **INVARIANTE DE EXECUÇÃO ABSOLUTA**:
+> O agente **NUNCA DEVE** esperar o usuário pedir "use a skill X".
+> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca (`grep_search`, `find_by_name`), comandos de terminal ou edição de código, o agente **É OBRIGADO A**:
+>
+> 1. **AVALIAR O CATÁLOGO DAS 30 SKILLS** (§10.2) e selecionar obrigatoriamente a melhor skill (ou combinação mínima) para o domínio da tarefa:
+>    - **Arquitetura, Navegação, Módulos e Dependências**: ➔ `graphify` (*Se a pasta `graphify-out/` existir na raiz do projeto, É TERMINANTEMENTE PROIBIDO fazer buscas cegas com `grep` antes de consultar o grafo*).
+>    - **Mapeamento de Tarefas Longas, Call Graph e Diffs**: ➔ `calm`.
+>    - **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
+>    - **Novo Código, Refatoração, Redução de Complexidade ou YAGNI**: ➔ `ponytail` (modo minimalista sênior) e `codebase-design`.
+>    - **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
+>    - **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
+>    - **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
+>    - **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
+>    - **Automação de Navegador / Testes E2E**: ➔ `playwright`.
+>    - **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
+>    - **Revisão de Código e PRs**: ➔ `code-review`.
+>    - **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
+>    - **Modelagem de Domínio e Linguagem Ubíqua**: ➔ `domain-modeling`.
+>    - **Pré-Conclusão e Entrega**: ➔ `verification-before-completion` (*The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação*).
+>
+> 2. **CARREGAR O `SKILL.MD` CORRESPONDENTE VIA `view_file`**:
+>    - O agente **DEVE** ler as instruções do `SKILL.md` da skill selecionada antes de executar a ação.
+>    - É terminantemente proibido pular o carregamento sob a alegação de "já saber como fazer".
 
-#### Navegação e execução
-
-- **`graphify`**
-  - Ferramenta primária para compreender arquitetura, dependências, módulos e fluxo do sistema antes de explorar arquivos manualmente.
-- **`calm`**
-  - Mantém o mapa operacional da tarefa: objetivo, progresso, evidências, findings, próximos passos e STOP conditions.
-- **`context-engineering`**
-  - Use quando a tarefa possuir contexto significativo, múltiplos módulos ou risco de context bloat.
-
-#### Implementação e raciocínio
-
-- **`diagnosing-bugs`**
-  - Skill principal para bugs, regressões e comportamento inesperado.
-  - Não combinar automaticamente com `systematic-debugging`.
-- **`codebase-design`**
-  - Skill principal para criação ou alteração relevante de módulos, interfaces e boundaries.
-- **`ponytail`**
-  - Antídoto contra overengineering e complexidade acidental.
-  - Aplica a escada de necessidade YAGNI para produzir a solução mais simples, enxuta e funcional.
-- **`devils-advocate`**
-  - Use antes de consolidar decisões técnicas importantes para questionar premissas, complexidade, riscos e alternativas.
-- **`security-best-practices`**
-  - Use durante alterações que afetem autenticação, autorização, APIs, dados, secrets, permissões ou outras superfícies sensíveis.
-
-#### Revisão e conclusão
-
-- **`code-review`**
-  - Revise o diff e sua aderência à arquitetura, padrões, especificação e qualidade antes de fechar uma alteração relevante.
-- **`verification-before-completion`**
-  - Obrigatória antes de declarar a tarefa concluída.
-  - Exija evidência proporcional ao escopo: testes, typecheck, lint, build, browser, queries ou outros checks relevantes.
 
 ---
 
