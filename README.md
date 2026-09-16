@@ -29,35 +29,27 @@ Prompt universal, autocontido, com inventário, regras de preservação, fontes 
 
 ### `install-skills.ps1`
 
-Única automação própria do projeto. Gerencia deterministicamente as 30 Skills em `%USERPROFILE%\.agents\skills` e as integra ao Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code sem duplicar arquivos:
+Automação determinística e idempotente para sincronização das 30 Skills canônicas em `%USERPROFILE%\.agents\skills` e integração por junctions para Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code.
 
-- **Por padrão (idempotente)**: se as 30 Skills já existirem e estiverem íntegras, o script apenas valida e emite `[SKIP / PRESENT]`, sem fazer requisições de rede. Em seguida, assegura as Directory Junctions para Antigravity IDE, Codex e Claude.
-- **Auto-reparo**: repara automaticamente pastas de Skills corrompidas (`[REPAIR]`).
-- **Atualização explícita (`-Update`)**: baixa e sincroniza as versões mais recentes dos repositórios oficiais upstream com clone temporário, backup atômico e rollback.
-- **Interoperabilidade Multi-IA**: cria e valida Directory Junctions individuais para os alvos de integração (`~/.gemini/antigravity/skills`, `~/.gemini/config/skills`, `~/.codex/skills`, `~/.claude/skills`), mantendo `%USERPROFILE%\.agents\skills` como fonte canônica física única, sem duplicar arquivos.
-- **Suporte a Workspace (`-WorkspacePath`)**: vincula a pasta `.agents` diretamente a qualquer workspace/projeto para visibilidade nativa e total permissão de leitura pelas IAs.
-- **Preservação de externas**: qualquer Skill não gerenciada é mantida intacta (`[PRESERVE EXTERNAL]`).
+### `install-agents.ps1`
+
+Automação determinística e idempotente para gerenciamento seletivo dos 7 Especialistas essenciais do Agency Agents em `%USERPROFILE%\.agents\agents`, com suporte a auto-reparo, atualização atômica (`-Update`), dry-run (`-DryRun`) e junctions seguras para Claude Code e Gemini CLI.
 
 Uso:
 
 ```powershell
-# Simulação somente leitura da execução padrão
-.\install-skills.ps1 -DryRun
+# Simulação somente leitura
+.\install-agents.ps1 -DryRun
 
-# Execução padrão idempotente (valida e cria junctions se faltarem, sem rede)
-.\install-skills.ps1
+# Execução padrão idempotente (sem rede se íntegro)
+.\install-agents.ps1
 
-# Vincular automaticamente as Skills no workspace de um projeto
-.\install-skills.ps1 -WorkspacePath "c:\caminho\para\novo-projeto"
+# Vincular ao workspace de um projeto alvo
+.\install-agents.ps1 -WorkspacePath "c:\caminho\para\projeto"
 
 # Atualização explícita baixando upstream
-.\install-skills.ps1 -Update
-
-# Simulação da atualização explícita
-.\install-skills.ps1 -Update -DryRun
+.\install-agents.ps1 -Update
 ```
-
-O script exige apenas PowerShell, Git e acesso HTTPS ao GitHub. Ele não instala programas, CLIs, dependências do Windows ou MCPs.
 
 ### `CREATE-PROJECT.md`
 
@@ -77,9 +69,39 @@ Instruções operacionais específicas para assistentes e agentes de IA que atua
 - CLIs de IA: Codex CLI, Claude Code, GitHub Copilot CLI, Gemini CLI e Antigravity CLI quando suportado;
 - ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Graphify, Semgrep, Trivy e Gitleaks;
 - 30 Skills globais gerenciadas;
+- 7 Especialistas gerenciados (Agency Agents);
 - MCPs base e catálogo sob demanda.
 
 Os métodos e versões devem ser confirmados na documentação oficial atual da máquina real.
+
+## Taxonomia Conceitual: O que é o quê?
+
+Para evitar sobrecarga de contexto ("Agent Soup" ou "Skill Soup"), o ambiente divide responsabilidades com clareza:
+
+- **`AGENTS.md` (Regras Operacionais)**: É a lei suprema do repositório. Define invariantes, comandos, estilo e limites de ação da IA.
+- **Agency Agents (QUEM / Especialistas)**: Personas com perspectiva de domínio profundo, padrões mentais e entregáveis técnicos arquitetados.
+- **Skills (COMO / Métodos)**: Procedimentos práticos, runbooks passo a passo e conhecimento de ferramentas.
+- **MCPs (Ferramentas & Contexto Externo)**: Servidores de integração com bancos, browsers, APIS e documentação externa.
+- **Graphify (ONDE ESTÁ / Estrutura)**: Mapa estrutural de dependências, comunidades de código e topologia do repositório.
+- **CALM (ONDE ESTAMOS / Liveness)**: Mapa operacional da tarefa em andamento (objetivo, evidências, blast radius e próximo passo seguro).
+
+## Especialistas Gerenciados (Agency Agents)
+
+O ecossistema gerencia seletivamente 7 especialistas canônicos em `%USERPROFILE%\.agents\agents`:
+
+| Especialista | Slug | Domínio | Quando Ativar |
+|---|---|---|---|
+| **Software Architect** | `software-architect` | Arquitetura | Decisões de arquitetura macro, bounded contexts (DDD), ADRs e trade-offs. |
+| **Backend Architect** | `backend-architect` | Backend / APIs | Governança de APIs (OpenAPI/gRPC), resiliência distribuída e migrações zero-downtime. |
+| **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, WCAG AA e Core Web Vitals. |
+| **Database Optimizer** | `database-optimizer` | Banco de Dados | Query plans (`EXPLAIN ANALYZE`), estratégias de indexação e schema design. |
+| **Security Architect** | `security-architect` | Segurança | Modelagem de ameaças, superfícies de ataque, trust boundaries e defesa em profundidade. |
+| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | Arquitetura de testes E2E Playwright determinísticos, fixtures isoladas e suites sem flake. |
+| **DevOps Automator** | `devops-automator` | DevOps / Infra | CI/CD GitHub Actions, Docker, IaC e automação de deployment. |
+
+### Regra Estrita de Delegação
+- **Tarefas triviais** (renames, pequenas alterações de CSS, correções de poucas linhas): resolvidas diretamente pelo agente atual sem delegação.
+- **Tarefas de domínio substantivas**: ativam a perspectiva ou persona do especialista sob demanda.
 
 ## Skills gerenciadas
 
