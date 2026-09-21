@@ -10,7 +10,7 @@ Execute o trabalho diretamente no computador usando terminal e ferramentas ofici
 2. Preservar programas, CLIs, Skills, MCPs, configurações e arquivos existentes.
 3. Instalar somente dependências ausentes, usando documentação oficial atual.
 4. Instalar os aplicativos desktop, CLIs e ferramentas de desenvolvimento listados abaixo.
-5. Executar `install-skills.ps1` para sincronizar as 30 Skills gerenciadas.
+5. Executar `install-skills.ps1` para sincronizar as 31 Skills gerenciadas.
 6. Executar `install-agents.ps1` para sincronizar os 7 Especialistas do Agency Agents.
 7. Configurar MCPs compatíveis, como base ou sob demanda.
 8. Validar cada item com seu comando real de versão/estado.
@@ -151,8 +151,9 @@ As Skills gerenciadas são:
 | impeccable | pbakaus/impeccable | `.agents/skills/impeccable` |
 | calm | Eilodon/CALM | adapter `calm-adapter` |
 | ponytail | DietrichGebert/ponytail | `skills/ponytail` |
+| windows-mcp | local (AI-Dev-Machine) | `skills/windows-mcp` (exclusivo Windows; excluído do Codex) |
 
-Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies.
+Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies. Para `windows-mcp`, gerenciar localmente no AI-Dev-Machine, integrar via junctions no Antigravity e Claude Code, e omitir estritamente no OpenAI Codex.
 
 ## Especialistas globais (Agency Agents)
 

@@ -28,6 +28,7 @@
 >      * **Performance React / Next.js / Server Components**: ➔ `.agents/skills/vercel-react-best-practices/SKILL.md`
 >      * **Segurança / Auth / RLS / Permissões / Tokens**: ➔ `.agents/skills/security-best-practices/SKILL.md` ou `security-threat-model/SKILL.md`
 >      * **Automação Browser / Testes E2E**: ➔ `.agents/skills/playwright/SKILL.md`
+>      * **Automação Windows / Desktop / GUI / Registry / Clipboard**: ➔ `.agents/skills/windows-mcp/SKILL.md`
 >      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
 >      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
 >      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
@@ -44,7 +45,7 @@
 # AGENTS.md — [Nome do Projeto]
 
 > **Instruções Operacionais para Agentes de IA**  
-> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **30 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
+> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **31 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
 
 ---
 
@@ -206,9 +207,9 @@ O ambiente disponibiliza 7 especialistas sob demanda em `.agents/agents/`:
 
 ---
 
-## 10. Principais Skills & Catálogo das 30 Skills Disponíveis (Progressive Disclosure)
+## 10. Principais Skills & Catálogo das 31 Skills Disponíveis (Progressive Disclosure)
 
-O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
+O ambiente global possui **31 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
 
 ---
 
@@ -232,13 +233,14 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 >    - Carregue `.agents/skills/verification-before-completion/SKILL.md`. *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação executados nesta rodada.*
 >
 > 4. **Ativação Obrigatória da Skill Especializada de Domínio**:
->    - Além do núcleo universal acima, avalie o catálogo das 30 skills (§10.2) e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
+>    - Além do núcleo universal acima, avalie o catálogo das 31 skills (§10.2) e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
 >      * **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
 >      * **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
 >      * **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
 >      * **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
 >      * **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
 >      * **Automação de Navegador / Testes E2E**: ➔ `playwright`.
+>      * **Automação Windows / Desktop / GUI / Registry / Clipboard**: ➔ `windows-mcp`.
 >      * **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
 >      * **Revisão de Código e PRs**: ➔ `code-review`.
 >      * **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
@@ -249,7 +251,7 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 
 ---
 
-### 📚 Catálogo Completo das 30 Skills por Categoria
+### 📚 Catálogo Completo das 31 Skills por Categoria
 
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
@@ -303,6 +305,11 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
 | **`playwright`** | Testes end-to-end, validação de telas e formulários | Automação de browser real via CLI para verificação de fluxos do usuário |
+
+### G. Automação do Sistema Windows & Desktop MCP
+| Skill | Quando Ativar / Trigger | Finalidade |
+| :--- | :--- | :--- |
+| **`windows-mcp`** | Automação desktop Windows, apps nativos, cliques, OCR, Registry, Clipboard | Automação desktop completa via servidor MCP `windows-mcp` |
 
 ---
 

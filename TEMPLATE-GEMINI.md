@@ -1,4 +1,4 @@
-﻿# 🛑 REGRA ZERO INEGOCIÁVEL: ATIVAÇÃO OBRIGATÓRIA DE SKILLS NA RODADA 1
+# 🛑 REGRA ZERO INEGOCIÁVEL: ATIVAÇÃO OBRIGATÓRIA DE SKILLS NA RODADA 1
 
 > ### ⚠️ PROTOCOLO DE DISPARO IMEDIATO (LEI SUPREMA DO REPOSITÓRIO)
 > O agente **NUNCA DEVE** esperar o usuário solicitar o uso de uma skill.
@@ -28,6 +28,7 @@
 >      * **Performance React / Next.js / Server Components**: ➔ `.agents/skills/vercel-react-best-practices/SKILL.md`
 >      * **Segurança / Auth / RLS / Permissões / Tokens**: ➔ `.agents/skills/security-best-practices/SKILL.md` ou `security-threat-model/SKILL.md`
 >      * **Automação Browser / Testes E2E**: ➔ `.agents/skills/playwright/SKILL.md`
+>      * **Automação Windows / Desktop / GUI / Registry / Clipboard**: ➔ `.agents/skills/windows-mcp/SKILL.md`
 >      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
 >      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
 >      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
@@ -43,7 +44,7 @@
 
 > **Instruções Nativas para Google Antigravity & Gemini CLI**  
 > Este arquivo é o ponto de entrada de configuração primária e regras operacionais para agentes do ecossistema Google (Antigravity IDE, Antigravity CLI e Gemini CLI).  
-> A especificação completa do projeto, taxonomia de especialistas, convenções operacionais e catálogo detalhado das **30 Skills** gerenciadas residem em [`AGENTS.md`](file:///./AGENTS.md).
+> A especificação completa do projeto, taxonomia de especialistas, convenções operacionais e catálogo detalhado das **31 Skills** gerenciadas residem em [`AGENTS.md`](file:///./AGENTS.md).
 
 ---
 

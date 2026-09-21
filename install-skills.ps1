@@ -54,6 +54,7 @@ $Managed = @(
     [pscustomobject]@{ Name = 'impeccable'; Repo = 'pbakaus/impeccable'; SourceType = 'subpath'; Subpath = '.agents/skills/impeccable'; ExpectedName = 'impeccable' }
     [pscustomobject]@{ Name = 'calm'; Repo = 'Eilodon/CALM'; SourceType = 'adapter'; Adapter = 'calm-adapter'; ExpectedName = 'calm' }
     [pscustomobject]@{ Name = 'ponytail'; Repo = 'DietrichGebert/ponytail'; SourceType = 'subpath'; Subpath = 'skills/ponytail'; ExpectedName = 'ponytail' }
+    [pscustomobject]@{ Name = 'windows-mcp'; Repo = 'local'; SourceType = 'local'; LocalPath = 'skills\windows-mcp'; ExpectedName = 'windows-mcp'; ExcludeTargets = @('.codex\skills') }
 )
 
 function Test-SkillDirectory {
@@ -219,22 +220,31 @@ foreach ($skill in $Managed) {
     }
 
     try {
-        if (-not $repoCache.ContainsKey($skill.Repo)) {
-            $repoWorkspace = Join-Path ([IO.Path]::GetTempPath()) ("aidev-repo-{0}" -f [guid]::NewGuid().ToString('N'))
-            $null = New-Item -ItemType Directory -Path $repoWorkspace -Force
-            $branch = if ($skill.PSObject.Properties.Name -contains 'Branch') { $skill.Branch } else { $null }
-            Invoke-GitClone -Repo $skill.Repo -Destination $repoWorkspace -Branch $branch
-            $repoCache[$skill.Repo] = $repoWorkspace
+        $sourcePath = $null
+        if ($skill.PSObject.Properties.Name -contains 'SourceType' -and $skill.SourceType -eq 'local') {
+            $localSubpath = if ($skill.PSObject.Properties.Name -contains 'LocalPath') { $skill.LocalPath } else { Join-Path 'skills' $skill.Name }
+            $sourcePath = Join-Path $PSScriptRoot ($localSubpath -replace '/', '\')
+            if (-not (Test-SkillDirectory -Path $sourcePath -ExpectedName $skill.ExpectedName)) {
+                throw "Local skill structure invalid or missing: $($skill.Name) em $sourcePath"
+            }
+        } else {
+            if (-not $repoCache.ContainsKey($skill.Repo)) {
+                $repoWorkspace = Join-Path ([IO.Path]::GetTempPath()) ("aidev-repo-{0}" -f [guid]::NewGuid().ToString('N'))
+                $null = New-Item -ItemType Directory -Path $repoWorkspace -Force
+                $branch = if ($skill.PSObject.Properties.Name -contains 'Branch') { $skill.Branch } else { $null }
+                Invoke-GitClone -Repo $skill.Repo -Destination $repoWorkspace -Branch $branch
+                $repoCache[$skill.Repo] = $repoWorkspace
+            }
+            $repoPath = $repoCache[$skill.Repo]
+            $adapter = if ($skill.PSObject.Properties.Name -contains 'Adapter') { $skill.Adapter } else { $null }
+            $sourcePath = if ($adapter -eq 'graphify-agents') {
+                $staging = Join-Path $repoPath '.aidev-graphify-staging'
+                New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
+            } elseif ($adapter -eq 'calm-adapter') {
+                $staging = Join-Path $repoPath '.aidev-calm-staging'
+                New-CalmStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
+            } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
         }
-        $repoPath = $repoCache[$skill.Repo]
-        $adapter = if ($skill.PSObject.Properties.Name -contains 'Adapter') { $skill.Adapter } else { $null }
-        $sourcePath = if ($adapter -eq 'graphify-agents') {
-            $staging = Join-Path $repoPath '.aidev-graphify-staging'
-            New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
-        } elseif ($adapter -eq 'calm-adapter') {
-            $staging = Join-Path $repoPath '.aidev-calm-staging'
-            New-CalmStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
-        } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
 
         Write-Host "[$actionLabel] $($skill.Name)"
         Set-ManagedSkill -Skill $skill -SourcePath $sourcePath
@@ -262,6 +272,10 @@ foreach ($skill in $Managed) {
     $sourceValid = Test-SkillDirectory -Path $sourceSkill -ExpectedName $skill.Name
 
     if (-not $sourceValid) {
+        if ($DryRun) {
+            Write-Host "[INTEGRATION / WOULD LINK] $($skill.Name)"
+            continue
+        }
         $integrationConflicts += "[INTEGRATION / ERROR] $($skill.Name): Skill de origem ausente ou invalida no repositorio canonico"
         Write-Host "[INTEGRATION / ERROR] $($skill.Name)"
         continue
@@ -269,8 +283,33 @@ foreach ($skill in $Managed) {
 
     $skillHasConflict = $false
     $skillAllPresent = $true
+    $effectiveRoots = @()
 
     foreach ($root in $IntegrationRoots) {
+        $isExcluded = $false
+        if ($skill.PSObject.Properties.Name -contains 'ExcludeTargets' -and $skill.ExcludeTargets) {
+            foreach ($excluded in $skill.ExcludeTargets) {
+                if ($root -like "*$excluded*") {
+                    $isExcluded = $true
+                    break
+                }
+            }
+        }
+
+        if ($isExcluded) {
+            $excludedPath = Join-Path $root $skill.Name
+            if (Test-Path -LiteralPath $excludedPath) {
+                if ($DryRun) {
+                    Write-Host "[INTEGRATION / WOULD REMOVE EXCLUDED] $($skill.Name) from $root"
+                } else {
+                    Remove-Item -LiteralPath $excludedPath -Recurse -Force -ErrorAction SilentlyContinue
+                    Write-Host "[INTEGRATION / REMOVED EXCLUDED] $($skill.Name) from $root"
+                }
+            }
+            continue
+        }
+
+        $effectiveRoots += $root
         $targetPath = Join-Path $root $skill.Name
         if (Test-Path -LiteralPath $targetPath) {
             if (Test-IsCorrectJunction -Path $targetPath -ExpectedTarget $sourceSkill) {
@@ -293,7 +332,7 @@ foreach ($skill in $Managed) {
         Write-Host "[INTEGRATION / WOULD LINK] $($skill.Name)"
     } else {
         $linkSuccess = $true
-        foreach ($root in $IntegrationRoots) {
+        foreach ($root in $effectiveRoots) {
             $targetPath = Join-Path $root $skill.Name
             if (-not (Test-Path -LiteralPath $targetPath)) {
                 try {
@@ -334,7 +373,7 @@ if (-not (Test-Path -LiteralPath $globalRuleFile)) {
 # AI Dev Machine — Global Agent Rules
 
 ## Global Skills Architecture
-This development machine has 30 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
+This development machine has 31 canonical managed skills located at `%USERPROFILE%\.agents\skills`.
 
 ## Automatic Workspace Linking
 When starting work in any project workspace:
