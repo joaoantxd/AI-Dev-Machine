@@ -31,6 +31,7 @@
 >      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
 >      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
 >      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
+>      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `.agents/skills/winapp/SKILL.md`
 >    - 🛑 **É PROIBIDO pular o carregamento do `SKILL.md` alegando "já saber como fazer".**
 >
 > 5. 🛡️ **GATE DE CONCLUSÃO (verification-before-completion - OBRIGATÓRIO ANTES DA ENTREGA)**:
@@ -44,7 +45,7 @@
 # AGENTS.md — [Nome do Projeto]
 
 > **Instruções Operacionais para Agentes de IA**  
-> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **30 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
+> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **31 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
 
 ---
 
@@ -249,7 +250,7 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 
 ---
 
-### 📚 Catálogo Completo das 30 Skills por Categoria
+### 📚 Catálogo Completo das 31 Skills por Categoria
 
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
@@ -303,6 +304,11 @@ O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo
 | Skill | Quando Ativar / Trigger | Finalidade |
 | :--- | :--- | :--- |
 | **`playwright`** | Testes end-to-end, validação de telas e formulários | Automação de browser real via CLI para verificação de fluxos do usuário |
+
+### G. Automação Desktop Windows & QA Físico
+| Skill | Quando Ativar / Trigger | Finalidade |
+| :--- | :--- | :--- |
+| **`winapp`** | Testes de UI desktop, QA Físico, automação de aplicações Windows | Automação e inspeção de apps WinUI 3, WPF, Win32 e Electron via Microsoft Windows App Development CLI (`winapp ui`) |
 
 ---
 

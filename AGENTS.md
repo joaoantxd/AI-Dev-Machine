@@ -31,6 +31,7 @@
 >      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
 >      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
 >      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
+>      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `.agents/skills/winapp/SKILL.md`
 >    - 🛑 **É PROIBIDO pular o carregamento do `SKILL.md` alegando "já saber como fazer".**
 >
 > 5. 🛡️ **GATE DE CONCLUSÃO (verification-before-completion - OBRIGATÓRIO ANTES DA ENTREGA)**:
@@ -41,7 +42,7 @@
 
 # AI Dev Machine — Instruções Operacionais para Agentes (AGENTS.md)
 
-Este documento define as diretrizes, arquitetura, catálogo de **30 Skills** gerenciadas e convenções operacionais para agentes e assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Gemini CLI, Cursor, Windsurf) trabalhando no repositório **AI-Dev-Machine**.
+Este documento define as diretrizes, arquitetura, catálogo de **31 Skills** gerenciadas e convenções operacionais para agentes e assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Gemini CLI, Cursor, Windsurf) trabalhando no repositório **AI-Dev-Machine**.
 
 ---
 
@@ -55,7 +56,7 @@ O **AI-Dev-Machine** é um kit portátil e determinístico para configurar, reco
 - [`TEMPLATE-AGENTS.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-AGENTS.md): Template universal padrão de `AGENTS.md` contendo catálogo de skills e especialistas, a ser adotado em todo novo projeto gerado.
 - [`TEMPLATE-GEMINI.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/TEMPLATE-GEMINI.md): Template nativo padrão de `GEMINI.md` para projetos no ecossistema Google Antigravity e Gemini CLI.
 - [`GEMINI.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/GEMINI.md): Ponto de entrada e instruções nativas para Google Antigravity e Gemini CLI neste repositório.
-- [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 30 Skills canônicas e orquestração de Directory Junctions multi-IA.
+- [`install-skills.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-skills.ps1): Automação determinística e idempotente para sincronização das 31 Skills canônicas e orquestração de Directory Junctions multi-IA.
 - [`install-agents.ps1`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/install-agents.ps1): Automação determinística e idempotente para gerenciamento dos 7 Especialistas do Agency Agents em `%USERPROFILE%\.agents\agents`.
 - [`README.md`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/README.md): Documentação voltada para humanos.
 
@@ -84,7 +85,7 @@ O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USER
 | **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, acessibilidade WCAG 2.1 AA e Core Web Vitals. | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `vercel-react-best-practices` |
 | **Database Optimizer** | `database-optimizer` | Banco de Dados | Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices (B-tree, GIN), N+1 e pooling. | `supabase-postgres-best-practices`, `supabase` |
 | **Security Architect** | `security-architect` | Segurança | Threat modeling, superfícies de ataque, trust boundaries e defesa em profundidade. | `security-threat-model`, `cybersecurity-review`, `security-review` |
-| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | Arquitetura de testes E2E resilientes, eliminação de flakes, fixtures isoladas e CI. | `playwright`, `verification-before-completion` |
+| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | Arquitetura de testes E2E resilientes, eliminação de flakes, fixtures isoladas e CI. | `playwright`, `verification-before-completion`, `winapp` |
 | **DevOps Automator** | `devops-automator` | DevOps / Infra | Automação de CI/CD (GitHub Actions), Docker, IaC e pipelines de release. | `verification-before-completion` |
 
 ### 🛑 Regra Estrita de Delegação (YAGNI / Ponytail)
@@ -93,7 +94,7 @@ O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USER
 
 ---
 
-## 4. Principais Skills & Catálogo das 30 Skills Gerenciadas
+## 4. Principais Skills & Catálogo das 31 Skills Gerenciadas
 
 ### 🛑 Protocolo Obrigatório de Pré-Voo: Núcleo Mandatório Universal & Seleção de Skills
 
@@ -115,13 +116,14 @@ O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USER
 >    - Carregue `.agents/skills/verification-before-completion/SKILL.md`. *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação executados nesta rodada.*
 >
 > 4. **Ativação Obrigatória da Skill Especializada de Domínio**:
->    - Além do núcleo universal acima, avalie o catálogo das 30 skills e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
+>    - Além do núcleo universal acima, avalie o catálogo das 31 skills e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
 >      * **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
 >      * **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
 >      * **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
 >      * **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
 >      * **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
 >      * **Automação de Navegador / Testes E2E**: ➔ `playwright`.
+>      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `winapp`.
 >      * **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
 >      * **Revisão de Código e PRs**: ➔ `code-review`.
 >      * **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
@@ -132,9 +134,9 @@ O ambiente gerencia 7 personas canônicas de especialistas sob demanda em `%USER
 
 ---
 
-### 📚 Catálogo Completo das 30 Skills
+### 📚 Catálogo Completo das 31 Skills
 
-O ambiente global gerencia 30 Skills distribuídas em `%USERPROFILE%\.agents\skills` e integradas a todas as IAs por junctions:
+O ambiente global gerencia 31 Skills distribuídas em `%USERPROFILE%\.agents\skills` e integradas a todas as IAs por junctions:
 
 1. **`context-engineering`**: Curadoria de contexto enxuto, Progressive Disclosure e foco de atenção.
 2. **`prompt-master`**: Engenharia e calibração sistemática de prompts para modelos de linguagem.
@@ -166,13 +168,14 @@ O ambiente global gerencia 30 Skills distribuídas em `%USERPROFILE%\.agents\ski
 28. **`review-skills`**: Auditoria de integridade, ausência de duplicatas e dependências órfãs de skills.
 29. **`playwright`**: Automação e testes de browser real via CLI para validação E2E.
 30. **`ponytail`**: Modo sênior minimalista/YAGNI para cortar código supérfluo, dependências desnecessárias e overengineering.
+31. **`winapp`**: Automação e testes de interface de aplicações Windows (QA Físico) via Microsoft Windows App Development CLI (`winapp ui`).
 
 ---
 
 ## 5. Comandos Principais
 
 ```powershell
-# Sincronização e validação das 30 Skills (DryRun e execução padrão)
+# Sincronização e validação das 31 Skills (DryRun e execução padrão)
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1 -DryRun
 powershell -ExecutionPolicy Bypass -File .\install-skills.ps1
 

@@ -10,7 +10,7 @@ Execute o trabalho diretamente no computador usando terminal e ferramentas ofici
 2. Preservar programas, CLIs, Skills, MCPs, configurações e arquivos existentes.
 3. Instalar somente dependências ausentes, usando documentação oficial atual.
 4. Instalar os aplicativos desktop, CLIs e ferramentas de desenvolvimento listados abaixo.
-5. Executar `install-skills.ps1` para sincronizar as 30 Skills gerenciadas.
+5. Executar `install-skills.ps1` para sincronizar as 31 Skills gerenciadas.
 6. Executar `install-agents.ps1` para sincronizar os 7 Especialistas do Agency Agents.
 7. Configurar MCPs compatíveis, como base ou sob demanda.
 8. Validar cada item com seu comando real de versão/estado.
@@ -73,6 +73,7 @@ Garanta, preservando versões saudáveis:
 - jq;
 - ast-grep (`sg` quando aplicável);
 - Playwright CLI;
+- Microsoft WinApp CLI (`winapp`: `winget install Microsoft.winappcli --source winget`);
 - Graphify CLI;
 - Semgrep;
 - Trivy;
@@ -151,8 +152,9 @@ As Skills gerenciadas são:
 | impeccable | pbakaus/impeccable | `.agents/skills/impeccable` |
 | calm | Eilodon/CALM | adapter `calm-adapter` |
 | ponytail | DietrichGebert/ponytail | `skills/ponytail` |
+| winapp | local (AI-Dev-Machine) | `skills/winapp` |
 
-Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies.
+Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies. Para `winapp`, gerenciar localmente no AI-Dev-Machine e utilizar a instalação oficial da Microsoft via winget (`Microsoft.winappcli`).
 
 ## Especialistas globais (Agency Agents)
 

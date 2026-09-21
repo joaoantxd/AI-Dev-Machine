@@ -54,6 +54,7 @@ $Managed = @(
     [pscustomobject]@{ Name = 'impeccable'; Repo = 'pbakaus/impeccable'; SourceType = 'subpath'; Subpath = '.agents/skills/impeccable'; ExpectedName = 'impeccable' }
     [pscustomobject]@{ Name = 'calm'; Repo = 'Eilodon/CALM'; SourceType = 'adapter'; Adapter = 'calm-adapter'; ExpectedName = 'calm' }
     [pscustomobject]@{ Name = 'ponytail'; Repo = 'DietrichGebert/ponytail'; SourceType = 'subpath'; Subpath = 'skills/ponytail'; ExpectedName = 'ponytail' }
+    [pscustomobject]@{ Name = 'winapp'; Repo = 'local'; SourceType = 'local'; LocalPath = 'skills/winapp'; ExpectedName = 'winapp' }
 )
 
 function Test-SkillDirectory {
@@ -219,22 +220,30 @@ foreach ($skill in $Managed) {
     }
 
     try {
-        if (-not $repoCache.ContainsKey($skill.Repo)) {
-            $repoWorkspace = Join-Path ([IO.Path]::GetTempPath()) ("aidev-repo-{0}" -f [guid]::NewGuid().ToString('N'))
-            $null = New-Item -ItemType Directory -Path $repoWorkspace -Force
-            $branch = if ($skill.PSObject.Properties.Name -contains 'Branch') { $skill.Branch } else { $null }
-            Invoke-GitClone -Repo $skill.Repo -Destination $repoWorkspace -Branch $branch
-            $repoCache[$skill.Repo] = $repoWorkspace
+        if ($skill.SourceType -eq 'local') {
+            $localCandidate = Join-Path $PSScriptRoot ($skill.LocalPath -replace '/', '\')
+            if (-not (Test-SkillDirectory -Path $localCandidate -ExpectedName $skill.Name)) {
+                throw "Arquivo ou diretorio local da skill invalido: $localCandidate"
+            }
+            $sourcePath = $localCandidate
+        } else {
+            if (-not $repoCache.ContainsKey($skill.Repo)) {
+                $repoWorkspace = Join-Path ([IO.Path]::GetTempPath()) ("aidev-repo-{0}" -f [guid]::NewGuid().ToString('N'))
+                $null = New-Item -ItemType Directory -Path $repoWorkspace -Force
+                $branch = if ($skill.PSObject.Properties.Name -contains 'Branch') { $skill.Branch } else { $null }
+                Invoke-GitClone -Repo $skill.Repo -Destination $repoWorkspace -Branch $branch
+                $repoCache[$skill.Repo] = $repoWorkspace
+            }
+            $repoPath = $repoCache[$skill.Repo]
+            $adapter = if ($skill.PSObject.Properties.Name -contains 'Adapter') { $skill.Adapter } else { $null }
+            $sourcePath = if ($adapter -eq 'graphify-agents') {
+                $staging = Join-Path $repoPath '.aidev-graphify-staging'
+                New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
+            } elseif ($adapter -eq 'calm-adapter') {
+                $staging = Join-Path $repoPath '.aidev-calm-staging'
+                New-CalmStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
+            } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
         }
-        $repoPath = $repoCache[$skill.Repo]
-        $adapter = if ($skill.PSObject.Properties.Name -contains 'Adapter') { $skill.Adapter } else { $null }
-        $sourcePath = if ($adapter -eq 'graphify-agents') {
-            $staging = Join-Path $repoPath '.aidev-graphify-staging'
-            New-GraphifyStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
-        } elseif ($adapter -eq 'calm-adapter') {
-            $staging = Join-Path $repoPath '.aidev-calm-staging'
-            New-CalmStaging -Skill $skill -RepositoryPath $repoPath -StagingPath $staging
-        } else { Resolve-SkillPath -Skill $skill -RepositoryPath $repoPath }
 
         Write-Host "[$actionLabel] $($skill.Name)"
         Set-ManagedSkill -Skill $skill -SourcePath $sourcePath

@@ -155,7 +155,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 30 Skills gerenciadas.
+Estas são minhas 31 Skills gerenciadas.
 
 ## Core
 
@@ -291,6 +291,12 @@ Use para orientação de fluxo e liveness mapping de código (Coding Agent Liven
 
 Use para browser automation, E2E, navegação, validação real de fluxos e interação com a aplicação.
 
+## DESKTOP / WINDOWS AUTOMATION & QA FÍSICO
+
+### winapp
+
+Use para automação e testes de interface de aplicações Windows (QA Físico) via Microsoft Windows App Development CLI (`winapp ui`). Permite inspecionar árvores UIA (element tree, slugs semânticos), capturar screenshots, simular cliques de mouse, arrastos (drag-and-drop), digitação e atalhos de teclado (`send-keys`) e gravar vídeos em apps WinUI 3, WPF, WinForms, Win32 e Electron.
+
 ## OUTPUT
 
 ### caveman
@@ -301,7 +307,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 30 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 31 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
