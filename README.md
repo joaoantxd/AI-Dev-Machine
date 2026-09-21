@@ -29,7 +29,7 @@ Prompt universal, autocontido, com inventário, regras de preservação, fontes 
 
 ### `install-skills.ps1`
 
-Automação determinística e idempotente para sincronização das 31 Skills canônicas em `%USERPROFILE%\.agents\skills` e integração por junctions para Google Antigravity IDE, Gemini CLI, Claude Code e OpenAI Codex (com controle de exceção para skills exclusivas como `windows-mcp`).
+Automação determinística e idempotente para sincronização das 30 Skills canônicas em `%USERPROFILE%\.agents\skills` e integração por junctions para Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code.
 
 ### `install-agents.ps1`
 
@@ -76,7 +76,7 @@ Ponto de entrada primário e regras nativas para Google Antigravity e Gemini CLI
 - aplicativos desktop: ChatGPT Desktop/Codex, Claude Desktop e Google Antigravity IDE;
 - CLIs de IA: Codex CLI, Claude Code, GitHub Copilot CLI, Gemini CLI e Antigravity CLI quando suportado;
 - ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Graphify, Semgrep, Trivy e Gitleaks;
-- 31 Skills globais gerenciadas;
+- 30 Skills globais gerenciadas;
 - 7 Especialistas gerenciados (Agency Agents);
 - MCPs base e catálogo sob demanda.
 
@@ -145,9 +145,8 @@ O ecossistema gerencia seletivamente 7 especialistas canônicos em `%USERPROFILE
 | impeccable | pbakaus/impeccable | Design craft e direção estética anti-slop (Paul Bakaus) |
 | calm | Eilodon/CALM | Workflow e mapa de liveness (Coding Agent Liveness Map, call graph e safe edit) |
 | ponytail | DietrichGebert/ponytail | Redução de overengineering, soluções mínimas e YAGNI |
-| windows-mcp | local (AI-Dev-Machine) | Automação desktop Windows via MCP (UI tree, vision, mouse, teclado, janelas) |
 
-`finding-google-skills` não instala o catálogo Google inteiro. `graphify` usa somente a variante de Agent Skills. `caveman` não instala proxy, hooks ou serviço always-on. `ponytail` instala somente a Skill canônica, sem hooks ou serviços. `windows-mcp` é exclusivo para Windows (Google Antigravity e Claude Code; excluído do OpenAI Codex).
+`finding-google-skills` não instala o catálogo Google inteiro. `graphify` usa somente a variante de Agent Skills. `caveman` não instala proxy, hooks ou serviço always-on. `ponytail` instala somente a Skill canônica, sem hooks ou serviços.
 
 ## MCPs
 

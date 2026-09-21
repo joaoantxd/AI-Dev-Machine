@@ -155,7 +155,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 31 Skills gerenciadas.
+Estas são minhas 30 Skills gerenciadas.
 
 ## Core
 
@@ -291,12 +291,6 @@ Use para orientação de fluxo e liveness mapping de código (Coding Agent Liven
 
 Use para browser automation, E2E, navegação, validação real de fluxos e interação com a aplicação.
 
-## DESKTOP / WINDOWS AUTOMATION
-
-### windows-mcp
-
-Use para automação de ambiente Windows nativo via MCP server `windows-mcp` (inspeção de UI tree, vision, OCR, cliques, digitação, atalhos, janelas, processos, clipboard, registry e notificações). Exclusivo para Windows (Google Antigravity e Claude Code; não carregar no OpenAI Codex).
-
 ## OUTPUT
 
 ### caveman
@@ -307,7 +301,7 @@ Uso manual/on-demand. Não ative automaticamente proxy, hooks, API proxy ou serv
 
 # SKILLS EXTERNAS
 
-Podem existir Skills extras além das 31 gerenciadas, como `find-skills` e `interface-design`.
+Podem existir Skills extras além das 30 gerenciadas, como `find-skills` e `interface-design`.
 
 Preserve-as. Se alguma for útil, inspecione sua finalidade antes de usar.
 
