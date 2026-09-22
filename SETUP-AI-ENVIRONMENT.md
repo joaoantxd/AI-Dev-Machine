@@ -74,6 +74,7 @@ Garanta, preservando versões saudáveis:
 - ast-grep (`sg` quando aplicável);
 - Playwright CLI;
 - Microsoft WinApp CLI (`winapp`: `winget install Microsoft.winappcli --source winget`);
+- AutoHotkey v2 (`AutoHotkey.AutoHotkey`: `winget install AutoHotkey.AutoHotkey --source winget`, com shims/links `ahk.exe` e `AutoHotkey.exe` no PATH);
 - Graphify CLI;
 - Semgrep;
 - Trivy;
@@ -278,7 +279,7 @@ Valide cada componente com seu comando real e produza um relatório com:
 - Desktop Apps: nome e status;
 - AI CLIs: nome, versão e status;
 - Development Tools: nome, versão e status;
-- Skills: as 30 gerenciadas e as externas preservadas;
+- Skills: as 31 gerenciadas e as externas preservadas;
 - MCPs: configurado, disponível sob demanda ou não suportado;
 - Authentication: logins pendentes;
 - Problems: limitações, erros, permissões ou bloqueios de rede.

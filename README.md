@@ -75,7 +75,7 @@ Ponto de entrada primário e regras nativas para Google Antigravity e Gemini CLI
 
 - aplicativos desktop: ChatGPT Desktop/Codex, Claude Desktop e Google Antigravity IDE;
 - CLIs de IA: Codex CLI, Claude Code, GitHub Copilot CLI, Gemini CLI e Antigravity CLI quando suportado;
-- ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Microsoft WinApp CLI (winapp), Graphify, Semgrep, Trivy e Gitleaks;
+- ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Microsoft WinApp CLI (winapp), AutoHotkey v2, Graphify, Semgrep, Trivy e Gitleaks;
 - 31 Skills globais gerenciadas;
 - 7 Especialistas gerenciados (Agency Agents);
 - MCPs base e catálogo sob demanda.

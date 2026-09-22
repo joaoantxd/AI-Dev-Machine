@@ -134,3 +134,38 @@ winapp ui screenshot -a "Controller" -o "evidence-step1.png" --json
    - Ações de mouse simulado (`click`, `drag`) exigem que a janela esteja visível e o desktop desbloqueado. Se necessário, traga a janela para o primeiro plano antes da ação.
 3. **Opção `--json`**:
    - Utilize sempre `--json` ao integrar comandos do `winapp ui` em scripts automatizados para processar respostas e slugs via PowerShell/`jq`.
+
+---
+
+## 6. Ferramenta Complementar: AutoHotkey v2 (`ahk`) para Input Físico de Baixo Nível
+
+Enquanto o `winapp ui` é a ferramenta primária para **inspeção semântica (UIA)**, **árvore de elementos** e **captura visual (screenshot)**, o **AutoHotkey v2 (`ahk`)** atua como ferramenta complementar especializada em **injeção de entrada de baixo nível** no Windows:
+
+- **Instalação**:
+  ```powershell
+  winget install AutoHotkey.AutoHotkey --source winget
+  ```
+  *(Os executáveis `ahk.exe` e `AutoHotkey64.exe` são disponibilizados globalmente via `%USERPROFILE%\.local\bin`)*.
+
+- **Casos de Uso Ideais para o AutoHotkey v2**:
+  1. **Arrastos com Interpolação Suave (Smooth Drag / 60 FPS)**: Movimento de cursor contínuo passo a passo (ex.: 16ms por passo) para testar streaming de telas remotas ou sliders analógicos.
+  2. **Atalhos de Sistema Globais**: Disparo de combos reservados do Windows (`Win+R`, `Win+Shift+S`, `Alt+Tab`) de forma imediata.
+  3. **Sequências de Baixo Nível (KeyDown / KeyUp / Down / Up)**: Controle explícito de sustentação de teclas e botões de mouse.
+
+- **Padrão Obrigatório de Script AHK v2 para Agentes de IA**:
+  Todo script `.ahk` executado pelo agente deve conter:
+  ```autohotkey
+  #Requires AutoHotkey v2.0
+  #ErrorStdOut
+  CoordMode "Mouse", "Screen"
+  SetDefaultMouseSpeed 0
+  SendMode "Input"
+
+  ; Retornar resultado em JSON para o terminal via stdout
+  FileAppend('{"status":"ok"}`n', "*")
+  ```
+  Execução a partir do terminal:
+  ```powershell
+  cmd /c "ahk /ErrorStdOut script.ahk arg1 arg2"
+  ```
+
