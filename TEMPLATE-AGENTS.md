@@ -1,323 +1,292 @@
-# 🛑 REGRA ZERO INEGOCIÁVEL: ATIVAÇÃO OBRIGATÓRIA DE SKILLS NA RODADA 1
-
-> ### ⚠️ PROTOCOLO DE DISPARO IMEDIATO (LEI SUPREMA DO REPOSITÓRIO)
-> O agente **NUNCA DEVE** esperar o usuário solicitar o uso de uma skill.
-> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca cega (`grep_search`, `find_by_name`), comandos de terminal ou edição de arquivos, o agente **É OBRIGADO A EXECUTAR O PROTOCOLO ABAIXO**:
->
-> 1. 🔍 **ONDE ESTÁ (Inteligência de Grafo - graphify - OBRIGATÓRIO EM TODOS OS PROJETOS)**:
->    - Se a pasta `graphify-out/` existir na raiz do projeto:
->      - **EXECUTE IMEDIATAMENTE** via terminal: `py -m graphify query "<pergunta ou termo da tarefa>"`
->      - **OU LEIA** com `view_file` os arquivos `graphify-out/GRAPH_REPORT.md` e `graphify-out/CALM_MAP.md`.
->      - 🛑 **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listar diretórios antes de consultar o grafo de conhecimento.
->    - Se `graphify-out/` ainda não existir: chame `view_file` em `.agents/skills/graphify/SKILL.md` (ou `%USERPROFILE%\.agents\skills\graphify\SKILL.md`) e oriente a geração do grafo.
->
-> 2. 🗺️ **ONDE ESTAMOS & IMPACTO SEGURO (Mapeamento de Chamadas - calm - OBRIGATÓRIO PARA QUALQUER MUDANÇA)**:
->    - Para qualquer refatoração, navegação profunda ou alteração de código:
->      - Chame `view_file` em `.agents/skills/calm/SKILL.md` (ou `%USERPROFILE%\.agents\skills\calm\SKILL.md`).
->      - Consulte `graphify-out/CALM_MAP.md` e siga a sequência: `locate` ➔ `source` ➔ `callers` ➔ `edit_context` ➔ `diff_impact`.
->
-> 3. ✂️ **COMO ESCREVER (Minimalismo Radical - ponytail - OBRIGATÓRIO AO ESCREVER/EDITAR)**:
->    - Chame `view_file` em `.agents/skills/ponytail/SKILL.md`.
->    - Siga YAGNI radical: corte código supérfluo, use a stdlib nativa e reaproveite utilitários existentes antes de criar novas abstrações ou dependências.
->
-> 4. 🎯 **SKILL ESPECIALIZADA DE DOMÍNIO (OBRIGATÓRIO CARREGAR PELO MENOS UMA VIA `view_file`)**:
->    - Identifique o domínio da tarefa e **chame `view_file` no `SKILL.md` correspondente** antes de propor código ou soluções:
->      * **Bugs / Erros / Falhas / Lentidão**: ➔ `.agents/skills/diagnosing-bugs/SKILL.md` ou `systematic-debugging/SKILL.md`
->      * **Postgres / Supabase / SQL / Migrations**: ➔ `.agents/skills/supabase-postgres-best-practices/SKILL.md` e/ou `supabase/SKILL.md`
->      * **Frontend / UI/UX / Telas / CSS / Acessibilidade**: ➔ `.agents/skills/ui-ux-pro-max/SKILL.md`, `frontend-design/SKILL.md` ou `impeccable/SKILL.md`
->      * **Performance React / Next.js / Server Components**: ➔ `.agents/skills/vercel-react-best-practices/SKILL.md`
->      * **Segurança / Auth / RLS / Permissões / Tokens**: ➔ `.agents/skills/security-best-practices/SKILL.md` ou `security-threat-model/SKILL.md`
->      * **Automação Browser / Testes E2E**: ➔ `.agents/skills/playwright/SKILL.md`
->      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
->      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
->      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
->      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `.agents/skills/winapp/SKILL.md`
->    - 🛑 **É PROIBIDO pular o carregamento do `SKILL.md` alegando "já saber como fazer".**
->
-> 5. 🛡️ **GATE DE CONCLUSÃO (verification-before-completion - OBRIGATÓRIO ANTES DA ENTREGA)**:
->    - Antes de alegar conclusão ou sucesso, chame `view_file` em `.agents/skills/verification-before-completion/SKILL.md`.
->    - *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação (build, test, lint) executados nesta rodada.*
->
-> > 💡 *Nota para Google Antigravity / Gemini CLI: Crie também um arquivo `GEMINI.md` na raiz do projeto contendo este cabeçalho e apontando para `AGENTS.md`.*
-
----
-
 # AGENTS.md — [Nome do Projeto]
 
-> **Instruções Operacionais para Agentes de IA**  
-> Este arquivo fornece contexto persistente, padrões de código, restrições operacionais e catálogo completo de ativação das **31 Skills** gerenciadas para assistentes de IA (Google Antigravity, OpenAI Codex, Claude Code, Cursor, Windsurf) trabalhando neste repositório.
+> Instruções persistentes para agentes de engenharia de software neste repositório.
+> Mantenha este arquivo **curto, específico do projeto e verificável**. Regras profundas de domínio devem ficar em `AGENTS.md` aninhados, Skills ou documentação própria e ser carregadas somente quando relevantes.
 
 ---
 
-## 1. Visão Geral do Projeto
+## 0. Precedência, Escopo e Fonte de Verdade
+
+- Respeite a hierarquia de instruções do runtime. Instruções explícitas do usuário para a tarefa têm precedência sobre orientações deste arquivo quando não conflitarem com regras superiores de segurança/plataforma.
+- Este `AGENTS.md` vale para toda a árvore abaixo deste diretório.
+- Se existir um `AGENTS.md` mais próximo do arquivo em edição, as instruções mais específicas desse subdiretório prevalecem naquele escopo.
+- Não duplique regras em vários arquivos. Mantenha **uma fonte de verdade** e use instruções locais apenas para diferenças reais do subprojeto.
+- Se uma regra deste arquivo ficar obsoleta em relação ao código/CI atual, **não invente comportamento**: confirme no repositório, sinalize a divergência e proponha a atualização da documentação.
+
+---
+
+## 1. Projeto
 
 - **Nome**: [Nome do Projeto]
-- **Objetivo / Problema**: [Breve descrição do que o sistema faz e qual problema resolve]
-- **Público-Alvo / Usuários**: [Ex.: Administradores, Clientes finais, Contadores, etc.]
-- **Tipo de Aplicação**: [Ex.: Web App Fullstack, API REST, Monorepo, CLI, App Desktop]
+- **Objetivo**: [O problema que o sistema resolve em 1–3 frases]
+- **Usuários principais**: [Perfis de usuário]
+- **Tipo**: [Web / API / Monorepo / CLI / Desktop / Mobile / Biblioteca]
+- **Ambiente principal de desenvolvimento**: [Windows / Linux / macOS / container]
+
+### Invariantes do domínio
+
+> Liste aqui somente regras que, se violadas, causam bug, risco de segurança ou quebra de negócio.
+
+- [Invariante crítico 1]
+- [Invariante crítico 2]
+- [Invariante crítico 3]
 
 ---
 
-## 2. Tech Stack
+## 2. Stack e Arquitetura
 
-- **Runtime / Linguagem**: [Ex.: Node.js LTS, TypeScript 5.x / Python 3.12]
-- **Frontend**: [Ex.: Next.js App Router, React 19, Tailwind CSS / Vanilla CSS]
-- **Backend / API**: [Ex.: Next.js Server Actions / NestJS / FastAPI / Express]
-- **Banco de Dados & ORM**: [Ex.: PostgreSQL via Supabase, Prisma / Drizzle / Kysely]
-- **Autenticação**: [Ex.: Supabase Auth / NextAuth / JWT]
-- **Testes**: [Ex.: Vitest, Playwright, React Testing Library]
-- **Gerenciador de Pacotes**: [Ex.: pnpm / npm / bun]
+- **Runtime / Linguagem**: [ex.: Node.js LTS + TypeScript]
+- **Frontend**: [ex.: React / Next.js]
+- **Backend / API**: [ex.: Fastify / NestJS / FastAPI]
+- **Banco / ORM**: [ex.: PostgreSQL + Kysely]
+- **Autenticação**: [ex.: Supabase Auth]
+- **Testes**: [ex.: Vitest + Playwright]
+- **Pacotes**: [ex.: pnpm]
 
----
-
-## 3. Comandos de Desenvolvimento
-
-Use comandos exatos e evite variações desnecessárias:
-
-```bash
-# Instalação de dependências
-pnpm install
-
-# Servidor de desenvolvimento
-pnpm dev
-
-# Typecheck (validação estática sem emitir arquivos)
-pnpm typecheck   # ou: npx tsc --noEmit
-
-# Linter e Formatação
-pnpm lint
-pnpm lint --fix
-
-# Testes automatizados
-pnpm test
-pnpm test:watch
-pnpm test:e2e
-
-# Build de produção
-pnpm build
-```
-
----
-
-## 4. Estrutura do Repositório
+### Mapa mínimo do repositório
 
 ```text
-├── src/
-│   ├── app/            # Rotas, páginas e layouts (App Router quando aplicável)
-│   ├── components/     # Componentes reutilizáveis (UI)
-│   │   └── ui/         # Primitivos visuais do design system
-│   ├── lib/            # Utilitários, clientes de banco e serviços
-│   ├── services/       # Regras de negócio e chamadas externas
-│   ├── types/          # Tipagens compartilhadas e schemas (Zod)
-│   └── hooks/          # Custom hooks React (quando aplicável)
-├── tests/              # Testes de integração e E2E
-├── .agents/            # [LINK LOCAL] Junction para %USERPROFILE%\.agents (ignorado no git)
-├── AGENTS.md           # Este arquivo (instruções operacionais para IAs)
-└── README.md           # Documentação para humanos
+[preencha somente os diretórios que ajudam um agente a navegar]
+src/
+  ...
+tests/
+  ...
 ```
 
----
-
-## 5. Convenções de Código e Padrões
-
-1. **Tipagem Estrita**:
-   - Sempre use TypeScript estrito (`strict: true`).
-   - Evite `any` a todo custo; prefira `unknown` com asserções de tipo ou validação com schemas Zod.
-2. **Componentes e Funções**:
-   - Prefira componentes funcionais com hooks.
-   - Use exportações nomeadas (`export function Component()`) para facilitar refatoração e busca.
-   - Isole regras de negócio em services ou custom hooks; mantenha componentes visuais focados em apresentação.
-3. **Estilo e Design Visual**:
-   - Adote design rico: paleta de cores harmoniosa, tipografia moderna (Inter, Outfit, etc.), espaçamentos consistentes.
-   - Evite layouts crus, vazios ou sem acabamento. Inclua hover states, loading states, empty states e tratamento de erro visual.
-4. **Tratamento de Erros**:
-   - Trate erros de forma explícita na camada de serviço ou controller.
-   - Nunca silencie exceções com blocos `catch` vazios.
-   - Retorne mensagens claras para o usuário e registre logs com contexto.
+Para monorepos ou áreas com regras próprias, prefira `AGENTS.md` aninhados em vez de aumentar indefinidamente este arquivo.
 
 ---
 
-## 6. Limites Operacionais e Segurança (Boundaries)
+## 3. Comandos Canônicos
 
-> [!CAUTION]
-> **Regras Absolutas de Segurança:**
-> - **NUNCA** faça commit de arquivos `.env` ou credenciais reais. Use `.env.example` para documentar variáveis.
-> - **NUNCA** desative autenticação, TLS ou políticas de RLS (Row Level Security) para "facilitar testes".
-> - **NUNCA** execute migrações destrutivas (`DROP TABLE`, `TRUNCATE`) sem aprovação explícita do usuário.
-> - Valide todo input recebido de usuários ou APIs externas usando schemas de validação (ex.: Zod).
+> Use os comandos **reais deste repositório**. Remova qualquer linha que não se aplique. Não invente variantes quando já houver script oficial no `package.json`, `Makefile`, `justfile`, CI ou equivalente.
 
----
+```bash
+# instalar
+[comando]
 
----
+# desenvolvimento
+[comando]
 
-## 7. Ordem Operacional Obrigatória para o Agente
+# testes focados / rápidos
+[comando]
 
-Para manter o desenvolvimento rigoroso, ágil e livre de "Agent Soup" ou "Skill Soup", siga esta ordem em trabalhos substanciais:
+# testes completos relevantes
+[comando]
 
-1. **Ler integralmente este `AGENTS.md`**: Regras, limites e comandos do projeto.
-2. **Graphify para navegação arquitetural**: Quando o escopo envolver múltiplos módulos, dependências ou entender fluxo estrutural.
-3. **CALM para mapa de execução**: Em tarefas longas/complexas, mantenha o mapa operacional (objetivo, evidências, findings, STOP conditions, próximo passo).
-4. **Avaliar necessidade de Especialista (QUEM)**: Avalie se a tarefa realmente demanda um especialista de domínio ou se o agente atual é suficiente.
-5. **Selecionar as Skills Mínimas Necessárias (COMO)**: Escolha apenas as ferramentas e runbooks indispensáveis para a fase atual.
-6. **Consultar documentação externa (Context7)**: Apenas quando documentação de APIs mutáveis exigir confirmação.
-7. **Abrir apenas os arquivos necessários**: Evite leitura indiscriminada; consulte o grafo antes.
-8. **Implementar**: Escreva o menor código funcional que resolva o problema (YAGNI / `ponytail`).
-9. **Testar proporcionalmente ao risco**: Testes automatizados ou validações manuais rigorosas.
-10. **Revisar o trabalho**: Avaliar aderência a padrões e requisitos (`code-review`).
-11. **`verification-before-completion`**: Obrigatório fornecer evidências reais antes de declarar sucesso.
-12. **Relatório objetivo**: Comunicar o que foi feito, evidências e próximos passos.
-13. **STOP**: Concluiu o escopo autorizado? Pare imediatamente.
+# typecheck
+[comando]
 
-> [!TIP]
-> **Regra de Bom Senso**: Em alterações mecânicas e triviais (ex.: rename, correção de 2 linhas, ajuste pontual de CSS), **NÃO** crie overhead artificial de Graphify, CALM ou delegação de especialistas.
+# lint / format check
+[comando]
 
----
+# build
+[comando]
+```
 
-## 8. Distinção Conceitual: Regras vs. Especialistas vs. Métodos
+### Estratégia de validação
 
-> - **Instalada não significa carregada.**
-> - **Disponível não significa necessária.**
-> - **Evite Skill Soup e Agent Soup.**
-
-- **`AGENTS.md`**: Define regras operacionais, precedência e invariantes do projeto.
-- **Agency Agents (QUEM)**: Define o especialista — papel, perspectiva, responsabilidade e entregáveis de domínio.
-- **Skills (COMO)**: Define o método procedimental de execução — instruções passo a passo, runbooks e comandos.
-- **Graphify**: Responde *como este sistema está estruturado e como suas partes se relacionam*.
-- **CALM**: Responde *onde estamos nesta execução, o que sabemos e qual o próximo passo seguro*.
+- Comece pelo check mais barato e diretamente relacionado ao diff.
+- Amplie para testes de integração/E2E/build conforme o risco e o alcance da mudança.
+- Mudança só de documentação não exige, por padrão, a suíte completa de aplicação.
+- Nunca declare `PASS`, “corrigido” ou “concluído” sem evidência executada **depois da última alteração relevante**.
+- Se um check necessário não puder ser executado, informe exatamente o que ficou sem validação e por quê.
 
 ---
 
-## 9. Camada de Especialistas (Agency Agents)
+## 4. Regras de Código
 
-O ambiente disponibiliza 7 especialistas sob demanda em `.agents/agents/`:
+> Personalize esta seção para a stack real. Evite preferências genéricas que o formatter/linter já impõe automaticamente.
 
-| Especialista | Slug | Domínio | Quando Ativar |
-|---|---|---|---|
-| **Software Architect** | `software-architect` | Arquitetura | Decisões de alto nível, bounded contexts, ADRs e trade-offs estruturais. |
-| **Backend Architect** | `backend-architect` | Backend / APIs | Contratos OpenAPI/gRPC, resiliência distribuída e migrações zero-downtime. |
-| **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, WCAG AA e Core Web Vitals. |
-| **Database Optimizer** | `database-optimizer` | Banco de Dados | Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices e schema design. |
-| **Security Architect** | `security-architect` | Segurança | Modelagem de ameaças, trust boundaries e superfícies de ataque. |
-| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | E2E Playwright determinístico, isolamento de fixtures e suites sem flake. |
-| **DevOps Automator** | `devops-automator` | DevOps / Infra | CI/CD GitHub Actions, Docker, IaC e pipelines de entrega contínua. |
+- Preserve padrões existentes antes de introduzir novos estilos ou abstrações.
+- Prefira a menor mudança coerente que resolva a causa do problema.
+- Reuse utilitários, tipos, componentes e serviços existentes antes de criar equivalentes.
+- Não adicione dependência nova quando a plataforma, stdlib ou stack atual já resolver de forma adequada.
+- Não silencie erros com `catch` vazio, fallback enganoso ou `any`/cast usado apenas para “fazer passar”.
+- Mantenha regras de negócio fora de componentes puramente visuais quando a arquitetura do projeto separar essas responsabilidades.
+- Comentários devem explicar **por que** algo não é óbvio; não narrar o código linha a linha.
 
-### 🛑 Regra de Delegação:
-- **NÃO delegar**: rename, pequenos ajustes de CSS, configuração simples, alteração mecânica de poucas linhas.
-- **DELEGAR**: decisões arquiteturais relevantes, segurança, banco complexo, frontend de alta complexidade, QA crítico.
+### Convenções específicas
 
----
-
-## 10. Principais Skills & Catálogo das 30 Skills Disponíveis (Progressive Disclosure)
-
-O ambiente global possui **30 Skills gerenciadas**. Não carregue todas ao mesmo tempo. Use **Progressive Disclosure** ativando apenas as skills relevantes para cada fase da tarefa.
+- [Ex.: TypeScript `strict: true`; evitar `any`]
+- [Ex.: nomes de colunas SQL em `snake_case`]
+- [Ex.: contratos de API validados com Zod]
+- [Ex.: componentes React funcionais]
 
 ---
 
-### 🛑 Protocolo Obrigatório de Pré-Voo: Núcleo Mandatório Universal & Seleção de Skills
+## 5. Segurança e Limites Operacionais
 
-> ⚠️ **INVARIANTE DE EXECUÇÃO ABSOLUTA**:
-> O agente **NUNCA DEVE** esperar o usuário pedir "use a skill X".
-> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca (`grep_search`, `find_by_name`), comandos de terminal ou edição de código, o agente **É OBRIGADO A CARREGAR E SEGUIR O NÚCLEO UNIVERSAL**:
->
-> 1. **`graphify` + `calm` — A Dupla Mandatória de Inteligência & Execução (OBRIGATÓRIO EM TODOS OS PROJETOS)**:
->    - **`graphify` (ONDE ESTÁ)**: Inteligência estrutural, relacionamentos e dependências.
->      * Se a pasta `graphify-out/` existir na raiz do projeto, **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listagens manuais antes de consultar o grafo de conhecimento.
->      * Se `graphify-out/` ainda não existir, o agente deve carregar `.agents/skills/graphify/SKILL.md` e orientar a exploração via grafo ou gerá-lo.
->    - **`calm` (ONDE ESTAMOS & IMPACTO SEGURO)**: Coding Agent Liveness Map e workflow de edição segura.
->      * Toda tarefa que envolva múltiplos passos, mapeamento de chamadas (call graph), refatoração ou alteração de código **DEVE** carregar `.agents/skills/calm/SKILL.md` para seguir a sequência segura: `locate` → `source` → `callers` → `edit_context` → `diff_impact`.
->
-> 2. **`ponytail` — O Padrão Mandatório de Código (OBRIGATÓRIO AO ESCREVER OU REFATORAR)**:
->    - Carregue `.agents/skills/ponytail/SKILL.md`. Todo código novo ou refatorado deve seguir YAGNI radical: cortar código supérfluo, usar o que já existe, preferir stdlib e recursos nativos da linguagem antes de adicionar abstrações, classes vazias ou novas dependências.
->
-> 3. **`verification-before-completion` — O Gate Mandatório de Conclusão (OBRIGATÓRIO ANTES DA ENTREGA)**:
->    - Carregue `.agents/skills/verification-before-completion/SKILL.md`. *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação executados nesta rodada.*
->
-> 4. **Ativação Obrigatória da Skill Especializada de Domínio**:
->    - Além do núcleo universal acima, avalie o catálogo das 30 skills (§10.2) e carregue via `view_file` a melhor skill para o domínio específico da tarefa:
->      * **Bugs, Regressões, Falhas de Testes ou Telas Quebradas**: ➔ `diagnosing-bugs` ou `systematic-debugging`.
->      * **Banco de Dados, Postgres, Supabase, Migrations e SQL**: ➔ `supabase-postgres-best-practices` e/ou `supabase`.
->      * **Frontend, UI/UX, Design de Telas, Estilização e Acessibilidade**: ➔ `ui-ux-pro-max`, `frontend-design`, `impeccable` e/ou `web-design-guidelines`.
->      * **Performance React / Next.js / Server Components**: ➔ `vercel-react-best-practices`.
->      * **Segurança, Threat Modeling, Permissões e Auth**: ➔ `security-best-practices`, `security-threat-model`, `cybersecurity-review` ou `security-review`.
->      * **Automação de Navegador / Testes E2E**: ➔ `playwright`.
->      * **Resolução de Conflitos Git (Merge / Rebase)**: ➔ `resolving-merge-conflicts`.
->      * **Revisão de Código e PRs**: ➔ `code-review`.
->      * **Desafio de Premissas e Stress Testing de Planos**: ➔ `devils-advocate`.
->      * **Modelagem de Domínio e Linguagem Ubíqua**: ➔ `domain-modeling`.
->
-> É terminantemente proibido pular o carregamento do `SKILL.md` sob a alegação de "já saber como fazer".
-
+- **Nunca** commite `.env`, tokens, chaves, senhas ou credenciais reais.
+- **Nunca** enfraqueça autenticação, autorização, RLS, TLS ou validações de segurança para facilitar testes.
+- **Nunca** execute ações destrutivas ou de difícil reversão (`DROP`, `TRUNCATE`, reset de ambiente, exclusão em massa, force push etc.) sem autorização explícita quando não fizerem parte inequívoca da tarefa.
+- Não reverta, sobrescreva ou “limpe” alterações do usuário que não pertencem ao escopo atual.
+- Trate inputs externos como não confiáveis e valide nos boundaries apropriados.
+- Para operações sensíveis, prefira dry-run, leitura ou simulação antes da mutation quando houver suporte.
+- Não faça commit, push, merge, release ou deploy a menos que a tarefa ou o workflow do repositório autorize claramente essa ação.
 
 ---
 
-### 📚 Catálogo Completo das 31 Skills por Categoria
+## 6. Método de Trabalho
 
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`context-engineering`** | Início de tarefas, contexto longo, degradação de qualidade | Curadoria de contexto enxuto, hierarquia de regras e foco do modelo |
-| **`prompt-master`** | Criação ou refino de prompts e instruções para agentes | Engenharia e estruturação sistemática de prompts de alta precisão |
-| **`systematic-debugging`** | Quando algo quebra, teste falha ou bug misterioso surge | Investigação metódica da causa raiz antes de fazer qualquer edição |
-| **`diagnosing-bugs`** | Bugs difíceis, regressões de desempenho, heisenbugs | Ciclo estruturado de diagnóstico e isolamento de hipóteses |
-| **`verification-before-completion`** | Imediatamente antes de declarar qualquer tarefa concluída | Exige evidências reais (typecheck, tests, build) antes de afirmar sucesso |
-| **`caveman`** | Quando o usuário pedir respostas compactas ou "be brief" | Redução drástica de tokens verbosos mantendo rigor técnico |
-| **`ponytail`** | Evitar overengineering, código excessivo, boilerplate, modo sênior YAGNI | Aplica a escada de necessidade YAGNI: reuso, stdlib e plataforma nativa antes de código customizado ou dependências |
+Para tarefas substanciais:
 
-### B. Arquitetura, Design de Módulos & Engenharia de Código
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`codebase-design`** | Criação ou refatoração de módulos e interfaces | Design de "módulos profundos" (deep modules), testabilidade e clareza |
-| **`improve-codebase-architecture`** | Acoplamento excessivo, evolução ou reestruturação do repo | Estratégias estruturadas para refatoração arquitetural segura |
-| **`domain-modeling`** | Definição de entidades, taxonomia e escrita de ADRs | Alinhamento do modelo de domínio e documentação de decisões |
-| **`code-review`** | Revisão de PRs, branches ou alterações de código | Auditoria paralela: Padrões do Repositório (Standards) e Especificação (Spec) |
-| **`devils-advocate`** | Planos complexos, pre-mortem, "o que estou esquecendo?" | Questionamento socrático para identificar pontos cegos e modos de falha |
-| **`resolving-merge-conflicts`** | Conflitos durante merge ou rebase no Git | Resolução segura e metódica preservando lógica de ambos os lados |
-| **`calm`** | Análise de impacto de diffs, call graph e navegação por símbolos | Coding Agent Liveness Map para entender impacto antes de alterar |
-| **`graphify`** | Projetos grandes ou relações estruturais complexas | Análise gráfica profunda e mapa de dependências entre módulos |
+1. **Entenda o pedido e o critério de conclusão.** Não amplie o escopo por conveniência.
+2. **Leia as instruções aplicáveis ao caminho.** Procure `AGENTS.md` mais específicos antes de editar subáreas.
+3. **Adquira o mínimo de contexto necessário.** Comece por arquitetura, símbolos e arquivos diretamente relacionados; evite varredura ampla sem hipótese.
+4. **Mapeie impacto antes de mudanças transversais.** Identifique callers, contratos, dados persistidos, testes e superfícies públicas afetadas.
+5. **Para bugs, investigue a causa antes de editar.** Reproduza ou obtenha evidência observável sempre que possível.
+6. **Implemente de forma mínima e consistente.** Não faça refactors laterais sem necessidade para cumprir a tarefa.
+7. **Valide proporcionalmente ao risco.** Rode checks focados primeiro e amplie quando necessário.
+8. **Revise o diff final.** Procure regressões, arquivos acidentais, segredos, mudanças fora de escopo e documentação desatualizada.
+9. **Reporte fatos, não suposições.** Diferencie o que foi implementado, o que foi testado e o que continua pendente.
+10. **Pare quando o escopo estiver concluído.** Não transforme uma correção local em “cleanup” geral do repositório.
 
-### C. Frontend, UI/UX & Design System
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`ui-ux-pro-max`** | Planejamento e definição do sistema visual do frontend | Inteligência de design: 79 estilos, paletas, tipografia e layouts modernos |
-| **`frontend-design`** | Implementação de páginas, telas e componentes visuais | Transformação de direção visual em código rico e esteticamente refinado |
-| **`impeccable`** | Ajuste fino, micro-interações, espaçamento e tipografia | Polimento visual de alto nível para tornar a UI profissional e fluida |
-| **`web-design-guidelines`** | Revisão de acessibilidade, contraste, usabilidade e UX | Auditoria de conformidade com diretrizes modernas de interface web |
-| **`vercel-react-best-practices`** | Código React, Next.js, Server Components e hooks | Otimização de rendering, bundle size e boas práticas oficiais |
+### Tarefas triviais
 
-### D. Backend, Banco de Dados & Infraestrutura
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`supabase`** | Auth, Storage, Edge Functions, Realtime ou APIs Supabase | Implementação de serviços integrados Supabase |
-| **`supabase-postgres-best-practices`** | Criação de tabelas, SQL, migrations, queries e RLS | Modelagem robusta de Postgres, índices eficientes e segurança de RLS |
-| **`finding-google-skills`** | Projetos com Google Cloud, Firebase, Gemini API, Maps | Localização sob demanda de skills oficiais do catálogo Google |
-
-### E. Segurança, Auditoria & Pentest
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`security-best-practices`** | Rotas de autenticação, APIs, gestão de tokens e sessões | Código seguro por padrão (OWASP, higienização, headers de segurança) |
-| **`cybersecurity-review`** | Auditoria de vulnerabilidades em código ou dependências | Revisão em 9 dimensões de segurança de software |
-| **`security-threat-model`** | Modelagem de ameaças e superfícies de ataque | Mapeamento de fronteiras de confiança, atores e vetores de exploração |
-| **`security-review`** | Análise estática de segurança e auditoria de lockfiles | Orquestração de SAST e scanners (semgrep, trivy, gitleaks) |
-| **`skill-security-review`** | Antes de instalar novas skills ou plugins de terceiros | Verificação estrita contra prompt injection e exfiltração de dados |
-| **`review-skills`** | Auditoria do próprio repositório de skills | Eliminação de skills redundantes, quebradas ou órfãs |
-
-### F. Automação & Testes no Navegador
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`playwright`** | Testes end-to-end, validação de telas e formulários | Automação de browser real via CLI para verificação de fluxos do usuário |
-
-### G. Automação Desktop Windows & QA Físico
-| Skill | Quando Ativar / Trigger | Finalidade |
-| :--- | :--- | :--- |
-| **`winapp`** | Testes de UI desktop, QA Físico, automação de aplicações Windows | Automação e inspeção de apps WinUI 3, WPF, Win32 e Electron via Microsoft Windows App Development CLI (`winapp ui`) |
+Renames mecânicos, correções locais pequenas, texto/documentação e ajustes pontuais não precisam de cerimônia artificial. Use o caminho mais curto que preserve segurança e verificabilidade.
 
 ---
 
-## 11. Protocolo de Verificação (Antes de Concluir)
+## 7. Ferramentas, Skills e Progressive Disclosure
 
-Antes de declarar qualquer funcionalidade, refatoração ou correção como concluída:
+**Instalada não significa necessária.** Não carregue ferramentas ou Skills por quota. Selecione apenas as que trazem ganho concreto para a tarefa atual.
 
-- [ ] **Typecheck**: `pnpm typecheck` (ou `npx tsc --noEmit`) executado sem erros.
-- [ ] **Lint**: `pnpm lint` passando sem violações.
-- [ ] **Build**: `pnpm build` compila com sucesso.
-- [ ] **Testes**: Testes unitários/integração relevantes executados e passando.
-- [ ] **Evidência**: Forneça evidência real (saída do terminal, print ou status do comando) na resposta.
+### Navegação arquitetural
+
+- **Graphify**: use como primeira camada em investigação/implementação/review **substancial** que atravesse módulos, dependências ou fluxos. Se houver `graphify-out/` válido, consulte o grafo antes de exploração ampla de arquivos.
+- Se o grafo estiver ausente, claramente desatualizado ou não responder à pergunta, não bloqueie uma tarefa simples só para gerá-lo; use a estratégia de navegação mais precisa disponível e registre a limitação quando material.
+
+### Execução longa e impacto
+
+- **CALM**: use em tarefas longas, multi-etapas, refactors relevantes, investigação de call graph ou quando houver risco real de perder estado/objetivo.
+- Para tarefas curtas e locais, não crie overhead de tracking sem benefício.
+
+### Implementação
+
+- **Ponytail / YAGNI**: aplique como princípio de implementação; carregue a Skill quando a tarefa envolver design/refactor onde overengineering seja um risco real.
+- Prefira reuso → plataforma/stdlib → código customizado → nova dependência, nessa ordem quando tecnicamente adequado.
+
+### Skills de domínio
+
+Escolha a Skill pela natureza da tarefa, não porque ela existe:
+
+| Situação | Skills candidatas |
+|---|---|
+| Bug / regressão / falha misteriosa | `systematic-debugging`, `diagnosing-bugs` |
+| PostgreSQL / Supabase / SQL / migrations / RLS | `supabase-postgres-best-practices`, `supabase` |
+| Frontend / UI / UX / acessibilidade | `frontend-design`, `ui-ux-pro-max`, `impeccable`, `web-design-guidelines` |
+| React / Next.js / performance | `vercel-react-best-practices` |
+| Segurança / auth / permissões / threat model | `security-best-practices`, `security-threat-model`; use **uma** review principal por rodada salvo necessidade clara |
+| E2E / browser automation | `playwright` |
+| Arquitetura / boundaries / domínio | `codebase-design`, `domain-modeling` |
+| Code review / PR | `code-review` |
+| Merge / rebase conflict | `resolving-merge-conflicts` |
+| QA de app Windows / desktop | `winapp` |
+| Avaliar plano de alto risco | `devils-advocate` |
+| Criar/refinar prompts para agentes | `prompt-master`, `context-engineering` |
+
+Antes de usar uma Skill, leia suas instruções atuais. Não presuma o conteúdo só pelo nome.
+
+### Documentação externa
+
+- Use **Context7** ou documentação oficial atual quando a tarefa depender de API/framework/biblioteca mutável.
+- Prefira documentação primária do mantenedor a posts, snippets ou memória do modelo.
+- Não pesquise externamente quando o repositório já contém a fonte autoritativa necessária.
+
+---
+
+## 8. Especialistas e Subagentes
+
+Especialistas existem para aumentar qualidade ou paralelismo, não para criar cerimônia.
+
+Delegue quando houver benefício claro, por exemplo:
+
+- investigação independente que pode ocorrer em paralelo;
+- análise especializada de segurança, banco, arquitetura ou QA crítico;
+- subtarefa grande com boundary e entregável bem definidos;
+- revisão independente de uma mudança de alto risco.
+
+Não delegue para renames, pequenos ajustes, configuração simples ou mudanças de poucas linhas sem complexidade real.
+
+Ao delegar:
+
+- dê ao especialista objetivo, escopo, evidências e restrições suficientes;
+- mantenha um agente principal responsável por integrar conclusões;
+- trate a saída do subagente como evidência/recomendação a ser verificada, não como verdade automática;
+- evite vários especialistas analisando a mesma coisa sem uma razão concreta.
+
+---
+
+## 9. Testes e Critério de Conclusão
+
+Antes de concluir uma alteração de código, execute os checks relevantes ao diff e ao risco. Exemplos:
+
+- [ ] teste(s) diretamente relacionados;
+- [ ] typecheck quando houver código tipado afetado;
+- [ ] lint/format check quando aplicável;
+- [ ] build quando a mudança puder afetar compilação/empacotamento;
+- [ ] integração/E2E para fluxos críticos ou mudanças cross-layer;
+- [ ] migration/schema validation para mudanças de banco;
+- [ ] revisão do diff final e `git status`.
+
+**Regra:** sucesso é uma afirmação baseada em evidência recente. Não use “deve funcionar” como substituto de validação.
+
+### Teste manual
+
+Quando automação não cobrir adequadamente comportamento visual, integração física, hardware, permissões reais ou fluxo operacional crítico, sinalize explicitamente a necessidade de homologação humana e forneça um roteiro curto e reproduzível.
+
+---
+
+## 10. Git e Entrega
+
+- Preserve a working tree do usuário; não descarte mudanças alheias ao escopo.
+- Commits devem ser coesos e descrever o que realmente mudou.
+- Não reescreva histórico compartilhado nem faça force push sem autorização explícita.
+- Antes de commit/push/PR, confira o diff e os checks exigidos pelo repositório.
+- Se houver instrução específica de PR/commit neste projeto, registre-a aqui ou em um `AGENTS.md` mais próximo do workflow correspondente.
+
+---
+
+## 11. Relatório Final
+
+A resposta ao usuário deve ser curta e operacional:
+
+- o que mudou;
+- checks executados e resultado;
+- blockers ou riscos restantes;
+- commit/PR, quando aplicável;
+- `TESTE MANUAL NECESSÁRIO` quando realmente houver homologação humana pendente.
+
+Se o ambiente oferecer **Walkthrough** ou artefato equivalente, coloque lá o relatório detalhado, evidências, arquivos alterados e decisões técnicas; não despeje logs extensos no chat.
+
+---
+
+## 12. Compatibilidade entre Agentes
+
+Use este `AGENTS.md` como fonte compartilhada sempre que o runtime suportar o formato.
+
+Para evitar duplicação e drift:
+
+- **OpenAI Codex / GitHub Copilot / Cursor e outros compatíveis**: use `AGENTS.md` diretamente.
+- **Claude Code**: mantenha um `CLAUDE.md` mínimo que importe/referencie `AGENTS.md` e contenha apenas diferenças específicas do Claude quando necessárias.
+- **Gemini CLI / Antigravity**: configure o contexto para ler `AGENTS.md` ou mantenha um `GEMINI.md` mínimo que importe/referencie este arquivo.
+
+Não mantenha cópias completas e independentes das mesmas regras em `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` e arquivos de IDE.
+
+---
+
+## 13. Manutenção deste Arquivo
+
+Atualize o `AGENTS.md` quando mudar algum fato que altere como um agente deve trabalhar, por exemplo:
+
+- comandos canônicos;
+- estrutura importante do repositório;
+- invariantes de domínio;
+- políticas de segurança;
+- critérios de validação;
+- gotchas recorrentes observados em PRs/incidentes.
+
+Não adicione regras para um erro isolado se o código, teste ou ferramenta puder eliminar a causa de forma mais robusta.
+
+**Meta:** cada linha deste arquivo deve economizar contexto, prevenir um erro real ou tornar a execução verificável.
