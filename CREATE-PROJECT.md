@@ -155,7 +155,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 31 Skills gerenciadas.
+Estas são minhas 32 Skills gerenciadas.
 
 ## Core
 
@@ -256,6 +256,10 @@ Use para orquestrar e interpretar scanners reais de segurança (Semgrep, Gitleak
 ### skill-security-review
 
 Use como auditoria de segurança obrigatória antes de instalar qualquer skill, plugin ou MCP de terceiros, verificando exfiltração, comandos destrutivos, prompt injection e fraude.
+
+### strix
+
+Use para pentest autônomo com agentes de IA, ethical hacking e exploração ofensiva (OWASP Top 10, injeção, XSS, SSRF, IDOR/BOLA, quebra de autenticação) via framework Strix (usestrix/strix), gerando provas de conceito executáveis (PoC) e relatórios estruturados (SARIF/JSON/Markdown).
 
 ## GOOGLE
 

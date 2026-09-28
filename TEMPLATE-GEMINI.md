@@ -1,106 +1,147 @@
-# 🛑 REGRA ZERO INEGOCIÁVEL: ATIVAÇÃO OBRIGATÓRIA DE SKILLS NA RODADA 1
+# GEMINI.md — [Nome do Projeto]
 
-> ### ⚠️ PROTOCOLO DE DISPARO IMEDIATO (LEI SUPREMA DO REPOSITÓRIO)
-> O agente **NUNCA DEVE** esperar o usuário solicitar o uso de uma skill.
-> Na **PRIMEIRA RODADA** de qualquer comando ou solicitação do usuário, **ANTES** de executar ferramentas de busca cega (`grep_search`, `find_by_name`), comandos de terminal ou edição de arquivos, o agente **É OBRIGADO A EXECUTAR O PROTOCOLO ABAIXO**:
->
-> 1. 🔍 **ONDE ESTÁ (Inteligência de Grafo - graphify - OBRIGATÓRIO EM TODOS OS PROJETOS)**:
->    - Se a pasta `graphify-out/` existir na raiz do projeto:
->      - **EXECUTE IMEDIATAMENTE** via terminal: `py -m graphify query "<pergunta ou termo da tarefa>"`
->      - **OU LEIA** com `view_file` os arquivos `graphify-out/GRAPH_REPORT.md` e `graphify-out/CALM_MAP.md`.
->      - 🛑 **É TERMINANTEMENTE PROIBIDO** fazer buscas cegas com `grep` ou listar diretórios antes de consultar o grafo de conhecimento.
->    - Se `graphify-out/` ainda não existir: chame `view_file` em `.agents/skills/graphify/SKILL.md` (ou `%USERPROFILE%\.agents\skills\graphify\SKILL.md`) e oriente a geração do grafo.
->
-> 2. 🗺️ **ONDE ESTAMOS & IMPACTO SEGURO (Mapeamento de Chamadas - calm - OBRIGATÓRIO PARA QUALQUER MUDANÇA)**:
->    - Para qualquer refatoração, navegação profunda ou alteração de código:
->      - Chame `view_file` em `.agents/skills/calm/SKILL.md` (ou `%USERPROFILE%\.agents\skills\calm\SKILL.md`).
->      - Consulte `graphify-out/CALM_MAP.md` e siga a sequência: `locate` ➔ `source` ➔ `callers` ➔ `edit_context` ➔ `diff_impact`.
->
-> 3. ✂️ **COMO ESCREVER (Minimalismo Radical - ponytail - OBRIGATÓRIO AO ESCREVER/EDITAR)**:
->    - Chame `view_file` em `.agents/skills/ponytail/SKILL.md`.
->    - Siga YAGNI radical: corte código supérfluo, use a stdlib nativa e reaproveite utilitários existentes antes de criar novas abstrações ou dependências.
->
-> 4. 🎯 **SKILL ESPECIALIZADA DE DOMÍNIO (OBRIGATÓRIO CARREGAR PELO MENOS UMA VIA `view_file`)**:
->    - Identifique o domínio da tarefa e **chame `view_file` no `SKILL.md` correspondente** antes de propor código ou soluções:
->      * **Bugs / Erros / Falhas / Lentidão**: ➔ `.agents/skills/diagnosing-bugs/SKILL.md` ou `systematic-debugging/SKILL.md`
->      * **Postgres / Supabase / SQL / Migrations**: ➔ `.agents/skills/supabase-postgres-best-practices/SKILL.md` e/ou `supabase/SKILL.md`
->      * **Frontend / UI/UX / Telas / CSS / Acessibilidade**: ➔ `.agents/skills/ui-ux-pro-max/SKILL.md`, `frontend-design/SKILL.md` ou `impeccable/SKILL.md`
->      * **Performance React / Next.js / Server Components**: ➔ `.agents/skills/vercel-react-best-practices/SKILL.md`
->      * **Segurança / Auth / RLS / Permissões / Tokens**: ➔ `.agents/skills/security-best-practices/SKILL.md` ou `security-threat-model/SKILL.md`
->      * **Automação Browser / Testes E2E**: ➔ `.agents/skills/playwright/SKILL.md`
->      * **Revisão de Código / Pull Requests**: ➔ `.agents/skills/code-review/SKILL.md`
->      * **Desafio de Planos / Stress Testing**: ➔ `.agents/skills/devils-advocate/SKILL.md`
->      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
->      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `.agents/skills/winapp/SKILL.md`
->    - 🛑 **É PROIBIDO pular o carregamento do `SKILL.md` alegando "já saber como fazer".**
->
-> 5. 🛡️ **GATE DE CONCLUSÃO (verification-before-completion - OBRIGATÓRIO ANTES DA ENTREGA)**:
->    - Antes de alegar conclusão ou sucesso, chame `view_file` em `.agents/skills/verification-before-completion/SKILL.md`.
->    - *The Iron Law: NUNCA alegar sucesso sem evidências reais de comandos de validação (build, test, lint) executados nesta rodada.*
+> **Camada específica para Google Gemini CLI / Antigravity.**  
+> As regras canônicas e compartilhadas do projeto vivem em `AGENTS.md`. Este arquivo deve conter apenas adaptações específicas do ecossistema Gemini.
+
+@./AGENTS.md
+
+> [!NOTE]
+> Se `.gemini/settings.json` já carregar `AGENTS.md` e `GEMINI.md` via `context.fileName`, remova o import acima para não duplicar contexto.
 
 ---
 
-# GEMINI.md — [Nome do Projeto] (Google Antigravity & Gemini CLI)
+## 1. Fonte de verdade e precedência
 
-> **Instruções Nativas para Google Antigravity & Gemini CLI**  
-> Este arquivo é o ponto de entrada de configuração primária e regras operacionais para agentes do ecossistema Google (Antigravity IDE, Antigravity CLI e Gemini CLI).  
-> A especificação completa do projeto, taxonomia de especialistas, convenções operacionais e catálogo detalhado das **31 Skills** gerenciadas residem em [`AGENTS.md`](file:///./AGENTS.md).
-
----
-
-## 1. Visão Geral & Contexto do Projeto
-
-- **Nome do Projeto**: [Nome do Projeto]
-- **Missão / Propósito**: [Breve descrição do que o sistema faz e qual problema resolve]
-- **Documento Canônico de Regras**: Consulte sempre [`AGENTS.md`](file:///./AGENTS.md) para diretrizes operacionais aprofundadas.
+- `AGENTS.md` define arquitetura, stack, comandos, convenções, segurança, Git, testes e critérios de conclusão.
+- `GEMINI.md` apenas complementa essas regras com comportamento específico do Gemini CLI / Antigravity.
+- Não replique aqui catálogo de Skills, comandos ou políticas gerais já existentes em `AGENTS.md`.
+- Dentro do repositório, contexto mais específico do diretório atual complementa ou prevalece sobre contexto mais geral, sempre respeitando instruções de sistema, plataforma e usuário.
 
 ---
 
-## 2. Tech Stack Resumida
+## 2. Contexto nativo do Gemini
 
-- **Runtime / Linguagem**: [Ex.: Node.js 22 LTS, TypeScript 5.x / Python 3.12]
-- **Frontend**: [Ex.: Next.js App Router, React 19, Tailwind CSS]
-- **Backend / API**: [Ex.: Fastify / NestJS / Supabase / Express]
-- **Banco de Dados & Storage**: [Ex.: PostgreSQL via Supabase Database, Storage S3/Supabase]
-- **Testes & Qualidade**: [Ex.: Vitest, Playwright, ESLint]
-- **Gerenciador de Pacotes**: [Ex.: pnpm / npm / bun]
+O Gemini CLI suporta contexto hierárquico e imports. Use isso para manter o contexto enxuto.
 
----
+- Global: preferências estáveis do usuário.
+- Projeto: `AGENTS.md` + este `GEMINI.md`.
+- Local: instruções específicas próximas ao módulo trabalhado.
+- Para regras de um único módulo, prefira contexto local em vez de crescer o arquivo raiz.
+- Use `@arquivo` para compartilhar contexto estável sem copiar conteúdo.
+- Quando houver dúvida sobre quais instruções estão ativas, inspecione a memória/contexto carregado antes de diagnosticar comportamento inconsistente.
 
-## 3. Comandos Principais de Desenvolvimento
+### Configuração opcional
 
-Execute sempre os comandos reais no terminal e confirme saída limpa:
+Para descoberta nativa de ambos os arquivos na hierarquia:
 
-```bash
-# Desenvolvimento local
-pnpm dev
-
-# Validação estática de tipos (Typecheck)
-pnpm typecheck
-
-# Linter e formatação
-pnpm lint
-
-# Testes automatizados
-pnpm test
-
-# Build de produção
-pnpm build
+```json
+{
+  "context": {
+    "fileName": ["AGENTS.md", "GEMINI.md"]
+  }
+}
 ```
 
+Nesse modo, não importe `AGENTS.md` novamente neste arquivo.
+
 ---
 
-## 4. Diretrizes Específicas para Antigravity & Gemini CLI
+## 3. Skills: Progressive Disclosure
 
-1. **Subagents sob Demanda**:
-   - Utilize subagents especializados (`invoke_subagent`) para tarefas com escopo pesado ou que exijam perspectiva de domínio (`Software Architect`, `Database Optimizer`, `Security Architect`, `Test Automation Engineer`).
-   - Siga a Regra YAGNI: **NÃO** delegue para edições mecânicas, renomeações de variáveis, pequenos ajustes de CSS ou correções simples de poucas linhas.
+Use o mecanismo nativo de Agent Skills do Gemini.
 
-2. **Gerenciamento Assíncrono de Tarefas**:
-   - Ao disparar comandos de longa duração (dev server, builds pesados, testes extensos), utilize background tasks sem polling em loop (o ambiente notifica a conclusão reativamente).
+- Skill disponível não significa Skill obrigatória.
+- Ative uma Skill somente quando sua descrição corresponder materialmente à tarefa.
+- Não imponha “carregar pelo menos uma Skill”.
+- Evite Skills sobrepostas sem necessidade concreta.
+- Prefira a menor combinação capaz de executar a tarefa com segurança.
+- `.agents/skills/` é suportado pelo Gemini como alias de Skills; não duplique tudo em `.gemini/skills/` apenas por compatibilidade.
+- Respeite consentimento e permissões exigidos pelo runtime.
 
-3. **Geração de Artefatos**:
-   - Utilize artefatos markdown (`implementation_plan.md`, `walkthrough.md`) quando planejar grandes refatorações ou resumir entregas complexas para o usuário.
+Use o catálogo real disponível na sessão. Exemplos de roteamento: debugging para bugs; Postgres/Supabase para banco; UI/UX para frontend; security para auth/permissões; Playwright para E2E; code review para revisão; domain modeling/codebase design para arquitetura; WinApp para QA Windows; Strix para pentest autônomo com IA.
 
-4. **Princípio de Verificação Obrigatória (The Iron Law)**:
-   - Nunca declare sucesso sem executar os testes/builds reais nesta rodada e comprovar com evidências da saída do terminal.
+---
+
+## 4. Investigação de codebase e subagents
+
+Para mudanças substanciais, construa primeiro um mapa do problema e evite exploração indiscriminada.
+
+1. Leia `AGENTS.md` e o contexto local aplicável.
+2. Se `AGENTS.md` orientar Graphify para o escopo atual e `graphify-out/` existir, consulte o grafo antes de exploração ampla.
+3. Use `codebase_investigator` quando uma investigação profunda e isolada realmente ajudar: arquitetura, dependências, causa raiz ou mudança transversal.
+4. Abra diretamente apenas os arquivos/símbolos necessários para confirmar detalhes.
+5. Use CALM ou outro mecanismo de estado definido pelo projeto em execuções longas, multi-etapas ou de alto impacto.
+
+### Delegação
+
+Use subagents para isolamento de contexto ou especialização real. Evite delegação para rename, CSS pontual, mudança mecânica ou edição de poucas linhas. Não execute investigações paralelas redundantes sobre a mesma pergunta.
+
+Não assuma nomes fixos de ferramentas de delegação. Consulte o registro de agents disponível na sessão; agentes locais podem viver em `.gemini/agents/` e agentes pessoais em `~/.gemini/agents/`.
+
+---
+
+## 5. Planejamento e implementação
+
+Planeje proporcionalmente ao risco.
+
+Para tarefa simples: investigue o mínimo necessário, altere, valide e conclua.
+
+Para tarefa substancial, antes de editar:
+
+1. defina objetivo e critério de conclusão;
+2. identifique invariantes e riscos;
+3. localize arquivos e símbolos envolvidos;
+4. determine a menor sequência segura de mudanças;
+5. implemente sem ampliar silenciosamente o escopo.
+
+Quando Plan Mode estiver disponível e a mudança for arriscada, transversal ou ambígua, prefira planejar em modo de leitura antes de modificar o repositório.
+
+Não crie `implementation_plan.md`, `walkthrough.md` ou arquivos semelhantes automaticamente para toda tarefa. Use artefatos persistentes apenas quando o projeto os exigir ou quando trouxerem valor real.
+
+---
+
+## 6. Terminal, autonomia e segurança operacional
+
+- Use os comandos oficiais definidos em `AGENTS.md`.
+- Verifique `stderr`, código de saída e resultado efetivo.
+- Use background process apenas para processos que precisam permanecer vivos, como servidor ou watcher; acompanhe seu PID quando aplicável e não deixe processos órfãos.
+- Não encerre processos do usuário que não tenham sido iniciados pela execução atual sem autorização.
+- Preserve alterações preexistentes da working tree.
+- Não faça refactors laterais, upgrades de dependências ou limpezas oportunistas fora do escopo.
+- Pare quando o critério de conclusão autorizado tiver sido atingido.
+
+---
+
+## 7. Verificação antes de concluir
+
+Nunca declare sucesso sem evidência compatível com o risco da mudança.
+
+Valide primeiro o caminho mais próximo da alteração e amplie somente quando necessário:
+
+- função isolada → teste relevante;
+- módulo → testes do módulo + checagens estáticas aplicáveis;
+- integração → testes de integração;
+- UI/fluxo → teste de componente/E2E e inspeção visual quando importante;
+- banco/migration → runtime/schema + invariantes relevantes;
+- mudança transversal/pré-merge → gate completo do projeto.
+
+Não rode `build + lint + typecheck + todos os testes` mecanicamente para qualquer alteração mínima, salvo se `AGENTS.md`, CI ou o risco exigir.
+
+Ao concluir, informe quais verificações foram realmente executadas. Se alguma validação necessária não puder ser feita, declare a limitação explicitamente.
+
+---
+
+## 8. Relatório e manutenção
+
+Mantenha o chat final curto: o que mudou, validações, blockers/riscos, commit/PR e teste manual quando necessário.
+
+Se o projeto usa Walkthrough, registre nele evidências, arquivos alterados e decisões técnicas detalhadas; deixe no chat apenas o resumo operacional.
+
+Antes de adicionar uma regra a este arquivo, pergunte:
+
+1. ela já pertence ao `AGENTS.md`?
+2. deveria ser uma Skill sob demanda?
+3. vale apenas para um módulo e deveria ficar em contexto local?
+4. descreve uma capacidade atual do Gemini ou depende de um nome de ferramenta transitório?
+
+Se houver um local melhor, coloque a regra lá em vez de aumentar este arquivo.

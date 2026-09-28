@@ -154,8 +154,9 @@ As Skills gerenciadas são:
 | calm | Eilodon/CALM | adapter `calm-adapter` |
 | ponytail | DietrichGebert/ponytail | `skills/ponytail` |
 | winapp | local (AI-Dev-Machine) | `skills/winapp` |
+| strix | local (AI-Dev-Machine) | `skills/strix` |
 
-Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies. Para `winapp`, gerenciar localmente no AI-Dev-Machine e utilizar a instalação oficial da Microsoft via winget (`Microsoft.winappcli`).
+Para `graphify`, instalar somente `skill-agents.md` como `SKILL.md` e as referências da variante `agents`, quando existirem. Não executar hooks, MCP ou injeção always-on do Graphify. Para `finding-google-skills`, não instalar o catálogo Google inteiro. Para `caveman`, não instalar proxy, hooks ou serviço. Para `ponytail`, instalar somente a Skill em `skills/ponytail`, sem plugins, hooks ou proxies. Para `winapp`, gerenciar localmente no AI-Dev-Machine e utilizar a instalação oficial da Microsoft via winget (`Microsoft.winappcli`). Para `strix`, gerenciar localmente no AI-Dev-Machine sem instalar o binário localmente até ser explicitamente requisitado.
 
 ## Especialistas globais (Agency Agents)
 
@@ -279,7 +280,7 @@ Valide cada componente com seu comando real e produza um relatório com:
 - Desktop Apps: nome e status;
 - AI CLIs: nome, versão e status;
 - Development Tools: nome, versão e status;
-- Skills: as 31 gerenciadas e as externas preservadas;
+- Skills: as 32 gerenciadas e as externas preservadas;
 - MCPs: configurado, disponível sob demanda ou não suportado;
 - Authentication: logins pendentes;
 - Problems: limitações, erros, permissões ou bloqueios de rede.

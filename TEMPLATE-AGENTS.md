@@ -183,6 +183,7 @@ Escolha a Skill pela natureza da tarefa, não porque ela existe:
 | Code review / PR | `code-review` |
 | Merge / rebase conflict | `resolving-merge-conflicts` |
 | QA de app Windows / desktop | `winapp` |
+| Pentest autônomo / ethical hacking / PoC de vulnerabilidades | `strix` |
 | Avaliar plano de alto risco | `devils-advocate` |
 | Criar/refinar prompts para agentes | `prompt-master`, `context-engineering` |
 
