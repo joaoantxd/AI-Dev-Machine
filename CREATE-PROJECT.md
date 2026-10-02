@@ -155,7 +155,7 @@ Não coordene múltiplos agentes automaticamente. Use o agente atual normalmente
 
 # GLOBAL SKILLS
 
-Estas são minhas 32 Skills gerenciadas.
+Estas são minhas 33 Skills gerenciadas.
 
 ## Core
 
@@ -288,6 +288,10 @@ Use para construir e refinar o modelo de domínio do projeto (`CONTEXT.md`, ADRs
 ### calm
 
 Use para orientação de fluxo e liveness mapping de código (Coding Agent Liveness Map). Auxilia no workflow de 8 estágios (`repo_overview` → `locate` → `source` → `callers` → `edit_context` → `edit_symbol`/`edit_lines` → `diff_impact` → `session_context`), consulta de call graphs reais e write-safety gates para evitar quebras em símbolos centrais (hubs).
+
+### understand-anything
+
+Use para análise profunda de arquitetura de software, mapeamento de domínios de negócio e geração de grafos de conhecimento interativos (`.ua/knowledge-graph.json`) via Understand-Anything (Egonex-AI/Understand-Anything), com suporte a visualização em dashboard web force-directed, análise de impacto de diffs e walkthroughs de onboarding.
 
 ## BROWSER
 

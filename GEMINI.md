@@ -33,6 +33,7 @@
 >      * **Modelagem de Domínio / Arquitetura**: ➔ `.agents/skills/domain-modeling/SKILL.md` ou `codebase-design/SKILL.md`
 >      * **Automação Desktop Windows / QA Físico / Testes de UI (winapp / WinUI / WPF / Electron)**: ➔ `.agents/skills/winapp/SKILL.md`
 >      * **Pentest Autônomo com IA / Ethical Hacking / Exploração e Validação de Vulnerabilidades (PoC)**: ➔ `.agents/skills/strix/SKILL.md`
+>      * **Compreensão de Código / Grafo Interativo / Onboarding de Codebase (Understand Anything)**: ➔ `.agents/skills/understand-anything/SKILL.md`
 >    - 🛑 **É PROIBIDO pular o carregamento do `SKILL.md` alegando "já saber como fazer".**
 >
 > 5. 🛡️ **GATE DE CONCLUSÃO (verification-before-completion - OBRIGATÓRIO ANTES DA ENTREGA)**:
@@ -44,4 +45,4 @@
 # AI Dev Machine — Instruções Nativas para Google Antigravity & Gemini CLI (GEMINI.md)
 
 Este repositório é governado pelas regras canônicas em [`AGENTS.md`](file:///./AGENTS.md).
-Consulte sempre `AGENTS.md` para a lista completa dos 7 Especialistas, catálogo das 32 Skills e diretrizes arquiteturais.
+Consulte sempre `AGENTS.md` para a lista completa dos 7 Especialistas, catálogo das 33 Skills e diretrizes arquiteturais.

@@ -58,7 +58,7 @@ Use o mecanismo nativo de Agent Skills do Gemini.
 - `.agents/skills/` é suportado pelo Gemini como alias de Skills; não duplique tudo em `.gemini/skills/` apenas por compatibilidade.
 - Respeite consentimento e permissões exigidos pelo runtime.
 
-Use o catálogo real disponível na sessão. Exemplos de roteamento: debugging para bugs; Postgres/Supabase para banco; UI/UX para frontend; security para auth/permissões; Playwright para E2E; code review para revisão; domain modeling/codebase design para arquitetura; WinApp para QA Windows; Strix para pentest autônomo com IA.
+Use o catálogo real disponível na sessão. Exemplos de roteamento: debugging para bugs; Postgres/Supabase para banco; UI/UX para frontend; security para auth/permissões; Playwright para E2E; code review para revisão; domain modeling/codebase design para arquitetura; WinApp para QA Windows; Strix para pentest autônomo com IA; Understand-Anything para grafos interativos de arquitetura.
 
 ---
 
