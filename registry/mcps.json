@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.0.0",
+  "mcps": [
+    {
+      "id": "context7",
+      "name": "Context7 Documentation Server",
+      "description": "Up-to-date documentation provider for modern libraries and frameworks.",
+      "category": "documentation",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "env": {},
+      "enabledByDefault": true,
+      "requiresAuth": false,
+      "authEnvVar": "CONTEXT7_API_KEY"
+    },
+    {
+      "id": "chrome-devtools-mcp",
+      "name": "Chrome DevTools MCP",
+      "description": "Deep browser inspection: console, network, DOM, runtime and performance.",
+      "category": "browser",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "env": {},
+      "enabledByDefault": false,
+      "profileRecommended": ["web-supabase", "monorepo"],
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "semgrep",
+      "name": "Semgrep SAST MCP",
+      "description": "Static analysis security scanner and rule evaluation via local semgrep CLI.",
+      "category": "security",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "semgrep",
+      "args": ["mcp"],
+      "env": {},
+      "enabledByDefault": false,
+      "profileRecommended": [],
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase MCP Server",
+      "description": "Direct access to Supabase projects, tables, migrations, logs and SQL execution.",
+      "category": "database",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      },
+      "enabledByDefault": false,
+      "profileRecommended": ["web-supabase", "monorepo"],
+      "requiresAuth": true,
+      "authEnvVar": "SUPABASE_ACCESS_TOKEN"
+    },
+    {
+      "id": "github",
+      "name": "GitHub MCP Server",
+      "description": "GitHub API integration for pull requests, issues, commits and repository management.",
+      "category": "vcs",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "enabledByDefault": false,
+      "requiresAuth": true,
+      "authEnvVar": "GITHUB_PERSONAL_ACCESS_TOKEN"
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel Deployment MCP",
+      "description": "Vercel deployments, projects, domains and environment variables management.",
+      "category": "deployment",
+      "scope": "project",
+      "transport": "sse",
+      "serverUrl": "https://mcp.vercel.com",
+      "enabledByDefault": false,
+      "requiresAuth": true,
+      "authEnvVar": "VERCEL_ACCESS_TOKEN"
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright Automation MCP",
+      "description": "Browser automation and testing server via Playwright.",
+      "category": "testing",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-playwright"],
+      "env": {},
+      "enabledByDefault": false,
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "graphify",
+      "name": "Graphify Architecture Server",
+      "description": "Graph querying and knowledge graph traversal server for complex codebases.",
+      "category": "architecture",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "graphify",
+      "args": ["mcp"],
+      "env": {},
+      "enabledByDefault": false,
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "calm",
+      "name": "CALM Liveness Server",
+      "description": "Coding Agent Liveness Map server for call graph navigation and safe editing.",
+      "category": "architecture",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@eilodon/calm-mcp", "serve"],
+      "env": {},
+      "enabledByDefault": false,
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "next-dev-tools",
+      "name": "Next.js DevTools MCP",
+      "description": "Next.js development diagnostics and server-side metrics.",
+      "category": "frontend",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@next/dev-tools-mcp"],
+      "env": {},
+      "enabledByDefault": false,
+      "requiresAuth": false,
+      "authEnvVar": ""
+    }
+  ]
+}

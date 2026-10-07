@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.0.0",
+  "profiles": {
+    "base": {
+      "name": "Base Engineering Profile",
+      "description": "Standard profile for all projects: invariants, verification, debugging, safe editing and git discipline.",
+      "inherits": [],
+      "rules": [
+        "architecture-invariants.md",
+        "git-workflow.md",
+        "verification.md"
+      ],
+      "skills": [
+        "systematic-debugging",
+        "verification-before-completion",
+        "ponytail"
+      ],
+      "recommendedSkills": [
+        "graphify",
+        "calm",
+        "codebase-design",
+        "diagnosing-bugs",
+        "devils-advocate",
+        "code-review",
+        "resolving-merge-conflicts",
+        "context-engineering"
+      ],
+      "agents": [
+        "researcher",
+        "reviewer",
+        "security-reviewer"
+      ],
+      "recommendedAgents": [
+        "software-architect",
+        "test-automation-engineer"
+      ],
+      "mcps": [
+        "context7"
+      ],
+      "plugins": [],
+      "hooks": true
+    },
+    "web-supabase": {
+      "name": "Web + Supabase Fullstack Profile",
+      "description": "Fullstack web profile: React/Next.js, UI/UX craft, Supabase/Postgres backend and RLS security.",
+      "inherits": ["base"],
+      "rules": [
+        "web-guidelines.md",
+        "database-postgres.md"
+      ],
+      "skills": [
+        "ui-ux-pro-max",
+        "frontend-design",
+        "impeccable",
+        "web-design-guidelines",
+        "vercel-react-best-practices",
+        "supabase",
+        "supabase-postgres-best-practices",
+        "playwright"
+      ],
+      "recommendedSkills": [
+        "security-best-practices"
+      ],
+      "agents": [
+        "frontend-developer",
+        "backend-architect",
+        "database-optimizer"
+      ],
+      "recommendedAgents": [],
+      "mcps": [
+        "context7",
+        "chrome-devtools-mcp",
+        "supabase"
+      ],
+      "plugins": [],
+      "hooks": true
+    },
+    "windows-desktop": {
+      "name": "Windows Desktop & Native Client Profile",
+      "description": "Desktop application profile: WinUI 3, WPF, C#, Electron, UI thread safety, physical QA and WinApp CLI.",
+      "inherits": ["base"],
+      "rules": [
+        "windows-desktop.md"
+      ],
+      "skills": [
+        "winapp",
+        "playwright",
+        "security-best-practices"
+      ],
+      "recommendedSkills": [],
+      "agents": [
+        "test-automation-engineer",
+        "software-architect"
+      ],
+      "recommendedAgents": [],
+      "mcps": [
+        "context7"
+      ],
+      "plugins": [],
+      "hooks": true
+    },
+    "monorepo": {
+      "name": "Monorepo Multi-Platform Profile",
+      "description": "Unified workspace with web frontend, desktop client and shared services.",
+      "inherits": ["base"],
+      "rules": [
+        "web-guidelines.md",
+        "windows-desktop.md",
+        "database-postgres.md"
+      ],
+      "skills": [
+        "winapp",
+        "ui-ux-pro-max",
+        "frontend-design",
+        "supabase",
+        "playwright"
+      ],
+      "recommendedSkills": [
+        "security-best-practices"
+      ],
+      "agents": [
+        "frontend-developer",
+        "backend-architect",
+        "test-automation-engineer",
+        "software-architect"
+      ],
+      "recommendedAgents": [],
+      "mcps": [
+        "context7",
+        "chrome-devtools-mcp",
+        "supabase"
+      ],
+      "plugins": [],
+      "hooks": true
+    }
+  }
+}

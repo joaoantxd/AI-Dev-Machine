@@ -1,0 +1,61 @@
+﻿{
+    "mcpServers":  {
+                       "context7":  {
+                                        "command":  "npx",
+                                        "args":  [
+                                                     "-y",
+                                                     "@upstash/context7-mcp@latest"
+                                                 ],
+                                        "env":  {
+
+                                                }
+                                    },
+                       "chrome-devtools-mcp":  {
+                                                   "command":  "npx",
+                                                   "args":  [
+                                                                "-y",
+                                                                "chrome-devtools-mcp@latest"
+                                                            ],
+                                                   "env":  {
+
+                                                           },
+                                                   "disabled":  true
+                                               },
+                       "semgrep":  {
+                                       "command":  "semgrep",
+                                       "args":  [
+                                                    "mcp"
+                                                ],
+                                       "env":  {
+
+                                               },
+                                       "disabled":  true
+                                   },
+                       "supabase":  {
+                                        "command":  "npx",
+                                        "args":  [
+                                                     "-y",
+                                                     "@supabase/mcp-server-supabase@latest"
+                                                 ],
+                                        "env":  {
+
+                                                },
+                                        "disabled":  true
+                                    },
+                       "github":  {
+                                      "command":  "npx",
+                                      "args":  [
+                                                   "-y",
+                                                   "@modelcontextprotocol/server-github"
+                                               ],
+                                      "env":  {
+
+                                              },
+                                      "disabled":  true
+                                  },
+                       "vercel":  {
+                                      "serverUrl":  "https://mcp.vercel.com",
+                                      "disabled":  true
+                                  }
+                   }
+}

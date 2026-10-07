@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.0.0",
+  "plugins": [
+    {
+      "id": "web-supabase-suite",
+      "name": "Web Frontend & Supabase Suite",
+      "description": "Distinctive visual design, OKLCH palettes, React optimization, accessibility, Postgres and Supabase.",
+      "skills": ["ui-ux-pro-max", "frontend-design", "impeccable", "web-design-guidelines", "vercel-react-best-practices", "supabase", "supabase-postgres-best-practices", "playwright"],
+      "rules": ["web-guidelines.md", "database-postgres.md"],
+      "mcps": ["supabase", "vercel"]
+    },
+    {
+      "id": "windows-desktop-suite",
+      "name": "Windows Desktop & Physical QA Suite",
+      "description": "UI automation, UIA tree inspection, screenshot verification for WinUI 3, WPF and Electron via WinApp CLI.",
+      "skills": ["winapp", "playwright", "security-best-practices"],
+      "rules": ["windows-desktop.md"],
+      "mcps": ["chrome-devtools-mcp"]
+    },
+    {
+      "id": "architecture-suite",
+      "name": "Deep Architecture & Graph Intelligence Suite",
+      "description": "Knowledge graph analysis, call graph tracing and deep module design.",
+      "skills": ["domain-modeling", "improve-codebase-architecture", "understand-anything"],
+      "rules": ["architecture-invariants.md"],
+      "mcps": ["github"]
+    },
+    {
+      "id": "security-suite",
+      "name": "AppSec & Vulnerability Audit Suite",
+      "description": "Threat modeling, secure coding standards, Semgrep static analysis and security reviews.",
+      "skills": ["security-best-practices", "security-threat-model", "cybersecurity-review", "security-review", "skill-security-review", "strix"],
+      "rules": ["architecture-invariants.md"],
+      "mcps": ["semgrep"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+﻿{
+    "profile":  "base",
+    "version":  "2.0.0",
+    "timestamp":  "2026-10-07T17:49:51Z",
+    "managedRules":  [
+                         "architecture-invariants.md",
+                         "git-workflow.md",
+                         "verification.md"
+                     ],
+    "managedAgents":  [
+                          "researcher.md",
+                          "reviewer.md",
+                          "security-reviewer.md"
+                      ],
+    "managedSkills":  [
+                          "systematic-debugging",
+                          "verification-before-completion",
+                          "ponytail"
+                      ],
+    "managedHooks":  true,
+    "managedMcp":  true
+}

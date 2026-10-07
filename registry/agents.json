@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.0.0",
+  "agents": [
+    {
+      "slug": "researcher",
+      "name": "Codebase & Architecture Researcher",
+      "role": "cognitive-specialist",
+      "description": "Deep investigation, architecture discovery, evidence gathering, call graph tracing and Graphify navigation. Read-only: never modifies code.",
+      "category": "investigation",
+      "source": "builtin",
+      "toolsAllowed": ["view_file", "grep_search", "run_command (read-only)", "graphify query", "calm locate/source/callers"],
+      "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
+    },
+    {
+      "slug": "reviewer",
+      "name": "Independent Code & Spec Reviewer",
+      "role": "cognitive-specialist",
+      "description": "Examines diffs, evaluates regressions, verifies issue specification compliance, checks edge cases and challenges optimistic conclusions.",
+      "category": "review",
+      "source": "builtin",
+      "toolsAllowed": ["view_file", "grep_search", "run_command (tests/lint)"],
+      "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
+    },
+    {
+      "slug": "security-reviewer",
+      "name": "Cybersecurity & Vulnerability Reviewer",
+      "role": "cognitive-specialist",
+      "description": "Audits attack surfaces, auth boundaries, input validation, secrets leaks, cryptographic choices and SAST findings.",
+      "category": "security",
+      "source": "builtin",
+      "toolsAllowed": ["view_file", "grep_search", "run_command (semgrep/gitleaks/trivy)"],
+      "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
+    },
+    {
+      "slug": "software-architect",
+      "name": "Software Architect",
+      "role": "domain-specialist",
+      "description": "Macro architecture decisions, bounded contexts (DDD), trade-off matrices, deep module boundaries and ADRs.",
+      "category": "architecture",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "engineering/engineering-software-architect.md",
+      "expectedName": "Software Architect"
+    },
+    {
+      "slug": "backend-architect",
+      "name": "Backend Architect",
+      "role": "domain-specialist",
+      "description": "API contracts (OpenAPI/gRPC), zero-downtime database migrations, caching and distributed resilience.",
+      "category": "backend",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "engineering/engineering-backend-architect.md",
+      "expectedName": "Backend Architect"
+    },
+    {
+      "slug": "frontend-developer",
+      "name": "Frontend Developer",
+      "role": "domain-specialist",
+      "description": "Component engineering, complex client-side state, WCAG 2.1 AA accessibility and Core Web Vitals.",
+      "category": "frontend",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "engineering/engineering-frontend-developer.md",
+      "expectedName": "Frontend Developer"
+    },
+    {
+      "slug": "database-optimizer",
+      "name": "Database Optimizer",
+      "role": "domain-specialist",
+      "description": "Execution plans (EXPLAIN ANALYZE), index strategies (B-tree, GIN), N+1 detection, connection pooling and RLS.",
+      "category": "database",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "engineering/engineering-database-optimizer.md",
+      "expectedName": "Database Optimizer"
+    },
+    {
+      "slug": "security-architect",
+      "name": "Security Architect",
+      "role": "domain-specialist",
+      "description": "Threat modeling, attack surfaces, trust boundaries, defensive architecture and defense-in-depth.",
+      "category": "security",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "security/security-architect.md",
+      "expectedName": "Security Architect"
+    },
+    {
+      "slug": "test-automation-engineer",
+      "name": "Test Automation Engineer",
+      "role": "domain-specialist",
+      "description": "E2E test architecture (Playwright, WinApp), flake elimination, deterministic fixtures and CI pipelines.",
+      "category": "testing",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "testing/testing-test-automation-engineer.md",
+      "expectedName": "Test Automation Engineer"
+    },
+    {
+      "slug": "devops-automator",
+      "name": "DevOps Automator",
+      "role": "domain-specialist",
+      "description": "CI/CD workflows (GitHub Actions), Docker, IaC, reproducible deployments and release automation.",
+      "category": "devops",
+      "source": "upstream",
+      "repo": "msitarzewski/agency-agents",
+      "subpath": "engineering/engineering-devops-automator.md",
+      "expectedName": "DevOps Automator"
+    }
+  ]
+}

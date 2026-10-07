@@ -1,248 +1,140 @@
-# AI Dev Machine
+# AI Dev Machine — Architecture v2
 
-## O que é
+Um kit determinístico e portátil para configurar, manter e orquestrar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
 
-Um kit portátil para reconstruir um ambiente global de desenvolvimento com IA usando:
+---
 
-- um prompt universal de setup;
-- um sincronizador determinístico de Skills.
+## 1. O que é a Architecture v2?
 
-O projeto não depende de um instalador proprietário gigante nem de uma IA específica em runtime.
+A **Architecture v2** foi projetada para resolver a sobrecarga cognitiva e a poluição de contexto nos coding agents.
 
-## Como funciona
+> **Princípio Central:** Aumentar a qualidade, inteligência, previsibilidade e autonomia dos coding agents, fornecendo o contexto certo no momento certo e automatizando deterministicamente aquilo que não precisa consumir raciocínio da IA.
 
-Em uma máquina nova:
+### O que mudou da v1 para a v2:
+- **Fim da Regra Zero Monolítica:** O agente não carrega obrigatoriamente 5 a 10 skills em toda interação inicial. `AGENTS.md` atua como uma constituição enxuta de invariantes essenciais.
+- **Isolamento de Projetos:** Eliminação de junction monolítica (`.agents -> %USERPROFILE%\.agents`). Cada workspace possui sua pasta `.agents/` física e independente.
+- **Registry Canônico Único:** Centralização de metadados em `registry/` (skills, agents, mcps, plugins, profiles), eliminando catálogos manuais duplicados.
+- **Especialistas Cognitivos:** Introdução de agentes com papéis mentais bem definidos: `researcher` (investigação read-only e Graphify), `reviewer` (desafio e validação de diffs) e `security-reviewer` (AppSec).
+- **Profiles Composáveis:** Perfis (`base`, `web-supabase`, `windows-desktop`, `monorepo`) para compor regras, skills e MCPs adequados à natureza do projeto.
+- **CLI Unificada `aidev`:** Ponto único de orquestração para diagnósticos, auditorias, migrações seguras, inicialização e sincronização.
 
-1. instale manualmente uma IA capaz de usar o terminal;
-2. baixe ou clone este repositório;
-3. entregue `SETUP-AI-ENVIRONMENT.md` para essa IA;
-4. deixe a IA instalar programas, CLIs, dependências e MCPs com documentação oficial atual;
-5. execute `install-skills.ps1`;
-6. faça os logins interativos pendentes;
-7. valide o relatório final do ambiente.
+---
 
-## Arquivos
+## 2. CLI `aidev` (PowerShell)
 
-### `SETUP-AI-ENVIRONMENT.md`
-
-Prompt universal, autocontido, com inventário, regras de preservação, fontes oficiais, ordem de instalação, MCPs, Skills, autenticação e validação.
-
-### `install-skills.ps1`
-
-Automação determinística e idempotente para sincronização das 31 Skills canônicas em `%USERPROFILE%\.agents\skills` e integração por junctions para Google Antigravity IDE, Gemini CLI, OpenAI Codex e Claude Code.
-
-### `install-agents.ps1`
-
-Automação determinística e idempotente para gerenciamento seletivo dos 7 Especialistas essenciais do Agency Agents em `%USERPROFILE%\.agents\agents`, com suporte a auto-reparo, atualização atômica (`-Update`), dry-run (`-DryRun`) e junctions seguras para Claude Code e Gemini CLI.
-
-Uso:
+A CLI `aidev.ps1` é o ponto de entrada canônico para automações no AI-Dev-Machine.
 
 ```powershell
-# Simulação somente leitura
-.\install-agents.ps1 -DryRun
+# Executar diagnósticos no sistema, ferramentas, registries e projeto
+.\aidev.ps1 doctor [caminho]
 
-# Execução padrão idempotente (sem rede se íntegro)
-.\install-agents.ps1
+# Listar componentes disponíveis no registry canônico
+.\aidev.ps1 list [skills|agents|mcps|plugins|profiles]
 
-# Vincular ao workspace de um projeto alvo
-.\install-agents.ps1 -WorkspacePath "c:\caminho\para\projeto"
+# Auditar conformidade de um projeto existente (somente leitura)
+.\aidev.ps1 audit [caminho]
 
-# Atualização explícita baixando upstream
-.\install-agents.ps1 -Update
+# Simular migração segura de um projeto para a Architecture v2 (zero escritas)
+.\aidev.ps1 migrate [caminho] -DryRun
+
+# Aplicar migração segura com backup automático e proteção contra sobrescrita
+.\aidev.ps1 migrate [caminho] -Profile base
+
+# Inicializar um novo projeto com Architecture v2 e profile específico
+.\aidev.ps1 init [caminho] -Profile web-supabase
+
+# Sincronizar a biblioteca global canônica em %USERPROFILE%\.agents
+.\aidev.ps1 sync [-Update] [-DryRun]
+
+# Executar a suíte completa de testes automatizados
+.\aidev.ps1 test
 ```
 
-### `CREATE-PROJECT.md`
+---
 
-Prompt greenfield para usar sempre que um projeto novo for iniciado. Primeiro você explica a ideia do produto; depois entrega este arquivo à IA para orientar a escolha de stack, arquitetura, Skills, MCPs e ferramentas usando Progressive Disclosure. Ele não presume código ou repositório existentes.
+## 3. Estrutura de um Projeto v2
 
-### `TEMPLATE-AGENTS.md`
-
-Modelo universal e padronizado de `AGENTS.md` para qualquer novo projeto criado com IA. Fornece seções prontas para stack, comandos, convenções de código, regras de segurança, ativação de skills por Progressive Disclosure e checklist de verificação.
-
-### `TEMPLATE-GEMINI.md`
-
-Modelo nativo e padronizado de `GEMINI.md` para projetos no ecossistema Google Antigravity e Gemini CLI, contendo a Regra Zero de disparo obrigatório de skills e apontando para as regras canônicas de `AGENTS.md`.
-
-### `AGENTS.md`
-
-Instruções operacionais específicas para assistentes e agentes de IA que atuam neste próprio repositório (`AI-Dev-Machine`), garantindo respeito à idempotência, ausência de caminhos hardcoded e interoperabilidade multi-IA.
-
-### `GEMINI.md`
-
-Ponto de entrada primário e regras nativas para Google Antigravity e Gemini CLI atuando no repositório `AI-Dev-Machine`.
-
-## O que será configurado pela IA
-
-- aplicativos desktop: ChatGPT Desktop/Codex, Claude Desktop e Google Antigravity IDE;
-- CLIs de IA: Codex CLI, Claude Code, GitHub Copilot CLI, Gemini CLI e Antigravity CLI quando suportado;
-- ferramentas de desenvolvimento: Git, GitHub CLI, Node.js LTS, npm, pnpm, Python, uv, ripgrep, jq, ast-grep, Playwright CLI, Microsoft WinApp CLI (winapp), AutoHotkey v2, Graphify, Semgrep, Trivy e Gitleaks;
-- 33 Skills globais gerenciadas;
-- 7 Especialistas gerenciados (Agency Agents);
-- MCPs base e catálogo sob demanda.
-
-Os métodos e versões devem ser confirmados na documentação oficial atual da máquina real.
-
-## Taxonomia Conceitual: O que é o quê?
-
-Para evitar sobrecarga de contexto ("Agent Soup" ou "Skill Soup"), o ambiente divide responsabilidades com clareza:
-
-- **`AGENTS.md` (Regras Operacionais)**: É a lei suprema do repositório. Define invariantes, comandos, estilo e limites de ação da IA.
-- **Agency Agents (QUEM / Especialistas)**: Personas com perspectiva de domínio profundo, padrões mentais e entregáveis técnicos arquitetados.
-- **Skills (COMO / Métodos)**: Procedimentos práticos, runbooks passo a passo e conhecimento de ferramentas.
-- **MCPs (Ferramentas & Contexto Externo)**: Servidores de integração com bancos, browsers, APIS e documentação externa.
-- **Graphify (ONDE ESTÁ / Estrutura)**: Mapa estrutural de dependências, comunidades de código e topologia do repositório.
-- **CALM (ONDE ESTAMOS / Liveness)**: Mapa operacional da tarefa em andamento (objetivo, evidências, blast radius e próximo passo seguro).
-
-## Especialistas Gerenciados (Agency Agents)
-
-O ecossistema gerencia seletivamente 7 especialistas canônicos em `%USERPROFILE%\.agents\agents`:
-
-| Especialista | Slug | Domínio | Quando Ativar |
-|---|---|---|---|
-| **Software Architect** | `software-architect` | Arquitetura | Decisões de arquitetura macro, bounded contexts (DDD), ADRs e trade-offs. |
-| **Backend Architect** | `backend-architect` | Backend / APIs | Governança de APIs (OpenAPI/gRPC), resiliência distribuída e migrações zero-downtime. |
-| **Frontend Developer** | `frontend-developer` | Frontend / UI | Engenharia de componentes, estado complexo, WCAG AA e Core Web Vitals. |
-| **Database Optimizer** | `database-optimizer` | Banco de Dados | Query plans (`EXPLAIN ANALYZE`), estratégias de indexação e schema design. |
-| **Security Architect** | `security-architect` | Segurança | Modelagem de ameaças, superfícies de ataque, trust boundaries e defesa em profundidade. |
-| **Test Automation Engineer** | `test-automation-engineer` | Testes / QA | Arquitetura de testes E2E Playwright determinísticos, fixtures isoladas e suites sem flake. |
-| **DevOps Automator** | `devops-automator` | DevOps / Infra | CI/CD GitHub Actions, Docker, IaC e automação de deployment. |
-
-### Regra Estrita de Delegação
-- **Tarefas triviais** (renames, pequenas alterações de CSS, correções de poucas linhas): resolvidas diretamente pelo agente atual sem delegação.
-- **Tarefas de domínio substantivas**: ativam a perspectiva ou persona do especialista sob demanda.
-
-## Skills gerenciadas
-
-| Skill | Fonte | Finalidade |
-|---|---|---|
-| context-engineering | addyosmani/agent-skills | Gestão progressiva de contexto |
-| prompt-master | nidhinjs/prompt-master | Estruturação de prompts |
-| systematic-debugging | obra/superpowers | Investigação de causa raiz |
-| verification-before-completion | obra/superpowers | Verificação antes da conclusão |
-| vercel-react-best-practices | vercel-labs/agent-skills | Boas práticas React/Next.js |
-| ui-ux-pro-max | nextlevelbuilder/ui-ux-pro-max-skill | Design de UI/UX |
-| frontend-design | anthropics/claude-code | Design visual e interação |
-| web-design-guidelines | vercel-labs/agent-skills | Diretrizes de interfaces web |
-| supabase | supabase/agent-skills | Supabase e autenticação |
-| supabase-postgres-best-practices | supabase/agent-skills | Schema e desempenho Postgres |
-| security-best-practices | openai/skills | Práticas de segurança |
-| security-threat-model | openai/skills | Modelagem de ameaças |
-| finding-google-skills | google/skills | Carregamento sob demanda de Skills Google |
-| graphify | Graphify-Labs/graphify | Skill de análise estrutural do código |
-| playwright | openai/skills | Automação de navegador |
-| caveman | JuliusBrussee/caveman | Saída compacta, manual/on-demand |
-| diagnosing-bugs | mattpocock/skills | Loop disciplinado para bugs difíceis e regressões |
-| code-review | mattpocock/skills | Revisão de diffs em dois eixos (Standards vs Spec) |
-| codebase-design | mattpocock/skills | Vocabulário e princípios de design de módulos profundos |
-| improve-codebase-architecture | mattpocock/skills | Identificação de atrito e refatoração arquitetural |
-| cybersecurity-review | ericmjl/skills | Auditoria abrangente em 9 dimensões de segurança |
-| security-review | bestdeejay-design/agent-skills | Orquestração de scanners reais (Semgrep, Trivy, Gitleaks, etc.) |
-| review-skills | tomzx/agents | Auditoria da biblioteca de skills (duplicatas, links, gaps) |
-| skill-security-review | klh/speedy-claude | Auditoria de segurança antes de instalar skills de terceiros |
-| domain-modeling | mattpocock/skills | Modelagem de domínio e linguagem ubíqua |
-| resolving-merge-conflicts | mattpocock/skills | Resolução estruturada de conflitos de merge e rebase |
-| devils-advocate | Mathews-Tom/armory | Desafio adversarial a planos, código e arquitetura (pre-mortem, inversão) |
-| impeccable | pbakaus/impeccable | Design craft e direção estética anti-slop (Paul Bakaus) |
-| calm | Eilodon/CALM | Workflow e mapa de liveness (Coding Agent Liveness Map, call graph e safe edit) |
-| ponytail | DietrichGebert/ponytail | Redução de overengineering, soluções mínimas e YAGNI |
-| winapp | local (AI-Dev-Machine) | Automação e QA Físico de UI desktop Windows via Microsoft WinApp CLI (`winapp ui`) |
-| strix | local (AI-Dev-Machine) | Pentest autônomo com agentes de IA, ethical hacking e validação de PoC (Strix) |
-| understand-anything | local (AI-Dev-Machine) | Análise profunda de repositórios e geração de grafos de conhecimento interativos (.ua) via Understand-Anything |
-
-`finding-google-skills` não instala o catálogo Google inteiro. `graphify` usa somente a variante de Agent Skills. `caveman` não instala proxy, hooks ou serviço always-on. `ponytail` instala somente a Skill canônica, sem hooks ou serviços. `winapp` utiliza o CLI oficial da Microsoft (`Microsoft.winappcli`). `strix` é gerenciado localmente no AI-Dev-Machine como skill sem instalar o binário localmente até ser explicitamente requisitado. `understand-anything` orienta a geração do grafo canônico (`.ua/knowledge-graph.json`) e visualização interativa do código.
-
-## MCPs
-
-### Base
-
-- Context7
-- Chrome DevTools (possui integração nativa no fluxo de browser do Antigravity IDE; não configurar MCP redundante se a integração já estiver disponível)
-
-### Sob demanda
-
-- Next DevTools para projetos Next.js
-- Supabase MCP
-- GitHub MCP
-- Vercel MCP
-- Semgrep MCP
-- Playwright MCP
-- Graphify MCP
-- CALM MCP (Coding Agent Liveness Map)
-
-Disponível sob demanda não significa sempre ativo. A configuração deve usar o formato oficial atual de cada agente e preservar integrações existentes.
-
-## Progressive Disclosure
-
-Ferramentas e Skills podem estar instaladas globalmente sem serem carregadas em todas as tarefas. Use apenas o que for relevante:
+Um projeto compatível com a Architecture v2 é organizado da seguinte forma:
 
 ```text
-Código:   rg → ast-grep → leitura direcionada → Graphify quando necessário
-Docs:     local/versionada → oficial → Context7
-Browser:  Playwright CLI → Chrome DevTools para diagnóstico profundo
-GitHub:   git → gh → GitHub MCP quando trouxer benefício
+meu-projeto/
+├── AGENTS.md                  # Constituição enxuta de invariantes e comandos
+├── GEMINI.md                  # Bridge nativo para Antigravity / Gemini (@./AGENTS.md)
+├── .agents/                   # Diretório físico ISOLADO (ignorado pelo git)
+│   ├── rules/                 # Regras contextuais (architecture, git, stack)
+│   ├── skills/                # Links individuais para skills habilitadas no projeto
+│   ├── agents/                # Especialistas cognitivos e de domínio
+│   ├── plugins/               # Plugins Antigravity
+│   ├── hooks.json             # Hooks determinísticos de proteção e ciclo de vida
+│   └── mcp_config.json        # Configuração de MCPs habilitados no projeto
+├── docs/                      # Conhecimento humano e histórico sob demanda
+│   ├── architecture/          # Visão arquitetural e diagramas
+│   ├── decisions/             # Architecture Decision Records (ADRs)
+│   └── runbooks/              # Runbooks operacionais e procedimentos
+└── src/                       # Código-fonte da aplicação
 ```
 
-## Preservação
+---
 
-O ambiente é aditivo e preservador:
+## 4. Três Categorias de Conhecimento
 
-- nada existente é removido automaticamente;
-- Skills externas ou desconhecidas são preservadas;
-- configurações existentes recebem backup e merge;
-- não há prune nem substituição indiscriminada;
-- autenticação permanece sob controle do usuário.
+Para otimizar o foco da IA sem comprometer o raciocínio profundo:
 
-## Instalação em nova máquina
+1. **Instrução Permanente (`AGENTS.md`)**:
+   - Invariantes inegociáveis do projeto (ex: não expor secrets, não fazer ações destrutivas sem autorização, comandos canônicos de teste).
+   - Deve ser conciso e verificável.
+2. **Conhecimento Contextual (`.agents/rules/`, `.agents/skills/`, `.agents/agents/`)**:
+   - Carregado sob demanda quando a tarefa exigir (ex: regras de Supabase/Postgres, UI/UX craft, análise com Graphify, E2E com Playwright).
+3. **Documentação Histórica (`docs/`)**:
+   - ADRs, runbooks, post-mortems e diagramas.
+   - Não consome contexto permanentemente, sendo consultado pela IA apenas quando relevante.
 
-1. Instale uma IA com acesso ao terminal.
-2. Clone ou baixe este repositório.
-3. Entregue `SETUP-AI-ENVIRONMENT.md` à IA.
-4. Revise e execute o inventário proposto.
-5. Instale e valide programas, CLIs, aplicativos e MCPs pelas fontes oficiais atuais.
-6. Execute `install-skills.ps1 -DryRun` e revise o plano.
-7. Execute `install-skills.ps1`.
-8. Faça os logins interativos solicitados.
-9. Revise o relatório final; só declare o ambiente pronto com evidências reais.
+---
 
-## Iniciar um projeto novo
+## 5. Especialistas & Agentes
 
-Quando ainda não existe código, repositório ou arquitetura:
+### Especialistas Cognitivos (Separação Mental de Papéis)
+- **`researcher`**: Investigação aprofundada, navegação arquitetural, levantamento de evidências e Graphify. Modo estrito somente leitura (nunca altera código).
+- **`reviewer`**: Análise crítica e independente de diffs, validação de especificações, detecção de regressões e testes de caso de borda.
+- **`security-reviewer`**: Auditoria de segurança de código, análise de superfície de ataque, SAST e conformidade com OWASP.
 
-1. converse com uma IA e explique a ideia do produto;
-2. descreva usuários, funcionalidades, restrições e objetivos;
-3. entregue `CREATE-PROJECT.md`;
-4. revise a proposta de stack e arquitetura;
-5. deixe a IA criar o projeto do zero e validar cada etapa.
+### Especialistas de Domínio (Agency Agents)
+- **`software-architect`**: Decisões macro, bounded contexts (DDD) e matrizes de trade-off.
+- **`backend-architect`**: Contratos de API, resiliência e migrações zero-downtime.
+- **`frontend-developer`**: Engenharia de componentes, estado, acessibilidade WCAG e Core Web Vitals.
+- **`database-optimizer`**: Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices e RLS.
+- **`security-architect`**: Modelagem de ameaças e trust boundaries.
+- **`test-automation-engineer`**: Automação E2E (Playwright, WinApp) e eliminação de flakes.
+- **`devops-automator`**: Pipelines de CI/CD (GitHub Actions), Docker e automação de release.
 
-`CREATE-PROJECT.md` não é um prompt para manutenção de um repositório existente.
+---
 
-## Atualizar Skills
+## 6. Profiles Composáveis
 
-Para atualizar as Skills gerenciadas a partir dos repositórios oficiais upstream, use a flag `-Update`:
+| Profile | Finalidade | Regras Habilitadas | Skills Principais |
+|---|---|---|---|
+| **`base`** | Engenharia padrão universal | Invariantes, Git, Verification | `context-engineering`, `systematic-debugging`, `diagnosing-bugs`, `ponytail`, `calm`, `graphify`, `codebase-design`, `devils-advocate`, `code-review` |
+| **`web-supabase`** | Web fullstack moderno | Web Guidelines, Database Postgres | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `vercel-react-best-practices`, `supabase`, `supabase-postgres-best-practices`, `playwright` |
+| **`windows-desktop`** | Aplicações desktop Windows | Windows Desktop Guidelines | `winapp`, `playwright`, `security-best-practices` |
+| **`monorepo`** | Monorepos e arquiteturas modulares | Modular Invariants | `domain-modeling`, `improve-codebase-architecture`, `understand-anything` |
 
-Primeiro simule a atualização:
+---
 
-```powershell
-.\install-skills.ps1 -Update -DryRun
-```
+## 7. Registry Canônico (`registry/`)
 
-Depois execute a atualização real:
+A fonte única da verdade para todo o ecossistema reside em arquivos JSON estruturados:
 
-```powershell
-.\install-skills.ps1 -Update
-```
+- [`registry/skills.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/skills.json): 33 Skills canônicas catalogadas com categoria, repositório de origem, ferramentas compatíveis e descrição.
+- [`registry/agents.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/agents.json): 10 Agentes (3 cognitivos + 7 de domínio) com papéis, ferramentas e personas.
+- [`registry/mcps.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/mcps.json): 10 Servidores MCP com escopo, transporte e variáveis de autenticação.
+- [`registry/plugins.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/plugins.json): 6 Plugins composáveis para Antigravity.
+- [`registry/profiles.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/profiles.json): 4 Perfis arquiteturais prontos para uso.
 
-O sincronizador usa clones temporários, valida `SKILL.md`, atualiza somente diretórios gerenciados, restaura a versão anterior se uma atualização falhar e revalida as junctions do Google Antigravity IDE. Se executado sem `-Update`, o script verifica e mantém as Skills locais sem fazer requisições de rede.
+---
 
-## Segurança
+## 8. Segurança e Idempotência
 
-- use somente fontes oficiais e documentação atual;
-- não armazene segredos, tokens ou chaves em texto puro;
-- não desabilite UAC ou políticas globais;
-- faça backup antes de alterar configurações;
-- deixe autenticação para fluxos interativos oficiais;
-- trate bloqueios de rede, permissão e sandbox como limitações explícitas.
-
-## Filosofia
-
-Pequeno. Portátil. Preservador. Multi-agent. Determinístico onde há automação própria e flexível onde a documentação oficial da máquina precisa ser consultada.
+- **Zero Caminhos Hardcoded**: Toda configuração respeita `$env:USERPROFILE` e caminhos relativos ao projeto.
+- **Proteção de Secrets**: Verificações do `doctor` auditam a presença de variáveis de ambiente sem expor ou versionar valores confidenciais.
+- **Backups e Rollback**: Qualquer operação de `migrate` gera backup automático antes de tocar no disco e possui rotina de restauração automática em caso de falha.
+- **Preservação de Conteúdo Externo**: Scripts e ferramentas respeitam a tag `[PRESERVE EXTERNAL]`, nunca removendo artefatos customizados pelo usuário.

@@ -1,2 +1,4 @@
 .git-dir/
-.agents/
+.agents/skills/
+.agents/cache/
+.aidev_backup_*/
