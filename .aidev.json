@@ -1,0 +1,31 @@
+{
+  "$schema": "./schemas/aidev-manifest.schema.json",
+  "schemaVersion": 1,
+  "preset": "base",
+  "capabilities": [
+    "core"
+  ],
+  "projectRules": [],
+  "validationGates": {
+    "commands": {
+      "doctor": "powershell -ExecutionPolicy Bypass -File .\\aidev.ps1 doctor",
+      "test": "powershell -ExecutionPolicy Bypass -File .\\aidev.ps1 test",
+      "audit": "powershell -ExecutionPolicy Bypass -File .\\aidev.ps1 audit"
+    },
+    "automated": [
+      {
+        "id": "automated-suite",
+        "description": "Execute comprehensive Architecture v2.1 validation suite",
+        "command": "powershell",
+        "args": [
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          ".\\tests\\run-tests.ps1"
+        ]
+      }
+    ],
+    "human": [],
+    "hardware": []
+  }
+}

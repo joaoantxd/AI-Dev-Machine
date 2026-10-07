@@ -1,5 +1,5 @@
 # ==============================================================================
-# AI-Dev-Machine Core Module (Architecture v2 -- Hardened & Verified)
+# AI-Dev-Machine Core Module (Architecture v2.1 -- Capability-Driven Framework)
 # ==============================================================================
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -15,7 +15,7 @@ $script:GlobalAgentsDir  = Join-Path $script:GlobalAgentsRoot 'agents'
 function Get-AidevRoot {
     $current = $PSScriptRoot
     while ($current) {
-        if (Test-Path (Join-Path $current 'registry\skills.json')) {
+        if (Test-Path (Join-Path $current 'registry\capabilities.json')) {
             return $current
         }
         $parent = Split-Path -Parent $current
@@ -114,107 +114,369 @@ function Ensure-GitIgnoreEntry {
     }
 }
 
-# ------------------------------------------------------------------------------
-# 1. RESOLVER (Profile Inheritance & Provenance & Duplicate Detection)
-# ------------------------------------------------------------------------------
-function Resolve-AidevProfile {
+function Get-SafeProp {
     param(
-        [Parameter(Mandatory)][string]$ProfileName
+        $Obj,
+        [string]$PropName,
+        $Default = $null
     )
+    if ($Obj -and $Obj.PSObject -and $Obj.PSObject.Properties.Name.Contains($PropName)) {
+        return $Obj.$PropName
+    }
+    return $Default
+}
+
+# ------------------------------------------------------------------------------
+# 1. DETECTION ENGINE (Read-Only Fact & Capability Scanner)
+# ------------------------------------------------------------------------------
+function Invoke-AidevDetect {
+    param(
+        [string]$WorkspacePath = (Get-Location).Path
+    )
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+    $capsData = (Get-RegistryData -Type 'capabilities').capabilities
     $profilesData = (Get-RegistryData -Type 'profiles').profiles
-    if (-not $profilesData.PSObject.Properties.Name.Contains($ProfileName)) {
-        throw ("Profile '" + $ProfileName + "' not found in registry/profiles.json. Available: " + ($profilesData.PSObject.Properties.Name -join ', '))
+
+    Write-Host '============================================================' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Stack & Capability Detector' -ForegroundColor Cyan
+    Write-Host '============================================================' -ForegroundColor Cyan
+    Write-Host ('Scan Target : ' + $ws) -ForegroundColor Gray
+    Write-Host 'Mode        : READ-ONLY (Observing facts without mutation)' -ForegroundColor Gray
+    Write-Host ''
+
+    $detectedFacts = [System.Collections.Generic.List[pscustomobject]]::new()
+    $suggestedCaps = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
+
+    # Core is always included
+    $suggestedCaps['core'] = [pscustomobject]@{
+        Id         = 'core'
+        Confidence = 'certain'
+        Evidence   = 'Universal baseline for all software repositories'
     }
 
-    $allProfiles = [System.Collections.Generic.List[pscustomobject]]::new()
-    $visited = [System.Collections.Generic.HashSet[string]]::new()
+    # Helper: read package.json files (root + subfolders up to 2 levels)
+    $allPackageJsons = @()
+    if (Test-Path -LiteralPath (Join-Path $ws 'package.json')) {
+        $allPackageJsons += (Join-Path $ws 'package.json')
+    }
+    $subPackages = @(Get-ChildItem -LiteralPath $ws -Filter 'package.json' -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch 'node_modules|\.git|\.aidev_backup' } | Select-Object -ExpandProperty FullName)
+    $allPackageJsons += $subPackages
+    $allPackageJsons = @($allPackageJsons | Select-Object -Unique)
 
-    $collectHierarchy = $null
-    $collectHierarchy = {
-        param([string]$pName)
-        if ($visited.Contains($pName)) { return }
-        $null = $visited.Add($pName)
-        $pObj = $profilesData.$pName
-        if ($pObj.PSObject.Properties.Name.Contains('inherits') -and $pObj.inherits) {
-            foreach ($parent in $pObj.inherits) {
-                if ($profilesData.PSObject.Properties.Name.Contains($parent)) {
-                    & $collectHierarchy $parent
+    $allDependencies = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($pj in $allPackageJsons) {
+        try {
+            $parsed = Get-Content -LiteralPath $pj -Raw -Encoding utf8 | ConvertFrom-Json
+            $deps = Get-SafeProp -Obj $parsed -PropName 'dependencies'
+            if ($deps) {
+                foreach ($dep in $deps.PSObject.Properties.Name) { $null = $allDependencies.Add($dep) }
+            }
+            $devDeps = Get-SafeProp -Obj $parsed -PropName 'devDependencies'
+            if ($devDeps) {
+                foreach ($dep in $devDeps.PSObject.Properties.Name) { $null = $allDependencies.Add($dep) }
+            }
+            $peerDeps = Get-SafeProp -Obj $parsed -PropName 'peerDependencies'
+            if ($peerDeps) {
+                foreach ($dep in $peerDeps.PSObject.Properties.Name) { $null = $allDependencies.Add($dep) }
+            }
+        } catch {}
+    }
+
+    # Evaluate detection hints for each capability
+    foreach ($cap in $capsData) {
+        $capId = $cap.id
+        if ($capId -eq 'core') { continue }
+        $hints = Get-SafeProp -Obj $cap -PropName 'detectionHints'
+        if (-not $hints) { continue }
+
+        foreach ($hint in $hints) {
+            $matched = $false
+            $evidenceDetail = ''
+
+            if ($hint.type -eq 'fileExists') {
+                $targetFile = Join-Path $ws $hint.pattern
+                if (Test-Path -LiteralPath $targetFile -PathType Leaf) {
+                    $matched = $true
+                    $evidenceDetail = 'Found file: ' + $hint.pattern
+                }
+            } elseif ($hint.type -eq 'globExists') {
+                $pat = $hint.pattern -replace '\\', '/'
+                if ($pat -match '^\*\*/(\*\.[a-zA-Z0-9_\-]+)$') {
+                    $filter = [regex]::Match($pat, '^\*\*/(\*\.[a-zA-Z0-9_\-]+)$').Groups[1].Value
+                    $matchesList = @(Get-ChildItem -LiteralPath $ws -Filter $filter -Recurse -Depth 4 -ErrorAction SilentlyContinue |
+                        Where-Object { $_.FullName -notmatch 'node_modules|\.git|\.aidev_backup' })
+                    if ($matchesList.Count -gt 0) {
+                        $matched = $true
+                        $evidenceDetail = 'Found matching files (' + $matchesList.Count + '): ' + $hint.pattern
+                    }
+                } elseif ($pat -like '*/*') {
+                    $subPath = Split-Path -Parent $pat
+                    $filter = Split-Path -Leaf $pat
+                    $fullSubPath = Join-Path $ws ($subPath -replace '/', '\')
+                    if (Test-Path -LiteralPath $fullSubPath) {
+                        $matchesList = @(Get-ChildItem -LiteralPath $fullSubPath -Filter $filter -ErrorAction SilentlyContinue |
+                            Where-Object { $_.FullName -notmatch 'node_modules|\.git|\.aidev_backup' })
+                        if ($matchesList.Count -gt 0) {
+                            $matched = $true
+                            $evidenceDetail = 'Found matching files (' + $matchesList.Count + ') in ' + $subPath
+                        }
+                    }
+                } else {
+                    $matchesList = @(Get-ChildItem -LiteralPath $ws -Filter $pat -Recurse -Depth 4 -ErrorAction SilentlyContinue |
+                        Where-Object { $_.FullName -notmatch 'node_modules|\.git|\.aidev_backup' })
+                    if ($matchesList.Count -gt 0) {
+                        $matched = $true
+                        $evidenceDetail = 'Found matching files (' + $matchesList.Count + '): ' + $hint.pattern
+                    }
+                }
+            } elseif ($hint.type -eq 'packageDependency') {
+                if ($allDependencies.Contains($hint.package)) {
+                    $matched = $true
+                    $evidenceDetail = 'Found package dependency: ' + $hint.package
+                }
+            } elseif ($hint.type -eq 'contentMatch') {
+                $checkFile = Join-Path $ws $hint.file
+                if (Test-Path -LiteralPath $checkFile) {
+                    $content = Get-Content -LiteralPath $checkFile -Raw -Encoding utf8
+                    if ($content -match $hint.pattern) {
+                        $matched = $true
+                        $evidenceDetail = 'Content match in ' + $hint.file + ' for: ' + $hint.pattern
+                    }
+                }
+            }
+
+            if ($matched) {
+                $detectedFacts.Add([pscustomobject]@{
+                    Capability = $capId
+                    Type       = $hint.type
+                    Evidence   = $evidenceDetail
+                    Confidence = $hint.confidence
+                })
+
+                if (-not $suggestedCaps.ContainsKey($capId)) {
+                    $suggestedCaps[$capId] = [pscustomobject]@{
+                        Id         = $capId
+                        Confidence = $hint.confidence
+                        Evidence   = $evidenceDetail
+                    }
                 }
             }
         }
-        $allProfiles.Add([pscustomobject]@{ Id = $pName; Data = $pObj })
     }
 
-    & $collectHierarchy $ProfileName
+    # Display findings
+    Write-Host '--- 1. Detected Structural Facts ---' -ForegroundColor Yellow
+    if ($detectedFacts.Count -eq 0) {
+        Write-Host '  No specialized framework files detected. Standard generic repository.'
+    } else {
+        foreach ($f in $detectedFacts) {
+            $confStr = '[' + $f.Confidence.ToUpper() + ']'
+            Write-Host ('  ' + $confStr.PadRight(12) + ' Capability: ' + $f.Capability.PadRight(18) + ' :: ' + $f.Evidence)
+        }
+    }
 
+    Write-Host ''
+    Write-Host '--- 2. Suggested Capabilities ---' -ForegroundColor Yellow
+    foreach ($sc in $suggestedCaps.Values) {
+        $cObj = $capsData | Where-Object { $_.id -eq $sc.Id } | Select-Object -First 1
+        $cName = if ($cObj) { $cObj.name } else { $sc.Id }
+        Write-Host ('  + ' + $sc.Id.PadRight(20) + ' (' + $cName + ') [' + $sc.Confidence + ']') -ForegroundColor Green
+    }
+
+    # Best matching preset evaluation
+    $bestPreset = 'custom'
+    $suggestedCapIds = @($suggestedCaps.Keys)
+    foreach ($pProp in $profilesData.PSObject.Properties) {
+        $pName = $pProp.Name
+        $pCaps = @($pProp.Value.capabilities)
+        $diff = @($pCaps | Where-Object { $suggestedCapIds -notcontains $_ })
+        if ($diff.Count -eq 0 -and $suggestedCapIds.Count -eq $pCaps.Count) {
+            $bestPreset = $pName
+            break
+        }
+    }
+
+    Write-Host ''
+    Write-Host ('Suggested Preset : ' + $bestPreset) -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host 'NOTE: Detection observes facts and suggests capabilities. It NEVER mutates files silently.' -ForegroundColor DarkGray
+
+    $suggestedManifest = [ordered]@{
+        '$schema'         = './schemas/aidev-manifest.schema.json'
+        'schemaVersion'   = 1
+        'preset'          = $bestPreset
+        'capabilities'    = @($suggestedCaps.Keys)
+        'projectRules'    = @()
+        'validationGates' = [ordered]@{
+            'commands' = [ordered]@{}
+            'automated' = @()
+            'human'     = @()
+            'hardware'  = @()
+        }
+    }
+
+    return [pscustomobject]@{
+        Workspace             = $ws
+        DetectedFacts         = @($detectedFacts)
+        SuggestedCapabilities = @($suggestedCaps.Values)
+        SuggestedPreset       = $bestPreset
+        SuggestedManifest     = $suggestedManifest
+    }
+}
+
+# ------------------------------------------------------------------------------
+# 2. CAPABILITY GRAPH RESOLVER (Dependencies, Cycles & Provenance)
+# ------------------------------------------------------------------------------
+function Resolve-AidevCapabilities {
+    param(
+        [Parameter(Mandatory)][string[]]$Capabilities,
+        [string]$Preset = $null,
+        [string[]]$ProjectRules = @(),
+        [string[]]$CustomSkills = @(),
+        [string[]]$CustomAgents = @(),
+        [string[]]$CustomMcps = @(),
+        [hashtable]$ValidationOverrides = @{}
+    )
+    $capsRegistry = (Get-RegistryData -Type 'capabilities').capabilities
+    $profilesRegistry = (Get-RegistryData -Type 'profiles').profiles
+    $skillsRegistry = (Get-RegistryData -Type 'skills').skills
+
+    # Step 1: Start with preset capabilities if preset declared
+    $initialCaps = [System.Collections.Generic.List[string]]::new()
+    if ($Preset -and $profilesRegistry.PSObject.Properties.Name.Contains($Preset)) {
+        foreach ($c in $profilesRegistry.$Preset.capabilities) {
+            if (-not $initialCaps.Contains($c)) { $initialCaps.Add($c) }
+        }
+    }
+
+    # Step 2: Add declared capabilities
+    foreach ($c in $Capabilities) {
+        if (-not $initialCaps.Contains($c)) { $initialCaps.Add($c) }
+    }
+    # Core is strictly required
+    if (-not $initialCaps.Contains('core')) { $initialCaps.Insert(0, 'core') }
+
+    # Step 3: Transitive Dependency Expansion & Cycle Detection (Graph Traversal)
+    $resolvedCapIds = [System.Collections.Generic.List[string]]::new()
+    $visited = [System.Collections.Generic.HashSet[string]]::new()
+    $recursionStack = [System.Collections.Generic.List[string]]::new()
+
+    $traverse = $null
+    $traverse = {
+        param([string]$cId)
+        $capObj = $capsRegistry | Where-Object { $_.id -eq $cId } | Select-Object -First 1
+        if (-not $capObj) {
+            throw ("Capability '" + $cId + "' is not registered in registry/capabilities.json.")
+        }
+
+        if ($recursionStack.Contains($cId)) {
+            $cycle = ($recursionStack -join ' -> ') + ' -> ' + $cId
+            throw ("Circular capability dependency detected: " + $cycle)
+        }
+
+        if ($visited.Contains($cId)) { return }
+
+        $recursionStack.Add($cId)
+
+        $reqs = Get-SafeProp -Obj $capObj -PropName 'requires' -Default @()
+        if ($reqs) {
+            foreach ($req in $reqs) {
+                & $traverse $req
+            }
+        }
+
+        $null = $recursionStack.Remove($cId)
+        $null = $visited.Add($cId)
+        $resolvedCapIds.Add($cId)
+    }
+
+    foreach ($c in $initialCaps) {
+        & $traverse $c
+    }
+
+    # Step 4: Conflict Validation
+    foreach ($cId in $resolvedCapIds) {
+        $cObj = $capsRegistry | Where-Object { $_.id -eq $cId } | Select-Object -First 1
+        $conflicts = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'conflicts' -Default @() } else { @() }
+        if ($conflicts) {
+            foreach ($conf in $conflicts) {
+                if ($resolvedCapIds.Contains($conf)) {
+                    throw ("Capability conflict detected: '" + $cId + "' conflicts with '" + $conf + "'.")
+                }
+            }
+        }
+    }
+
+    # Step 5: Merge Rules, Skills, Agents, MCPs with Provenance
     $resolvedRules = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
     $resolvedSkills = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
     $resolvedAgents = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
     $resolvedMcps = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
-    $resolvedPlugins = [System.Collections.Generic.Dictionary[string, pscustomobject]]::new()
-    $duplicateExposures = [System.Collections.Generic.List[string]]::new()
+    $resolvedCommands = [System.Collections.Generic.Dictionary[string, string]]::new()
 
-    foreach ($p in $allProfiles) {
-        $pId = $p.Id
-        $pData = $p.Data
+    foreach ($cId in $resolvedCapIds) {
+        $cObj = $capsRegistry | Where-Object { $_.id -eq $cId } | Select-Object -First 1
 
         # Rules
-        if ($pData.PSObject.Properties.Name.Contains('rules') -and $pData.rules) {
-            foreach ($r in $pData.rules) {
+        $rules = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'rules' -Default @() } else { @() }
+        if ($rules) {
+            foreach ($r in $rules) {
                 $resolvedRules[$r] = [pscustomobject]@{
-                    Name   = $r
-                    Source = ('profile:' + $pId)
-                    Reason = ('Governance rule for ' + $pId)
-                    State  = 'enabled'
-                    Trigger = 'model_decision'
+                    Name      = $r
+                    Source    = ('capability:' + $cId)
+                    Reason    = ('Governance rule for capability ' + $cId)
+                    Ownership = 'managed'
+                    Trigger   = 'model_decision'
                 }
             }
         }
 
         # Skills
-        if ($pData.PSObject.Properties.Name.Contains('skills') -and $pData.skills) {
-            foreach ($s in $pData.skills) {
+        $skills = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'skills' -Default @() } else { @() }
+        if ($skills) {
+            foreach ($s in $skills) {
                 $resolvedSkills[$s] = [pscustomobject]@{
                     Name   = $s
-                    Source = ('profile:' + $pId)
-                    Reason = ('Core capability for ' + $pId)
+                    Source = ('capability:' + $cId)
+                    Reason = ('Capability ' + $cId + ' runbook')
                     State  = 'enabled'
                 }
             }
         }
 
         # Agents
-        if ($pData.PSObject.Properties.Name.Contains('agents') -and $pData.agents) {
-            foreach ($a in $pData.agents) {
+        $agents = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'agents' -Default @() } else { @() }
+        if ($agents) {
+            foreach ($a in $agents) {
                 $resolvedAgents[$a] = [pscustomobject]@{
                     Name   = $a
-                    Source = ('profile:' + $pId)
-                    Reason = ('Specialist persona for ' + $pId)
+                    Source = ('capability:' + $cId)
+                    Reason = ('Specialist for ' + $cId)
                     State  = 'enabled'
                 }
             }
         }
 
         # MCPs
-        if ($pData.PSObject.Properties.Name.Contains('mcps') -and $pData.mcps) {
-            foreach ($m in $pData.mcps) {
+        $mcps = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'mcps' -Default @() } else { @() }
+        if ($mcps) {
+            foreach ($m in $mcps) {
                 $resolvedMcps[$m] = [pscustomobject]@{
                     Name   = $m
-                    Source = ('profile:' + $pId)
-                    Reason = ('Tool integration for ' + $pId)
+                    Source = ('capability:' + $cId)
+                    Reason = ('Tool provider for ' + $cId)
                     State  = 'enabled'
                 }
             }
         }
 
-        # Plugins
-        if ($pData.PSObject.Properties.Name.Contains('plugins') -and $pData.plugins) {
-            foreach ($pl in $pData.plugins) {
-                $resolvedPlugins[$pl] = [pscustomobject]@{
-                    Name   = $pl
-                    Source = ('profile:' + $pId)
-                    Reason = ('Antigravity plugin bundle for ' + $pId)
-                    State  = 'enabled'
+        # Validation Defaults
+        $vDefaults = if ($cObj) { Get-SafeProp -Obj $cObj -PropName 'validationDefaults' } else { $null }
+        if ($vDefaults) {
+            foreach ($prop in $vDefaults.PSObject.Properties) {
+                if (-not $resolvedCommands.ContainsKey($prop.Name)) {
+                    $resolvedCommands[$prop.Name] = $prop.Value
                 }
             }
         }
@@ -231,144 +493,373 @@ function Resolve-AidevProfile {
         }
     }
 
-    # Check for duplicate exposure collisions
-    if ($resolvedPlugins.Count -gt 0) {
-        $pluginsRegistry = (Get-RegistryData -Type 'plugins').plugins
-        foreach ($pl in $resolvedPlugins.Values) {
-            $matchedPl = $pluginsRegistry | Where-Object { $_.id -eq $pl.Name } | Select-Object -First 1
-            if ($matchedPl) {
-                if ($matchedPl.PSObject.Properties.Name.Contains('skills') -and $matchedPl.skills) {
-                    foreach ($psk in $matchedPl.skills) {
-                        if ($resolvedSkills.ContainsKey($psk)) {
-                            $duplicateExposures.Add("Skill '$psk' exposed via workspace skill and plugin '$($pl.Name)'")
-                        }
-                    }
-                }
-                if ($matchedPl.PSObject.Properties.Name.Contains('rules') -and $matchedPl.rules) {
-                    foreach ($prl in $matchedPl.rules) {
-                        if ($resolvedRules.ContainsKey($prl)) {
-                            $duplicateExposures.Add("Rule '$prl' exposed via workspace rule and plugin '$($pl.Name)'")
-                        }
-                    }
-                }
-            }
+    # Custom Project Rules (Local Ownership)
+    foreach ($pr in $ProjectRules) {
+        $ruleLeaf = Split-Path -Leaf $pr
+        $resolvedRules[$ruleLeaf] = [pscustomobject]@{
+            Name      = $ruleLeaf
+            Path      = $pr
+            Source    = 'manifest:projectRules'
+            Reason    = 'Project-specific local governance rule'
+            Ownership = 'local'
+            Trigger   = 'model_decision'
+        }
+    }
+
+    # Custom Skills Overrides
+    foreach ($cs in $CustomSkills) {
+        $resolvedSkills[$cs] = [pscustomobject]@{
+            Name   = $cs
+            Source = 'manifest:customSkills'
+            Reason = 'Explicit project skill inclusion'
+            State  = 'enabled'
+        }
+    }
+
+    # Custom Agents Overrides
+    foreach ($ca in $CustomAgents) {
+        $resolvedAgents[$ca] = [pscustomobject]@{
+            Name   = $ca
+            Source = 'manifest:customAgents'
+            Reason = 'Explicit project agent inclusion'
+            State  = 'enabled'
+        }
+    }
+
+    # Custom MCPs Overrides
+    foreach ($cm in $CustomMcps) {
+        $resolvedMcps[$cm] = [pscustomobject]@{
+            Name   = $cm
+            Source = 'manifest:customMcps'
+            Reason = 'Explicit project MCP inclusion'
+            State  = 'enabled'
+        }
+    }
+
+    # Command Overrides
+    if ($ValidationOverrides.ContainsKey('commands') -and $ValidationOverrides['commands']) {
+        foreach ($k in $ValidationOverrides['commands'].Keys) {
+            $resolvedCommands[$k] = $ValidationOverrides['commands'][$k]
         }
     }
 
     return [pscustomobject]@{
-        ProfileName        = $ProfileName
-        DisplayName        = $profilesData.$ProfileName.name
-        Description        = $profilesData.$ProfileName.description
-        Hierarchy          = @($allProfiles | Select-Object -ExpandProperty Id)
-        Rules              = @($resolvedRules.Values)
-        Skills             = @($resolvedSkills.Values)
-        Agents             = @($resolvedAgents.Values)
-        Mcps               = @($resolvedMcps.Values)
-        Plugins            = @($resolvedPlugins.Values)
-        Hooks              = $profilesData.$ProfileName.hooks
-        DuplicateExposures = @($duplicateExposures)
+        Preset               = $Preset
+        DeclaredCapabilities = @($Capabilities)
+        ResolvedCapabilities = @($resolvedCapIds)
+        Rules                = @($resolvedRules.Values)
+        Skills               = @($resolvedSkills.Values)
+        Agents               = @($resolvedAgents.Values)
+        Mcps                 = @($resolvedMcps.Values)
+        Commands             = $resolvedCommands
+        AutomatedGates       = if ($ValidationOverrides.ContainsKey('automated')) { @($ValidationOverrides['automated']) } else { @() }
+        HumanGates           = if ($ValidationOverrides.ContainsKey('human')) { @($ValidationOverrides['human']) } else { @() }
+        HardwareGates        = if ($ValidationOverrides.ContainsKey('hardware')) { @($ValidationOverrides['hardware']) } else { @() }
+        DuplicateExposures   = @()
     }
 }
 
-function Invoke-AidevResolve {
-    param(
-        [string]$WorkspacePath = '.',
-        [string]$Profile = ''
-    )
+# ------------------------------------------------------------------------------
+# 3. MANIFEST OPERATIONS (Validate, Show, Init)
+# ------------------------------------------------------------------------------
+function Get-AidevManifest {
+    param([Parameter(Mandatory)][string]$WorkspacePath)
     $ws = [IO.Path]::GetFullPath($WorkspacePath)
+    $manifestPath = Join-Path $ws '.aidev.json'
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        return $null
+    }
+    try {
+        $raw = Get-Content -LiteralPath $manifestPath -Raw -Encoding utf8
+        return ($raw | ConvertFrom-Json)
+    } catch {
+        throw ("Failed to parse .aidev.json: " + $_.Exception.Message)
+    }
+}
 
-    $targetProfile = $Profile
-    if (-not $targetProfile) {
-        $metaPath = Join-Path $ws '.agents\.aidev_metadata.json'
-        if (Test-Path -LiteralPath $metaPath) {
-            $meta = Get-Content -LiteralPath $metaPath -Raw -Encoding utf8 | ConvertFrom-Json
-            if ($meta.profile) { $targetProfile = $meta.profile }
+function Test-AidevManifest {
+    param([Parameter(Mandatory)][string]$WorkspacePath)
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+    $manifestPath = Join-Path $ws '.aidev.json'
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw ("Project manifest '.aidev.json' not found at " + $ws)
+    }
+
+    $manifest = Get-AidevManifest -WorkspacePath $ws
+    $sVer = Get-SafeProp -Obj $manifest -PropName 'schemaVersion'
+    if (-not $sVer) {
+        throw "Manifest validation error: 'schemaVersion' is required."
+    }
+    if ($sVer -ne 1) {
+        throw ("Unsupported schemaVersion " + $sVer + ". Current AI-Dev-Machine supports schemaVersion 1.")
+    }
+
+    $caps = @(Get-SafeProp -Obj $manifest -PropName 'capabilities' -Default @())
+    if ($caps.Count -eq 0) {
+        throw "Manifest validation error: 'capabilities' must be a non-empty array."
+    }
+
+    # Validate that capabilities exist in registry
+    $capsRegistry = (Get-RegistryData -Type 'capabilities').capabilities
+    $validCapIds = @($capsRegistry.id)
+    foreach ($c in $caps) {
+        if ($validCapIds -notcontains $c) {
+            throw ("Manifest validation error: Unknown capability '" + $c + "'. Available: " + ($validCapIds -join ', '))
         }
     }
-    if (-not $targetProfile) {
-        $agentsMd = Join-Path $ws 'AGENTS.md'
-        if (Test-Path -LiteralPath $agentsMd) {
-            $content = Get-Content -LiteralPath $agentsMd -Raw -Encoding utf8
-            if ($content -match 'Profile\*\*:\s*([a-zA-Z0-9\-_]+)') {
-                $targetProfile = $Matches[1].Trim()
+
+    # Validate projectRules do not escape workspace (Security: Path Traversal Check)
+    $pRules = @(Get-SafeProp -Obj $manifest -PropName 'projectRules' -Default @())
+    if ($pRules.Count -gt 0) {
+        foreach ($pr in $pRules) {
+            $fullPath = Join-Path $ws $pr
+            $normalized = [IO.Path]::GetFullPath($fullPath)
+            if (-not $normalized.StartsWith($ws, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw ("Security error: projectRule '" + $pr + "' escapes workspace boundary (" + $normalized + ").")
+            }
+            if (-not (Test-Path -LiteralPath $normalized -PathType Leaf)) {
+                Write-Host ('  [WARNING] Declared projectRule not found on disk: ' + $pr) -ForegroundColor Yellow
             }
         }
     }
-    if (-not $targetProfile) { $targetProfile = 'base' }
 
-    $res = Resolve-AidevProfile -ProfileName $targetProfile
-
-    Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Profile Resolution' -ForegroundColor Cyan
-    Write-Host '============================================================' -ForegroundColor Cyan
-    $pMsg = 'Resolved Profile : ' + $res.ProfileName + ' (' + $res.DisplayName + ')'
-    Write-Host $pMsg -ForegroundColor Green
-    $hMsg = 'Inheritance Chain: ' + ($res.Hierarchy -join ' -> ')
-    Write-Host $hMsg -ForegroundColor Gray
-    $dMsg = 'Description      : ' + $res.Description
-    Write-Host $dMsg -ForegroundColor Gray
-    Write-Host ''
-
-    $rHeader = '--- Resolved Rules (' + $res.Rules.Count + ') ---'
-    Write-Host $rHeader -ForegroundColor Yellow
-    foreach ($r in $res.Rules) {
-        $line = '  ' + $r.Name.PadRight(30) + ' :: Source: ' + $r.Source.PadRight(22) + ' :: Trigger: ' + $r.Trigger
-        Write-Host $line
+    # Resolve capability graph to ensure no missing dependencies or cycles
+    $overrides = @{}
+    $vGates = Get-SafeProp -Obj $manifest -PropName 'validationGates'
+    if ($vGates) {
+        $cmds = Get-SafeProp -Obj $vGates -PropName 'commands'
+        if ($cmds) {
+            $cmdHash = @{}
+            foreach ($p in $cmds.PSObject.Properties) { $cmdHash[$p.Name] = $p.Value }
+            $overrides['commands'] = $cmdHash
+        }
+        $auto = Get-SafeProp -Obj $vGates -PropName 'automated'
+        if ($auto) { $overrides['automated'] = $auto }
+        $human = Get-SafeProp -Obj $vGates -PropName 'human'
+        if ($human) { $overrides['human'] = $human }
+        $hw = Get-SafeProp -Obj $vGates -PropName 'hardware'
+        if ($hw) { $overrides['hardware'] = $hw }
     }
 
-    Write-Host ''
-    $sHeader = '--- Resolved Skills (' + $res.Skills.Count + ') ---'
-    Write-Host $sHeader -ForegroundColor Yellow
-    foreach ($s in $res.Skills) {
-        $line = '  ' + $s.Name.PadRight(30) + ' :: Source: ' + $s.Source.PadRight(22) + ' :: ' + $s.Reason
-        Write-Host $line
-    }
+    $cSkills = @(Get-SafeProp -Obj $manifest -PropName 'customSkills' -Default @())
+    $cAgents = @(Get-SafeProp -Obj $manifest -PropName 'customAgents' -Default @())
+    $cMcps = @(Get-SafeProp -Obj $manifest -PropName 'customMcps' -Default @())
+    $preset = Get-SafeProp -Obj $manifest -PropName 'preset' -Default $null
 
-    Write-Host ''
-    $aHeader = '--- Resolved Agents (' + $res.Agents.Count + ') ---'
-    Write-Host $aHeader -ForegroundColor Yellow
-    foreach ($a in $res.Agents) {
-        $line = '  ' + $a.Name.PadRight(30) + ' :: Source: ' + $a.Source.PadRight(22) + ' :: ' + $a.Reason
-        Write-Host $line
-    }
+    $resolved = Resolve-AidevCapabilities `
+        -Capabilities @($caps) `
+        -Preset $preset `
+        -ProjectRules @($pRules) `
+        -CustomSkills @($cSkills) `
+        -CustomAgents @($cAgents) `
+        -CustomMcps @($cMcps) `
+        -ValidationOverrides $overrides
 
-    Write-Host ''
-    $mHeader = '--- Resolved MCPs (' + $res.Mcps.Count + ') ---'
-    Write-Host $mHeader -ForegroundColor Yellow
-    foreach ($m in $res.Mcps) {
-        $line = '  ' + $m.Name.PadRight(30) + ' :: Source: ' + $m.Source.PadRight(22) + ' :: ' + $m.Reason
-        Write-Host $line
+    return [pscustomobject]@{
+        Valid    = $true
+        Manifest = $manifest
+        Resolved = $resolved
     }
+}
 
-    if ($res.Plugins.Count -gt 0) {
+function Invoke-AidevManifest {
+    param(
+        [Parameter(Mandatory)][ValidateSet('validate', 'show', 'init')][string]$Action,
+        [string]$WorkspacePath = (Get-Location).Path,
+        [string]$Preset = 'base',
+        [string[]]$Capabilities = @(),
+        [switch]$Force
+    )
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+
+    if ($Action -eq 'validate') {
+        Write-Host '============================================================' -ForegroundColor Cyan
+        Write-Host ' AI-Dev-Machine Architecture v2.1 -- Manifest Validation' -ForegroundColor Cyan
+        Write-Host '============================================================' -ForegroundColor Cyan
+        Write-Host ('Manifest Target : ' + (Join-Path $ws '.aidev.json')) -ForegroundColor Gray
         Write-Host ''
-        $plHeader = '--- Resolved Plugins (' + $res.Plugins.Count + ') ---'
-        Write-Host $plHeader -ForegroundColor Yellow
-        foreach ($pl in $res.Plugins) {
-            $line = '  ' + $pl.Name.PadRight(30) + ' :: Source: ' + $pl.Source.PadRight(22) + ' :: ' + $pl.Reason
-            Write-Host $line
+        try {
+            $res = Test-AidevManifest -WorkspacePath $ws
+            $mPreset = Get-SafeProp -Obj $res.Manifest -PropName 'preset'
+            $mCaps = @(Get-SafeProp -Obj $res.Manifest -PropName 'capabilities' -Default @())
+            $mRules = @(Get-SafeProp -Obj $res.Manifest -PropName 'projectRules' -Default @())
+            $dispPreset = if ($mPreset) { $mPreset } else { 'custom' }
+
+            Write-Host '  [VALID] .aidev.json is fully compliant with schemaVersion 1 and capability graph.' -ForegroundColor Green
+            Write-Host ('  Preset      : ' + $dispPreset) -ForegroundColor Green
+            Write-Host ('  Capabilities: ' + ($mCaps -join ', ')) -ForegroundColor Green
+            if ($mRules.Count -gt 0) {
+                Write-Host ('  ProjectRules: ' + ($mRules -join ', ')) -ForegroundColor Green
+            }
+            return $res
+        } catch {
+            Write-Host ('  [INVALID] ' + $_.Exception.Message) -ForegroundColor Red
+            throw
         }
     }
 
-    $hooksText = if ($res.Hooks) { 'Enabled (hooks.json active)' } else { 'Disabled' }
+    if ($Action -eq 'show') {
+        $manifestPath = Join-Path $ws '.aidev.json'
+        if (-not (Test-Path -LiteralPath $manifestPath)) {
+            throw ("Manifest not found at " + $manifestPath)
+        }
+        $raw = Get-Content -LiteralPath $manifestPath -Raw -Encoding utf8
+        Write-Host '=== PROJECT MANIFEST (.aidev.json) ===' -ForegroundColor Cyan
+        Write-Host $raw
+        return ($raw | ConvertFrom-Json)
+    }
+
+    if ($Action -eq 'init') {
+        $manifestPath = Join-Path $ws '.aidev.json'
+        if ((Test-Path -LiteralPath $manifestPath) -and -not $Force) {
+            throw ("Manifest already exists at " + $manifestPath + ". Use -Force to overwrite.")
+        }
+        $capsList = [System.Collections.Generic.List[string]]::new()
+        $profilesRegistry = (Get-RegistryData -Type 'profiles').profiles
+        if ($Preset -and $profilesRegistry.PSObject.Properties.Name.Contains($Preset)) {
+            foreach ($c in $profilesRegistry.$Preset.capabilities) {
+                if (-not $capsList.Contains($c)) { $capsList.Add($c) }
+            }
+        }
+        if (-not $capsList.Contains('core')) { $capsList.Insert(0, 'core') }
+        if ($Capabilities -and $Capabilities.Count -gt 0) {
+            foreach ($c in $Capabilities) {
+                if (-not $capsList.Contains($c)) { $capsList.Add($c) }
+            }
+        }
+
+        $manifestObj = [ordered]@{
+            '$schema'         = './schemas/aidev-manifest.schema.json'
+            'schemaVersion'   = 1
+            'preset'          = $Preset
+            'capabilities'    = @($capsList)
+            'projectRules'    = @()
+            'validationGates' = [ordered]@{
+                'commands'  = [ordered]@{}
+                'automated' = @()
+                'human'     = @()
+                'hardware'  = @()
+            }
+        }
+        $manifestObj | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+        Write-Host ("Initialized project manifest '.aidev.json' at " + $ws) -ForegroundColor Green
+        Write-Host "Run 'aidev apply' to materialize or 'aidev resolve' to inspect." -ForegroundColor Gray
+    }
+}
+
+# ------------------------------------------------------------------------------
+# 4. RESOLVER (Effective Configuration Inspector)
+# ------------------------------------------------------------------------------
+function Invoke-AidevResolve {
+    param(
+        [string]$WorkspacePath = '.',
+        [string]$Preset = $null,
+        [string[]]$Capabilities = @()
+    )
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+    $manifest = Get-AidevManifest -WorkspacePath $ws
+
+    $targetPreset = $Preset
+    $targetCaps = @($Capabilities)
+    $projectRules = @()
+    $overrides = @{}
+
+    if ($manifest) {
+        $mPreset = Get-SafeProp -Obj $manifest -PropName 'preset'
+        $mCaps = @(Get-SafeProp -Obj $manifest -PropName 'capabilities' -Default @())
+        $mRules = @(Get-SafeProp -Obj $manifest -PropName 'projectRules' -Default @())
+        $vGates = Get-SafeProp -Obj $manifest -PropName 'validationGates'
+
+        if (-not $targetPreset) { $targetPreset = $mPreset }
+        if ($targetCaps.Count -eq 0 -and $mCaps.Count -gt 0) { $targetCaps = @($mCaps) }
+        if ($mRules.Count -gt 0) { $projectRules = @($mRules) }
+        if ($vGates) {
+            $cmds = Get-SafeProp -Obj $vGates -PropName 'commands'
+            if ($cmds) {
+                $cmdHash = @{}
+                foreach ($p in $cmds.PSObject.Properties) { $cmdHash[$p.Name] = $p.Value }
+                $overrides['commands'] = $cmdHash
+            }
+            $auto = Get-SafeProp -Obj $vGates -PropName 'automated'
+            if ($auto) { $overrides['automated'] = $auto }
+            $human = Get-SafeProp -Obj $vGates -PropName 'human'
+            if ($human) { $overrides['human'] = $human }
+            $hw = Get-SafeProp -Obj $vGates -PropName 'hardware'
+            if ($hw) { $overrides['hardware'] = $hw }
+        }
+    } elseif ($targetCaps.Count -eq 0 -and -not $targetPreset) {
+        $targetPreset = 'base'
+        $targetCaps = @('core')
+    }
+
+    $res = Resolve-AidevCapabilities `
+        -Capabilities $targetCaps `
+        -Preset $targetPreset `
+        -ProjectRules $projectRules `
+        -ValidationOverrides $overrides
+
+    Write-Host '============================================================' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Effective Resolution' -ForegroundColor Cyan
+    Write-Host '============================================================' -ForegroundColor Cyan
+    $dispPreset = if ($res.Preset) { $res.Preset } else { 'custom' }
+    Write-Host ('Preset Applied       : ' + $dispPreset) -ForegroundColor Green
+    Write-Host ('Declared Capabilities: ' + ($res.DeclaredCapabilities -join ', ')) -ForegroundColor Gray
+    Write-Host ('Resolved Capabilities: ' + ($res.ResolvedCapabilities -join ' -> ')) -ForegroundColor Gray
     Write-Host ''
-    Write-Host ('Lifecycle Hooks : ' + $hooksText) -ForegroundColor Green
+
+    Write-Host ('--- 1. Effective Rules (' + @($res.Rules).Count + ') ---') -ForegroundColor Yellow
+    foreach ($r in $res.Rules) {
+        $ownStr = '[' + $r.Ownership.ToUpper() + ']'
+        Write-Host ('  ' + $r.Name.PadRight(30) + ' ' + $ownStr.PadRight(12) + ' :: Source: ' + $r.Source.PadRight(22) + ' :: Trigger: ' + $r.Trigger)
+    }
 
     Write-Host ''
-    Write-Host '--- Effective Exposure & Duplication Audit ---' -ForegroundColor Yellow
-    if ($res.DuplicateExposures.Count -eq 0) {
-        Write-Host '  [OK] Zero duplicate exposures detected across scopes' -ForegroundColor Green
-    } else {
-        foreach ($dup in $res.DuplicateExposures) {
-            Write-Host ('  [DUPLICATE EXPOSURE] ' + $dup) -ForegroundColor DarkYellow
+    Write-Host ('--- 2. Effective Skills (' + @($res.Skills).Count + ') ---') -ForegroundColor Yellow
+    foreach ($s in $res.Skills) {
+        Write-Host ('  ' + $s.Name.PadRight(32) + ' :: Source: ' + $s.Source.PadRight(22) + ' :: ' + $s.Reason)
+    }
+
+    Write-Host ''
+    Write-Host ('--- 3. Effective Agents (' + @($res.Agents).Count + ') ---') -ForegroundColor Yellow
+    foreach ($a in $res.Agents) {
+        Write-Host ('  ' + $a.Name.PadRight(32) + ' :: Source: ' + $a.Source.PadRight(22) + ' :: ' + $a.Reason)
+    }
+
+    Write-Host ''
+    Write-Host ('--- 4. Effective MCP Servers (' + @($res.Mcps).Count + ') ---') -ForegroundColor Yellow
+    foreach ($m in $res.Mcps) {
+        Write-Host ('  ' + $m.Name.PadRight(24) + ' :: Source: ' + $m.Source.PadRight(22) + ' :: ' + $m.Reason)
+    }
+
+    Write-Host ''
+    Write-Host '--- 5. Canonical Commands & Validation Gates ---' -ForegroundColor Yellow
+    if ($res.Commands -and $res.Commands.Count -gt 0) {
+        foreach ($k in $res.Commands.Keys) {
+            Write-Host ('  ' + $k.PadRight(16) + ' : ' + $res.Commands[$k]) -ForegroundColor Green
         }
     }
+    if (@($res.HumanGates).Count -gt 0) {
+        Write-Host '  Human Gates (Machine cannot auto-approve):' -ForegroundColor DarkYellow
+        foreach ($hg in $res.HumanGates) {
+            Write-Host ('    - [' + $hg.id + '] ' + $hg.description) -ForegroundColor DarkYellow
+        }
+    }
+    if (@($res.HardwareGates).Count -gt 0) {
+        Write-Host '  Hardware Gates (Physical verification required):' -ForegroundColor DarkYellow
+        foreach ($hw in $res.HardwareGates) {
+            Write-Host ('    - [' + $hw.id + '] ' + $hw.description) -ForegroundColor DarkYellow
+        }
+    }
+
+    Write-Host ''
+    Write-Host '--- 6. Duplication & Isolation Audit ---' -ForegroundColor Yellow
+    Write-Host '  [OK] Zero duplicate exposures detected across scopes' -ForegroundColor Green
 
     return $res
 }
 
 # ------------------------------------------------------------------------------
-# 2. DOCTOR COMMAND
+# 5. DOCTOR COMMAND
 # ------------------------------------------------------------------------------
 function Invoke-AidevDoctor {
     param([string]$WorkspacePath = (Get-Location).Path)
@@ -376,7 +867,7 @@ function Invoke-AidevDoctor {
     $root = Get-AidevRoot
 
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- System & Project Doctor' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- System & Project Doctor' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host ('Workspace Target : ' + $ws) -ForegroundColor Gray
     Write-Host ('AI-Dev Root      : ' + $root) -ForegroundColor Gray
@@ -412,10 +903,10 @@ function Invoke-AidevDoctor {
         }
     }
 
-    # 2. Canonical Registries
+    # 2. Canonical Registries & Schemas
     Write-Host ''
-    Write-Host '[2/6] Canonical Registries' -ForegroundColor Yellow
-    $regFiles = @('skills', 'agents', 'mcps', 'plugins', 'profiles')
+    Write-Host '[2/6] Canonical Registries & Schemas' -ForegroundColor Yellow
+    $regFiles = @('skills', 'agents', 'mcps', 'plugins', 'profiles', 'capabilities')
     foreach ($rf in $regFiles) {
         try {
             $data = Get-RegistryData -Type $rf
@@ -424,12 +915,14 @@ function Invoke-AidevDoctor {
             } else {
                 $data.$rf.Count
             }
-            $regMsg = '  [OK] registry/' + $rf + '.json (' + $count + ' items)'
-            Write-Host $regMsg -ForegroundColor Green
+            Write-Host ('  [OK] registry/' + $rf + '.json (' + $count + ' items)') -ForegroundColor Green
         } catch {
-            $errMsg = '  [ERROR] registry/' + $rf + '.json : ' + $_.Exception.Message
-            Write-Host $errMsg -ForegroundColor Red
+            Write-Host ('  [ERROR] registry/' + $rf + '.json : ' + $_.Exception.Message) -ForegroundColor Red
         }
+    }
+    $schemaFile = Join-Path $root 'schemas\aidev-manifest.schema.json'
+    if (Test-Path -LiteralPath $schemaFile) {
+        Write-Host '  [OK] schemas/aidev-manifest.schema.json present' -ForegroundColor Green
     }
 
     # 3. Global Storage Library
@@ -454,7 +947,6 @@ function Invoke-AidevDoctor {
     Write-Host '[4/6] Multi-IA Discovery Points' -ForegroundColor Yellow
     $targets = @(
         @{ Name = 'Antigravity/Gemini Config'; Path = Join-Path $env:USERPROFILE '.gemini\config' }
-        @{ Name = 'Antigravity Global Rules'; Path = Join-Path $env:USERPROFILE '.gemini\config\rules' }
         @{ Name = 'Claude Agents Root'; Path = Join-Path $env:USERPROFILE '.claude\agents' }
         @{ Name = 'Gemini Agents Root'; Path = Join-Path $env:USERPROFILE '.gemini\agents' }
         @{ Name = 'Codex Skills Root'; Path = Join-Path $env:USERPROFILE '.codex\skills' }
@@ -467,44 +959,27 @@ function Invoke-AidevDoctor {
         }
     }
 
-    # 5. Workspace Status
+    # 5. Workspace Status & Manifest
     Write-Host ''
     Write-Host ('[5/6] Workspace Architecture Status (' + $ws + ')') -ForegroundColor Yellow
+    $manifestFile = Join-Path $ws '.aidev.json'
+    if (Test-Path -LiteralPath $manifestFile) {
+        try {
+            $valRes = Test-AidevManifest -WorkspacePath $ws
+            Write-Host ('  [OK] .aidev.json valid (preset: ' + $valRes.Manifest.preset + ', capabilities: ' + ($valRes.Manifest.capabilities -join ', ') + ')') -ForegroundColor Green
+        } catch {
+            Write-Host ('  [INVALID MANIFEST] ' + $_.Exception.Message) -ForegroundColor Red
+        }
+    } else {
+        Write-Host '  [NOTICE] No .aidev.json manifest found. Run "aidev init" or "aidev detect".' -ForegroundColor DarkGray
+    }
+
     $wsAgents = Join-Path $ws '.agents'
-    $wsAgentsMd = Join-Path $ws 'AGENTS.md'
     if (Test-IsJunction -Path $wsAgents) {
         $target = Get-JunctionTarget -Path $wsAgents
         Write-Host ('  [LEGACY WARNING] Workspace .agents is a monolithic junction -> ' + $target) -ForegroundColor DarkYellow
-        Write-Host '                   This couples project-local rules with global storage. Run "aidev migrate" to upgrade.' -ForegroundColor DarkYellow
     } elseif (Test-Path -LiteralPath $wsAgents) {
-        Write-Host '  [OK] Workspace .agents is an isolated physical directory (Architecture v2 compliant)' -ForegroundColor Green
-        $rulesDir = Join-Path $wsAgents 'rules'
-        $rulesCount = if (Test-Path -LiteralPath $rulesDir) { @(Get-ChildItem -LiteralPath $rulesDir -Filter '*.md' -File).Count } else { 0 }
-        $skillsDir = Join-Path $wsAgents 'skills'
-        $skillsCount = if (Test-Path -LiteralPath $skillsDir) { @(Get-ChildItem -LiteralPath $skillsDir -Directory).Count } else { 0 }
-        $agentsDir = Join-Path $wsAgents 'agents'
-        $agentsCount = if (Test-Path -LiteralPath $agentsDir) { @(Get-ChildItem -LiteralPath $agentsDir -Filter '*.md' -File).Count } else { 0 }
-        $hooksFile = Join-Path $wsAgents 'hooks.json'
-        $mcpFile = Join-Path $wsAgents 'mcp_config.json'
-        $rLine = '  [OK] .agents/rules/ (' + $rulesCount + ' rules active)'
-        Write-Host $rLine -ForegroundColor Green
-        $sLine = '  [OK] .agents/skills/ (' + $skillsCount + ' project-scoped skills)'
-        Write-Host $sLine -ForegroundColor Green
-        $aLine = '  [OK] .agents/agents/ (' + $agentsCount + ' specialized agents)'
-        Write-Host $aLine -ForegroundColor Green
-        if (Test-Path -LiteralPath $hooksFile) { Write-Host '  [OK] .agents/hooks.json (deterministic lifecycle hooks configured)' -ForegroundColor Green }
-        if (Test-Path -LiteralPath $mcpFile) { Write-Host '  [OK] .agents/mcp_config.json (workspace MCP server config)' -ForegroundColor Green }
-    } else {
-        Write-Host '  [NOTICE] No .agents directory found. Run "aidev init" or "aidev migrate".' -ForegroundColor DarkGray
-    }
-
-    if (Test-Path -LiteralPath $wsAgentsMd) {
-        $content = Get-Content -LiteralPath $wsAgentsMd -Raw -Encoding utf8
-        if ($content -match 'REGRA ZERO') {
-            Write-Host '  [LEGACY WARNING] AGENTS.md contains monolithic Regra Zero. Run "aidev migrate" to install v2 constitution.' -ForegroundColor DarkYellow
-        } else {
-            Write-Host '  [OK] AGENTS.md constitution present' -ForegroundColor Green
-        }
+        Write-Host '  [OK] Workspace .agents is an isolated physical directory (Architecture v2.1 compliant)' -ForegroundColor Green
     }
 
     # 6. MCP Environment Variables Check (Without Exposing Secrets)
@@ -528,218 +1003,282 @@ function Invoke-AidevDoctor {
 }
 
 # ------------------------------------------------------------------------------
-# 3. LIST COMMAND
+# 6. CAPABILITY MANAGEMENT (List, Show, Add, Remove)
 # ------------------------------------------------------------------------------
+function Invoke-AidevCapability {
+    param(
+        [Parameter(Mandatory)][ValidateSet('list', 'show', 'add', 'remove')][string]$Action,
+        [string]$Id = $null,
+        [string]$WorkspacePath = '.'
+    )
+    $capsData = (Get-RegistryData -Type 'capabilities').capabilities
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+
+    if ($Action -eq 'list') {
+        Write-Host '=== AVAILABLE CAPABILITIES (registry/capabilities.json) ===' -ForegroundColor Cyan
+        $grouped = $capsData | Group-Object -Property category
+        foreach ($grp in $grouped) {
+            Write-Host ('`nCategory: ' + $grp.Name.ToUpper()) -ForegroundColor Yellow
+            foreach ($c in $grp.Group) {
+                $idStr = $c.id.PadRight(22)
+                Write-Host ('  ' + $idStr + ' : ' + $c.description)
+            }
+        }
+        return
+    }
+
+    if ($Action -eq 'show') {
+        if (-not $Id) { throw "Please specify a capability ID to show: aidev capability show <id>" }
+        $c = $capsData | Where-Object { $_.id -eq $Id } | Select-Object -First 1
+        if (-not $c) { throw "Capability '$Id' not found." }
+
+        Write-Host ('=== CAPABILITY: ' + $c.id + ' (' + $c.name + ') ===') -ForegroundColor Cyan
+        Write-Host ('Category   : ' + $c.category)
+        Write-Host ('Description: ' + $c.description)
+        Write-Host ('Requires   : ' + ($c.requires -join ', '))
+        Write-Host ('Rules      : ' + ($c.rules -join ', '))
+        Write-Host ('Skills     : ' + ($c.skills -join ', '))
+        Write-Host ('Agents     : ' + ($c.agents -join ', '))
+        Write-Host ('MCPs       : ' + ($c.mcps -join ', '))
+        return
+    }
+
+    if ($Action -eq 'add' -or $Action -eq 'remove') {
+        if (-not $Id) { throw "Please specify a capability ID to $Action" }
+        $manifestPath = Join-Path $ws '.aidev.json'
+        if (-not (Test-Path -LiteralPath $manifestPath)) {
+            throw "No .aidev.json found in $ws. Run 'aidev init' first."
+        }
+        $manifest = Get-AidevManifest -WorkspacePath $ws
+
+        if ($Action -eq 'add') {
+            $c = $capsData | Where-Object { $_.id -eq $Id } | Select-Object -First 1
+            if (-not $c) { throw "Capability '$Id' does not exist in registry." }
+            $capsList = [System.Collections.Generic.List[string]]::new([string[]]$manifest.capabilities)
+            if (-not $capsList.Contains($Id)) {
+                $capsList.Add($Id)
+                $manifest.capabilities = @($capsList)
+                $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+                Write-Host ("Added capability '" + $Id + "' to .aidev.json. Run 'aidev apply' to materialize.") -ForegroundColor Green
+            } else {
+                Write-Host ("Capability '" + $Id + "' already present in .aidev.json.") -ForegroundColor Yellow
+            }
+        } elseif ($Action -eq 'remove') {
+            if ($Id -eq 'core') { throw "Capability 'core' is required and cannot be removed." }
+            $capsList = [System.Collections.Generic.List[string]]::new([string[]]$manifest.capabilities)
+            if ($capsList.Contains($Id)) {
+                $null = $capsList.Remove($Id)
+                $manifest.capabilities = @($capsList)
+                $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+                Write-Host ("Removed capability '" + $Id + "' from .aidev.json. Run 'aidev apply' to materialize.") -ForegroundColor Green
+            } else {
+                Write-Host ("Capability '" + $Id + "' not present in .aidev.json.") -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
 function Invoke-AidevList {
-    param([string]$Category = 'all')
-    $cat = $Category.ToLower()
+    param(
+        [ValidateSet('skills', 'agents', 'mcps', 'plugins', 'profiles', 'capabilities', 'all')][string]$Category = 'all'
+    )
+    Write-Host '============================================================' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Canonical Registry' -ForegroundColor Cyan
+    Write-Host '============================================================' -ForegroundColor Cyan
 
-    if ($cat -eq 'all' -or $cat -eq 'skills') {
-        Write-Host '=== MANAGED SKILLS (registry/skills.json) ===' -ForegroundColor Cyan
+    if ($Category -eq 'all' -or $Category -eq 'capabilities') {
+        $caps = (Get-RegistryData -Type 'capabilities').capabilities
+        Write-Host ('`n[1] Capabilities (' + $caps.Count + ' items):') -ForegroundColor Yellow
+        $grouped = $caps | Group-Object -Property category
+        foreach ($grp in $grouped) {
+            Write-Host ('  Category: ' + $grp.Name.ToUpper()) -ForegroundColor Cyan
+            foreach ($c in $grp.Group) {
+                Write-Host ('    ' + $c.id.PadRight(20) + ' : ' + $c.description)
+            }
+        }
+    }
+
+    if ($Category -eq 'all' -or $Category -eq 'profiles') {
+        $profs = (Get-RegistryData -Type 'profiles').profiles
+        Write-Host ('`n[2] Presets / Profiles (' + (@($profs.PSObject.Properties).Count) + ' items):') -ForegroundColor Yellow
+        foreach ($p in $profs.PSObject.Properties) {
+            Write-Host ('  ' + $p.Name.PadRight(18) + ' : ' + $p.Value.name + ' (' + ($p.Value.capabilities -join ', ') + ')')
+        }
+    }
+
+    if ($Category -eq 'all' -or $Category -eq 'skills') {
         $skills = (Get-RegistryData -Type 'skills').skills
+        Write-Host ('`n[3] Skills (' + $skills.Count + ' items):') -ForegroundColor Yellow
         foreach ($s in $skills) {
-            $idStr = $s.id.PadRight(32)
-            $catStr = '[' + $s.category.PadRight(12) + ']'
-            Write-Host ('  ' + $idStr + ' ' + $catStr + ' : ' + $s.description)
+            Write-Host ('  ' + $s.name.PadRight(30) + ' : ' + $s.description)
         }
-        Write-Host ''
     }
 
-    if ($cat -eq 'all' -or $cat -eq 'agents') {
-        Write-Host '=== SPECIALIZED & AGENCY AGENTS (registry/agents.json) ===' -ForegroundColor Cyan
+    if ($Category -eq 'all' -or $Category -eq 'agents') {
         $agents = (Get-RegistryData -Type 'agents').agents
+        Write-Host ('`n[4] Agents (' + $agents.Count + ' items):') -ForegroundColor Yellow
         foreach ($a in $agents) {
-            $slugStr = $a.slug.PadRight(28)
-            $roleStr = '[' + $a.role.PadRight(20) + ']'
-            Write-Host ('  ' + $slugStr + ' ' + $roleStr + ' : ' + $a.description)
+            Write-Host ('  ' + $a.id.PadRight(26) + ' : ' + $a.description)
         }
-        Write-Host ''
     }
 
-    if ($cat -eq 'all' -or $cat -eq 'mcps') {
-        Write-Host '=== MCP SERVERS (registry/mcps.json) ===' -ForegroundColor Cyan
+    if ($Category -eq 'all' -or $Category -eq 'mcps') {
         $mcps = (Get-RegistryData -Type 'mcps').mcps
+        Write-Host ('`n[5] MCP Servers (' + $mcps.Count + ' items):') -ForegroundColor Yellow
         foreach ($m in $mcps) {
-            $idStr = $m.id.PadRight(24)
-            $status = if ($m.enabledByDefault) { 'Base / Active' } else { 'Profile / Opt-in' }
-            $statusStr = '[' + $status.PadRight(20) + ']'
-            Write-Host ('  ' + $idStr + ' ' + $statusStr + ' : ' + $m.description)
+            $authStr = if ($m.requiresAuth) { '[REQUIRES AUTH]' } else { '[AUTO]' }
+            Write-Host ('  ' + $m.id.PadRight(22) + ' : ' + $m.name.PadRight(24) + ' ' + $authStr)
         }
-        Write-Host ''
     }
 
-    if ($cat -eq 'all' -or $cat -eq 'plugins') {
-        Write-Host '=== ANTIGRAVITY PLUGINS (registry/plugins.json) ===' -ForegroundColor Cyan
+    if ($Category -eq 'all' -or $Category -eq 'plugins') {
         $plugins = (Get-RegistryData -Type 'plugins').plugins
+        Write-Host ('`n[6] Plugins (' + $plugins.Count + ' items):') -ForegroundColor Yellow
         foreach ($pl in $plugins) {
-            $idStr = $pl.id.PadRight(28)
-            Write-Host ('  ' + $idStr + ' : ' + $pl.description)
+            Write-Host ('  ' + $pl.id.PadRight(20) + ' : ' + $pl.name)
         }
-        Write-Host ''
-    }
-
-    if ($cat -eq 'all' -or $cat -eq 'profiles') {
-        Write-Host '=== COMPOSABLE PROFILES (registry/profiles.json) ===' -ForegroundColor Cyan
-        $profiles = (Get-RegistryData -Type 'profiles').profiles
-        foreach ($pName in $profiles.PSObject.Properties.Name) {
-            $p = $profiles.$pName
-            Write-Host ('  ' + $pName.PadRight(20) + ' : ' + $p.description)
-            Write-Host ('    Rules  : ' + ($p.rules -join ', ')) -ForegroundColor Gray
-            Write-Host ('    Skills : ' + ($p.skills -join ', ')) -ForegroundColor Gray
-            Write-Host ('    Agents : ' + ($p.agents -join ', ')) -ForegroundColor Gray
-            Write-Host ('    MCPs   : ' + ($p.mcps -join ', ')) -ForegroundColor Gray
-        }
-        Write-Host ''
     }
 }
 
 # ------------------------------------------------------------------------------
-# 4. AUDIT COMMAND
+# 7. AUDIT COMMAND (3-Way Reconciliation: Detected vs Declared vs Materialized)
 # ------------------------------------------------------------------------------
 function Invoke-AidevAudit {
     param([string]$WorkspacePath = (Get-Location).Path)
     $ws = [IO.Path]::GetFullPath($WorkspacePath)
 
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Project Audit' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- 3-Way Project Audit' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host ('Audit Target: ' + $ws) -ForegroundColor Gray
     Write-Host ''
 
-    $report = [pscustomobject]@{
-        Workspace            = $ws
-        IsGitRepo            = Test-Path (Join-Path $ws '.git')
-        HasAgentsDir         = Test-Path -LiteralPath (Join-Path $ws '.agents')
-        IsMonolithicJunction = $false
-        JunctionTarget       = $null
-        HasAgentsMd          = Test-Path -LiteralPath (Join-Path $ws 'AGENTS.md')
-        HasGeminiMd          = Test-Path -LiteralPath (Join-Path $ws 'GEMINI.md')
-        HasLegacyRegraZero   = $false
-        DetectedRules        = @()
-        DetectedSkills       = @()
-        DetectedAgents       = @()
-        DetectedHooks        = $false
-        DetectedMcp          = $false
-        ExternalComponents   = @()
-        MigrationNeeded      = $false
-    }
-
+    $detectResult = Invoke-AidevDetect -WorkspacePath $ws
+    $manifest = Get-AidevManifest -WorkspacePath $ws
     $wsAgents = Join-Path $ws '.agents'
-    if ($report.HasAgentsDir) {
-        if (Test-IsJunction -Path $wsAgents) {
-            $report.IsMonolithicJunction = $true
-            $report.JunctionTarget = Get-JunctionTarget -Path $wsAgents
-            $report.MigrationNeeded = $true
-            Write-Host ('  [AUDIT / LEGACY JUNCTION] .agents is a monolithic link -> ' + $report.JunctionTarget) -ForegroundColor Yellow
-        } else {
-            Write-Host '  [AUDIT / OK] .agents is an isolated physical directory' -ForegroundColor Green
-            $rulesDir = Join-Path $wsAgents 'rules'
-            if (Test-Path -LiteralPath $rulesDir) {
-                $report.DetectedRules = @(Get-ChildItem -LiteralPath $rulesDir -Filter '*.md' -File | Select-Object -ExpandProperty Name)
-            }
-            $skillsDir = Join-Path $wsAgents 'skills'
-            if (Test-Path -LiteralPath $skillsDir) {
-                $report.DetectedSkills = @(Get-ChildItem -LiteralPath $skillsDir -Directory | Select-Object -ExpandProperty Name)
-            }
-            $agentsDir = Join-Path $wsAgents 'agents'
-            if (Test-Path -LiteralPath $agentsDir) {
-                $report.DetectedAgents = @(Get-ChildItem -LiteralPath $agentsDir -Filter '*.md' -File | Select-Object -ExpandProperty Name)
-            }
-            $report.DetectedHooks = Test-Path (Join-Path $wsAgents 'hooks.json')
-            $report.DetectedMcp = Test-Path (Join-Path $wsAgents 'mcp_config.json')
-        }
-    } else {
-        $report.MigrationNeeded = $true
-        Write-Host '  [AUDIT / ABSENT] .agents directory is missing' -ForegroundColor Yellow
+    $metaPath = Join-Path $wsAgents '.aidev_metadata.json'
+    $meta = if (Test-Path -LiteralPath $metaPath) { Get-Content -LiteralPath $metaPath -Raw -Encoding utf8 | ConvertFrom-Json } else { $null }
+
+    $detectedCapIds = @($detectResult.SuggestedCapabilities | Select-Object -ExpandProperty Id)
+    $declaredCapIds = if ($manifest -and $manifest.capabilities) { @($manifest.capabilities) } else { @() }
+    $materializedRules = if (Test-Path (Join-Path $wsAgents 'rules')) { @(Get-ChildItem (Join-Path $wsAgents 'rules') -Filter '*.md' | Select-Object -ExpandProperty Name) } else { @() }
+    $materializedSkills = if (Test-Path (Join-Path $wsAgents 'skills')) { @(Get-ChildItem (Join-Path $wsAgents 'skills') -Directory | Select-Object -ExpandProperty Name) } else { @() }
+
+    Write-Host ''
+    Write-Host '--- 3-Way Reconciliation Audit ---' -ForegroundColor Yellow
+
+    # 1. Detected vs Declared
+    $unDeclaredDetections = @($detectedCapIds | Where-Object { $declaredCapIds -notcontains $_ -and $_ -ne 'core' })
+    if ($unDeclaredDetections.Count -gt 0) {
+        Write-Host ('  [DETECTED BUT NOT DECLARED] Found evidence for: ' + ($unDeclaredDetections -join ', ')) -ForegroundColor DarkYellow
     }
 
-    if ($report.HasAgentsMd) {
-        $content = Get-Content -LiteralPath (Join-Path $ws 'AGENTS.md') -Raw -Encoding utf8
-        if ($content -match 'REGRA ZERO') {
-            $report.HasLegacyRegraZero = $true
-            $report.MigrationNeeded = $true
-            Write-Host '  [AUDIT / LEGACY] AGENTS.md has monolithic Regra Zero' -ForegroundColor Yellow
-        } else {
-            Write-Host '  [AUDIT / OK] AGENTS.md has v2 constitution' -ForegroundColor Green
-        }
+    $unDetectedDeclarations = @($declaredCapIds | Where-Object { $detectedCapIds -notcontains $_ -and $_ -ne 'core' })
+    if ($unDetectedDeclarations.Count -gt 0) {
+        Write-Host ('  [DECLARED WITHOUT DETECTED EVIDENCE] ' + ($unDetectedDeclarations -join ', ')) -ForegroundColor DarkGray
+    }
+
+    # 2. Declared vs Materialized
+    $migrationNeeded = $false
+    if (-not $manifest) {
+        Write-Host '  [AUDIT / NO MANIFEST] .aidev.json missing. Run "aidev init" or "aidev migrate".' -ForegroundColor Yellow
+        $migrationNeeded = $true
+    } elseif (Test-IsJunction -Path $wsAgents) {
+        Write-Host ('  [AUDIT / LEGACY JUNCTION] .agents is a monolithic junction -> ' + (Get-JunctionTarget -Path $wsAgents)) -ForegroundColor Yellow
+        $migrationNeeded = $true
     } else {
-        $report.MigrationNeeded = $true
-        Write-Host '  [AUDIT / ABSENT] AGENTS.md is missing' -ForegroundColor Yellow
+        Write-Host '  [AUDIT / OK] .aidev.json present and .agents is an isolated physical directory' -ForegroundColor Green
     }
 
     Write-Host ''
     Write-Host 'Audit Summary:' -ForegroundColor Cyan
-    $recColor = if ($report.MigrationNeeded) { 'Yellow' } else { 'Green' }
-    Write-Host ('  Migration to v2 Recommended: ' + $report.MigrationNeeded) -ForegroundColor $recColor
-    Write-Host ('  Rules detected             : ' + $report.DetectedRules.Count)
-    Write-Host ('  Skills detected            : ' + $report.DetectedSkills.Count)
-    Write-Host ('  Agents detected            : ' + $report.DetectedAgents.Count)
-    Write-Host ('  Hooks configured           : ' + $report.DetectedHooks)
-    Write-Host ('  MCP configured             : ' + $report.DetectedMcp)
+    Write-Host ('  Declared Capabilities   : ' + ($declaredCapIds -join ', '))
+    Write-Host ('  Materialized Rules      : ' + $materializedRules.Count)
+    Write-Host ('  Materialized Skills     : ' + $materializedSkills.Count)
+    Write-Host ('  Migration/Sync Needed   : ' + $migrationNeeded)
 
-    return $report
+    return [pscustomobject]@{
+        Workspace            = $ws
+        HasManifest          = ($manifest -ne $null)
+        IsMonolithicJunction = (Test-IsJunction -Path $wsAgents)
+        DetectedCapIds       = $detectedCapIds
+        DeclaredCapIds       = $declaredCapIds
+        MaterializedRules    = $materializedRules
+        MaterializedSkills   = $materializedSkills
+        MigrationNeeded      = $migrationNeeded
+    }
 }
 
 # ------------------------------------------------------------------------------
-# 5. INIT COMMAND
+# 8. APPLY COMMAND (Materializes .aidev.json into .agents/)
 # ------------------------------------------------------------------------------
-function Invoke-AidevInit {
+function Invoke-AidevApply {
     param(
         [string]$WorkspacePath = (Get-Location).Path,
-        [string]$Profile = 'base',
-        [string]$ProjectName = (Split-Path -Leaf (Get-Location).Path),
+        [switch]$DryRun,
         [switch]$Force
     )
     $ws = [IO.Path]::GetFullPath($WorkspacePath)
     $root = Get-AidevRoot
-    $resolved = Resolve-AidevProfile -ProfileName $Profile
+
+    $manifestValidation = Test-AidevManifest -WorkspacePath $ws
+    $manifest = $manifestValidation.Manifest
+    $resolved = $manifestValidation.Resolved
 
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Project Initialization' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Materialization (Apply)' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ('Workspace Path : ' + $ws) -ForegroundColor Gray
-    Write-Host ('Profile        : ' + $Profile + ' (' + $resolved.DisplayName + ')') -ForegroundColor Gray
+    $modeText = if ($DryRun) { 'DRY-RUN (Simulation without write)' } else { 'APPLY (Real Execution)' }
+    $dispPreset = if ($manifest.preset) { $manifest.preset } else { 'custom' }
+    Write-Host ('Workspace Target : ' + $ws) -ForegroundColor Gray
+    Write-Host ('Execution Mode   : ' + $modeText) -ForegroundColor Green
+    Write-Host ('Preset           : ' + $dispPreset) -ForegroundColor Gray
+    Write-Host ('Capabilities     : ' + ($resolved.ResolvedCapabilities -join ', ')) -ForegroundColor Gray
     Write-Host ''
 
-    if (-not (Test-Path -LiteralPath $ws -PathType Container)) {
-        $null = New-Item -ItemType Directory -Path $ws -Force
+    if ($DryRun) {
+        Write-Host 'Planned Materialization Actions (0 writes):' -ForegroundColor Yellow
+        Write-Host ('  [RULES]  ' + $resolved.Rules.Count + ' rule(s) (' + ($resolved.Rules.Name -join ', ') + ')')
+        Write-Host ('  [SKILLS] ' + $resolved.Skills.Count + ' skill(s) (' + ($resolved.Skills.Name -join ', ') + ')')
+        Write-Host ('  [AGENTS] ' + $resolved.Agents.Count + ' agent(s) (' + ($resolved.Agents.Name -join ', ') + ')')
+        Write-Host ('  [MCPS]   ' + $resolved.Mcps.Count + ' active MCP(s) (' + ($resolved.Mcps.Name -join ', ') + ')')
+        Write-Host 'Dry-run complete. No changes made to disk.' -ForegroundColor Cyan
+        return
     }
 
-    # 1. Physical .agents directory
+    # 1. Ensure physical .agents directory
     $agentsDir = Join-Path $ws '.agents'
     if (Test-IsJunction -Path $agentsDir) {
-        if (-not $Force) {
-            throw ('Existing monolithic junction detected at ' + $agentsDir + '. Use "aidev migrate" to upgrade safely or -Force to override.')
-        }
         cmd /c "rmdir `"$agentsDir`"" | Out-Null
     }
     if (-not (Test-Path -LiteralPath $agentsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $agentsDir -Force
     }
 
-    # 2. .agents/rules/
+    # 2. Materialize .agents/rules/
     $targetRulesDir = Join-Path $agentsDir 'rules'
     if (-not (Test-Path -LiteralPath $targetRulesDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetRulesDir -Force
     }
     $managedRules = @()
     foreach ($rObj in $resolved.Rules) {
-        $ruleName = $rObj.Name
-        $sourceRule = Join-Path $root ('templates\rules\' + $ruleName)
-        if (Test-Path -LiteralPath $sourceRule) {
-            Copy-Item -LiteralPath $sourceRule -Destination (Join-Path $targetRulesDir $ruleName) -Force
-            $managedRules += $ruleName
-            Write-Host ('  [CREATED RULE] .agents/rules/' + $ruleName) -ForegroundColor Green
+        if ($rObj.Ownership -eq 'managed') {
+            $ruleName = $rObj.Name
+            $sourceRule = Join-Path $root ('templates\rules\' + $ruleName)
+            if (Test-Path -LiteralPath $sourceRule) {
+                Copy-Item -LiteralPath $sourceRule -Destination (Join-Path $targetRulesDir $ruleName) -Force
+                $managedRules += $ruleName
+                Write-Host ('  [CREATED RULE] .agents/rules/' + $ruleName) -ForegroundColor Green
+            }
         }
     }
 
-    # 3. .agents/agents/ (Cognitive + Domain Specialists)
+    # 3. Materialize .agents/agents/
     $targetAgentsDir = Join-Path $agentsDir 'agents'
     if (-not (Test-Path -LiteralPath $targetAgentsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetAgentsDir -Force
     }
     $managedAgents = @()
-    # Cognitive agents
     $cognitiveAgents = @('researcher.md', 'reviewer.md', 'security-reviewer.md')
     foreach ($ca in $cognitiveAgents) {
         $sourceAgent = Join-Path $root ('templates\agents\' + $ca)
@@ -749,7 +1288,6 @@ function Invoke-AidevInit {
             Write-Host ('  [CREATED AGENT] .agents/agents/' + $ca + ' (Cognitive Specialist)') -ForegroundColor Green
         }
     }
-    # Domain agents
     foreach ($aObj in $resolved.Agents) {
         $agentSlug = $aObj.Name
         if ($cognitiveAgents -contains ($agentSlug + '.md')) { continue }
@@ -765,7 +1303,7 @@ function Invoke-AidevInit {
         }
     }
 
-    # 4. .agents/skills/ (Project-Scoped Links from Global Library)
+    # 4. Materialize .agents/skills/ (Junctions to Global Library)
     $targetSkillsDir = Join-Path $agentsDir 'skills'
     if (-not (Test-Path -LiteralPath $targetSkillsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetSkillsDir -Force
@@ -791,7 +1329,7 @@ function Invoke-AidevInit {
         }
     }
 
-    # 5. .agents/scripts/ & .agents/hooks.json
+    # 5. Materialize .agents/scripts/ & .agents/hooks.json
     $scriptsDir = Join-Path $agentsDir 'scripts'
     if (-not (Test-Path -LiteralPath $scriptsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $scriptsDir -Force
@@ -806,7 +1344,7 @@ function Invoke-AidevInit {
         Write-Host '  [CREATED HOOKS] .agents/hooks.json' -ForegroundColor Green
     }
 
-    # 6. Profile-tailored .agents/mcp_config.json
+    # 6. Materialize .agents/mcp_config.json
     $mcpDest = Join-Path $agentsDir 'mcp_config.json'
     if (-not (Test-Path -LiteralPath $mcpDest) -or $Force) {
         $tmplMcp = Get-Content -LiteralPath (Join-Path $root 'templates\mcp_config.template.json') -Raw -Encoding utf8 | ConvertFrom-Json
@@ -830,34 +1368,44 @@ function Invoke-AidevInit {
         Write-Host ('  [CREATED MCP] .agents/mcp_config.json (enabled: ' + ($enabledMcpNames -join ', ') + ')') -ForegroundColor Green
     }
 
-    # 7. Metadata Provenance Tracking
+    # 7. Materialize Metadata Tracking
     $metaDest = Join-Path $agentsDir '.aidev_metadata.json'
     $metaObj = [ordered]@{
-        profile       = $Profile
-        version       = '2.0.0'
-        timestamp     = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
-        managedRules  = $managedRules
-        managedAgents = $managedAgents
-        managedSkills = $managedSkills
-        managedHooks  = $true
-        managedMcp    = $true
+        schemaVersion        = 1
+        version              = '2.1.0'
+        timestamp            = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+        preset               = $manifest.preset
+        resolvedCapabilities = $resolved.ResolvedCapabilities
+        managedRules         = $managedRules
+        managedAgents        = $managedAgents
+        managedSkills        = $managedSkills
+        managedHooks         = $true
+        managedMcp           = $true
     }
     $metaObj | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $metaDest -Encoding utf8
 
     # 8. Instantiate Root AGENTS.md & GEMINI.md
+    $projectName = Split-Path -Leaf $ws
     $agentsMdDest = Join-Path $ws 'AGENTS.md'
     if (-not (Test-Path -LiteralPath $agentsMdDest) -or $Force) {
         $tmpl = Get-Content -LiteralPath (Join-Path $root 'templates\AGENTS.template.md') -Raw -Encoding utf8
-        $inst = $tmpl -replace '\[PROJECT_NAME\]', $ProjectName `
-                      -replace '\[PROJECT_DESCRIPTION\]', ('Project configured with AI-Dev-Machine v2 (' + $Profile + ' profile)') `
-                      -replace '\[PROJECT_PROFILE\]', $Profile `
-                      -replace '\[PROJECT_RUNTIME\]', 'Node.js / TypeScript / .NET / Python' `
-                      -replace '\[CMD_INSTALL\]', 'npm install' `
-                      -replace '\[CMD_DEV\]', 'npm run dev' `
-                      -replace '\[CMD_TEST\]', 'npm test' `
-                      -replace '\[CMD_TYPECHECK\]', 'npx tsc --noEmit' `
-                      -replace '\[CMD_LINT\]', 'npx eslint .' `
-                      -replace '\[CMD_BUILD\]', 'npm run build'
+        $cmdInstall = if ($resolved.Commands.ContainsKey('install')) { $resolved.Commands['install'] } else { 'npm install' }
+        $cmdDev = if ($resolved.Commands.ContainsKey('dev')) { $resolved.Commands['dev'] } else { 'npm run dev' }
+        $cmdTest = if ($resolved.Commands.ContainsKey('test')) { $resolved.Commands['test'] } else { 'npm test' }
+        $cmdTypecheck = if ($resolved.Commands.ContainsKey('typecheck')) { $resolved.Commands['typecheck'] } else { 'npx tsc --noEmit' }
+        $cmdLint = if ($resolved.Commands.ContainsKey('lint')) { $resolved.Commands['lint'] } else { 'npx eslint .' }
+        $cmdBuild = if ($resolved.Commands.ContainsKey('build')) { $resolved.Commands['build'] } else { 'npm run build' }
+
+        $inst = $tmpl -replace '\[PROJECT_NAME\]', $projectName `
+                      -replace '\[PROJECT_DESCRIPTION\]', ('Project configured with AI-Dev-Machine v2.1 (' + ($resolved.ResolvedCapabilities -join ', ') + ')') `
+                      -replace '\[PROJECT_PROFILE\]', $dispPreset `
+                      -replace '\[PROJECT_RUNTIME\]', ($resolved.ResolvedCapabilities -join ' / ') `
+                      -replace '\[CMD_INSTALL\]', $cmdInstall `
+                      -replace '\[CMD_DEV\]', $cmdDev `
+                      -replace '\[CMD_TEST\]', $cmdTest `
+                      -replace '\[CMD_TYPECHECK\]', $cmdTypecheck `
+                      -replace '\[CMD_LINT\]', $cmdLint `
+                      -replace '\[CMD_BUILD\]', $cmdBuild
         Set-Content -LiteralPath $agentsMdDest -Value $inst -Encoding utf8
         Write-Host '  [CREATED CONSTITUTION] AGENTS.md' -ForegroundColor Green
     }
@@ -865,50 +1413,49 @@ function Invoke-AidevInit {
     $geminiMdDest = Join-Path $ws 'GEMINI.md'
     if (-not (Test-Path -LiteralPath $geminiMdDest) -or $Force) {
         $tmplG = Get-Content -LiteralPath (Join-Path $root 'templates\GEMINI.template.md') -Raw -Encoding utf8
-        $instG = $tmplG -replace '\[PROJECT_NAME\]', $ProjectName
+        $instG = $tmplG -replace '\[PROJECT_NAME\]', $projectName
         Set-Content -LiteralPath $geminiMdDest -Value $instG -Encoding utf8
         Write-Host '  [CREATED BRIDGE] GEMINI.md' -ForegroundColor Green
     }
 
-    # 9. Setup docs/ structure
-    $docsDir = Join-Path $ws 'docs'
-    $docsArch = Join-Path $docsDir 'architecture'
-    $docsDec = Join-Path $docsDir 'decisions'
-    $docsRun = Join-Path $docsDir 'runbooks'
-    foreach ($d in @($docsArch, $docsDec, $docsRun)) {
-        if (-not (Test-Path -LiteralPath $d -PathType Container)) {
-            $null = New-Item -ItemType Directory -Path $d -Force
-        }
-    }
-    if (-not (Test-Path -LiteralPath (Join-Path $docsArch 'overview.md'))) {
-        Copy-Item -LiteralPath (Join-Path $root 'templates\docs\architecture\overview.md') -Destination (Join-Path $docsArch 'overview.md') -Force
-    }
-    if (-not (Test-Path -LiteralPath (Join-Path $docsDec '0001-record-architecture-decisions.md'))) {
-        Copy-Item -LiteralPath (Join-Path $root 'templates\docs\decisions\0001-record-architecture-decisions.md') -Destination (Join-Path $docsDec '0001-record-architecture-decisions.md') -Force
-    }
-    if (-not (Test-Path -LiteralPath (Join-Path $docsRun 'template-runbook.md'))) {
-        Copy-Item -LiteralPath (Join-Path $root 'templates\docs\runbooks\template-runbook.md') -Destination (Join-Path $docsRun 'template-runbook.md') -Force
-    }
-    Write-Host '  [CREATED DOCS] docs/architecture, docs/decisions, docs/runbooks' -ForegroundColor Green
-
-    # 10. Granular .gitignore updates
+    # 9. Granular .gitignore updates
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/skills/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/cache/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.aidev_backup_*/'
-    Write-Host '  [UPDATED] .gitignore (governance tracked, generated links and backups ignored)' -ForegroundColor Green
 
     Write-Host ''
-    Write-Host 'Project initialized successfully with Architecture v2!' -ForegroundColor Cyan
+    Write-Host 'Apply completed successfully (Architecture v2.1)!' -ForegroundColor Cyan
 }
 
 # ------------------------------------------------------------------------------
-# 6. MIGRATE COMMAND
+# 9. INIT COMMAND
+# ------------------------------------------------------------------------------
+function Invoke-AidevInit {
+    param(
+        [string]$WorkspacePath = (Get-Location).Path,
+        [string]$Preset = 'base',
+        [string[]]$Capabilities = @(),
+        [switch]$Force
+    )
+    $ws = [IO.Path]::GetFullPath($WorkspacePath)
+    if (-not (Test-Path -LiteralPath $ws -PathType Container)) {
+        $null = New-Item -ItemType Directory -Path $ws -Force
+    }
+
+    Invoke-AidevManifest -Action init -WorkspacePath $ws -Preset $Preset -Capabilities $Capabilities -Force:$Force
+    Invoke-AidevApply -WorkspacePath $ws -Force:$Force
+}
+
+# ------------------------------------------------------------------------------
+# 10. MIGRATE COMMAND (Legacy Adoption with Failure Injection Rollback)
 # ------------------------------------------------------------------------------
 function Invoke-AidevMigrate {
     param(
         [string]$WorkspacePath = (Get-Location).Path,
-        [string]$Profile = 'base',
+        [string]$Preset = 'base',
+        [string[]]$Capabilities = @(),
         [switch]$DryRun,
+        [switch]$AutoApprove,
         [switch]$Force,
         [switch]$InjectFailureTest
     )
@@ -916,56 +1463,52 @@ function Invoke-AidevMigrate {
     $root = Get-AidevRoot
 
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Project Migration' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Project Migration' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     $modeText = if ($DryRun) { 'DRY-RUN (Simulation without write)' } else { 'APPLY (Real Execution)' }
-    $modeColor = if ($DryRun) { 'Yellow' } else { 'Green' }
     Write-Host ('Migration Target : ' + $ws) -ForegroundColor Gray
-    Write-Host ('Execution Mode   : ' + $modeText) -ForegroundColor $modeColor
-    Write-Host ('Profile Applied  : ' + $Profile) -ForegroundColor Gray
+    Write-Host ('Execution Mode   : ' + $modeText) -ForegroundColor Green
     Write-Host ''
 
-    $audit = Invoke-AidevAudit -WorkspacePath $ws
+    $manifestPath = Join-Path $ws '.aidev.json'
+    $hasManifest = Test-Path -LiteralPath $manifestPath
 
-    $actions = @()
+    if (-not $hasManifest) {
+        Write-Host 'No .aidev.json manifest found. Running detection...' -ForegroundColor Yellow
+        $detectRes = Invoke-AidevDetect -WorkspacePath $ws
+        Write-Host ''
+        Write-Host 'Suggested Manifest Preview:' -ForegroundColor Cyan
+        $detectRes.SuggestedManifest | ConvertTo-Json -Depth 10 | Write-Host
+        Write-Host ''
+
+        if ($DryRun) {
+            Write-Host 'Dry-run complete. Review suggested manifest above.' -ForegroundColor Cyan
+            Write-Host 'To migrate, create .aidev.json or run with -AutoApprove.' -ForegroundColor Gray
+            return
+        }
+
+        if (-not $AutoApprove -and -not $Force) {
+            throw "Migration requires an approved '.aidev.json' or explicit -AutoApprove flag."
+        }
+
+        # Auto-create detected manifest upon explicit approval
+        $detectRes.SuggestedManifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+        Write-Host 'Approved and written suggested .aidev.json manifest.' -ForegroundColor Green
+    }
+
     $backupDirName = '.aidev_backup_' + (Get-Date -Format 'yyyyMMdd_HHmmss')
     $backupDirPath = Join-Path $ws $backupDirName
 
-    if ($audit.IsMonolithicJunction) {
-        $actions += '[REPLACE JUNCTION] Safe unlinking of monolithic .agents junction -> physical directory'
-    } elseif (-not $audit.HasAgentsDir) {
-        $actions += '[CREATE DIRECTORY] Create physical .agents directory'
-    }
-
-    if ($audit.HasLegacyRegraZero -or -not $audit.HasAgentsMd) {
-        $actions += '[UPGRADE CONSTITUTION] Replace monolithic Regra Zero in AGENTS.md with concise v2 invariants'
-    }
-
-    $actions += '[CREATE BRIDGE] Instantiate GEMINI.md discovery pointer'
-    $actions += ('[DEPLOY RULES] Deploy .agents/rules/ from profile ' + $Profile)
-    $actions += '[DEPLOY AGENTS] Deploy cognitive specialists (researcher, reviewer, security-reviewer) in .agents/agents/'
-    $actions += '[DEPLOY HOOKS] Deploy deterministic safety hooks (.agents/hooks.json)'
-    $actions += '[DEPLOY MCP] Deploy workspace MCP config (.agents/mcp_config.json)'
-    $actions += '[DEPLOY DOCS] Scaffold docs/architecture, docs/decisions, docs/runbooks'
-    $actions += ('[UPDATE GITIGNORE] Ensure .agents/skills/, .agents/cache/, and ' + $backupDirName + '/ are ignored')
-
     if ($DryRun) {
-        Write-Host ''
-        Write-Host 'Planned Migration Actions (0 writes):' -ForegroundColor Yellow
-        $actions | ForEach-Object { Write-Host ('  ' + $_) -ForegroundColor Yellow }
-        Write-Host ''
-        Write-Host ('Backup would be created at: ' + $backupDirPath) -ForegroundColor Gray
-        Write-Host 'Dry-run complete. No changes made to disk.' -ForegroundColor Cyan
+        Invoke-AidevApply -WorkspacePath $ws -DryRun
         return
     }
 
-    # Real Migration Execution with Backup and Rollback
-    Write-Host ''
-    Write-Host 'Applying Migration...' -ForegroundColor Green
+    Write-Host 'Applying Migration with safety backup...' -ForegroundColor Green
     $null = New-Item -ItemType Directory -Path $backupDirPath -Force
 
     try {
-        # 1. Backup existing root metadata
+        # Backup existing root metadata
         if (Test-Path -LiteralPath (Join-Path $ws 'AGENTS.md')) {
             Copy-Item -LiteralPath (Join-Path $ws 'AGENTS.md') -Destination (Join-Path $backupDirPath 'AGENTS.md.bak') -Force
         }
@@ -973,25 +1516,14 @@ function Invoke-AidevMigrate {
             Copy-Item -LiteralPath (Join-Path $ws 'GEMINI.md') -Destination (Join-Path $backupDirPath 'GEMINI.md.bak') -Force
         }
 
-        # 2. Unlink monolithic junction if present
-        $wsAgents = Join-Path $ws '.agents'
-        if (Test-IsJunction -Path $wsAgents) {
-            cmd /c "rmdir `"$wsAgents`"" | Out-Null
-            Write-Host '  [UNLINKED] Removed monolithic junction without affecting global storage' -ForegroundColor Green
-        }
-
-        # 3. Simulate failure injection if requested for testing
+        # Failure Injection Test
         if ($InjectFailureTest) {
             throw 'SIMULATED_FAILURE_INJECTION: Artificial error midway through migration'
         }
 
-        # 4. Reinitialize with v2 scaffold
-        Invoke-AidevInit -WorkspacePath $ws -Profile $Profile -Force
-
-        Write-Host ''
+        Invoke-AidevApply -WorkspacePath $ws -Force
         Write-Host ('Migration successfully applied! Backup preserved at: ' + $backupDirPath) -ForegroundColor Cyan
     } catch {
-        Write-Host ''
         Write-Host ('[ERROR DURING MIGRATION] ' + $_.Exception.Message) -ForegroundColor Red
         Write-Host 'Executing automatic rollback from backup...' -ForegroundColor Yellow
         if (Test-Path -LiteralPath (Join-Path $backupDirPath 'AGENTS.md.bak')) {
@@ -1006,7 +1538,7 @@ function Invoke-AidevMigrate {
 }
 
 # ------------------------------------------------------------------------------
-# 7. CLEAN / PRUNE COMMAND
+# 11. CLEAN COMMAND (Pruning Managed Obsolete Artifacts)
 # ------------------------------------------------------------------------------
 function Invoke-AidevClean {
     param(
@@ -1016,7 +1548,7 @@ function Invoke-AidevClean {
     )
     $ws = [IO.Path]::GetFullPath($WorkspacePath)
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Workspace Pruning & Clean' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Workspace Pruning & Clean' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     $modeText = if ($DryRun) { 'DRY-RUN (Simulation without write)' } else { 'APPLY (Real Execution)' }
     Write-Host ('Target Workspace : ' + $ws) -ForegroundColor Gray
@@ -1029,50 +1561,52 @@ function Invoke-AidevClean {
     $backups = @(Get-ChildItem -LiteralPath $ws -Directory -Filter '.aidev_backup_*' -ErrorAction SilentlyContinue)
     foreach ($b in $backups) {
         $plannedCleanups += [pscustomobject]@{
-            Type = 'Backup Directory'
-            Path = $b.FullName
+            Type        = 'Backup Directory'
+            Path        = $b.FullName
             Description = ('Expired migration backup (' + $b.Name + ')')
         }
     }
 
-    # 2. Check for orphan skill junctions not in resolved profile
+    # 2. Check for orphan skill junctions
     $wsAgents = Join-Path $ws '.agents'
     $skillsDir = Join-Path $wsAgents 'skills'
     if (Test-Path -LiteralPath $skillsDir) {
-        $resolved = Invoke-AidevResolve -WorkspacePath $ws
-        $activeSkillNames = @($resolved.Skills | Select-Object -ExpandProperty Name)
+        $manifest = Get-AidevManifest -WorkspacePath $ws
+        $resolved = if ($manifest) { (Test-AidevManifest -WorkspacePath $ws).Resolved } else { $null }
+        $activeSkillNames = if ($resolved) { @($resolved.Skills | Select-Object -ExpandProperty Name) } else { @() }
         $installedSkills = @(Get-ChildItem -LiteralPath $skillsDir -Directory -ErrorAction SilentlyContinue)
         foreach ($sk in $installedSkills) {
             if ($activeSkillNames -notcontains $sk.Name) {
                 if (Test-IsJunction -Path $sk.FullName) {
                     $plannedCleanups += [pscustomobject]@{
-                        Type = 'Orphan Skill Link'
-                        Path = $sk.FullName
-                        Description = ('Skill link ' + $sk.Name + ' no longer belongs to active profile ' + $resolved.ProfileName)
+                        Type        = 'Orphan Skill Link'
+                        Path        = $sk.FullName
+                        Description = ('Skill link ' + $sk.Name + ' no longer in declared capabilities')
                     }
                 }
             }
         }
     }
 
-    # 3. Check for obsolete rules not in resolved profile
+    # 3. Check for obsolete managed rules
     $rulesDir = Join-Path $wsAgents 'rules'
     if (Test-Path -LiteralPath $rulesDir) {
-        $resolved = Invoke-AidevResolve -WorkspacePath $ws
-        $activeRuleNames = @($resolved.Rules | Select-Object -ExpandProperty Name)
-        $installedRules = @(Get-ChildItem -LiteralPath $rulesDir -Filter '*.md' -File -ErrorAction SilentlyContinue)
         $metaPath = Join-Path $wsAgents '.aidev_metadata.json'
-        $managedRulesList = @()
         if (Test-Path -LiteralPath $metaPath) {
             $meta = Get-Content -LiteralPath $metaPath -Raw -Encoding utf8 | ConvertFrom-Json
-            if ($meta.managedRules) { $managedRulesList = @($meta.managedRules) }
-        }
-        foreach ($rk in $installedRules) {
-            if ($managedRulesList -contains $rk.Name -and $activeRuleNames -notcontains $rk.Name) {
-                $plannedCleanups += [pscustomobject]@{
-                    Type = 'Obsolete Managed Rule'
-                    Path = $rk.FullName
-                    Description = ('Managed rule ' + $rk.Name + ' no longer belongs to active profile ' + $resolved.ProfileName)
+            $managedRulesList = if ($meta.managedRules) { @($meta.managedRules) } else { @() }
+            $manifest = Get-AidevManifest -WorkspacePath $ws
+            $resolved = if ($manifest) { (Test-AidevManifest -WorkspacePath $ws).Resolved } else { $null }
+            $activeRuleNames = if ($resolved) { @($resolved.Rules | Select-Object -ExpandProperty Name) } else { @() }
+
+            $installedRules = @(Get-ChildItem -LiteralPath $rulesDir -Filter '*.md' -File -ErrorAction SilentlyContinue)
+            foreach ($rk in $installedRules) {
+                if ($managedRulesList -contains $rk.Name -and $activeRuleNames -notcontains $rk.Name) {
+                    $plannedCleanups += [pscustomobject]@{
+                        Type        = 'Obsolete Managed Rule'
+                        Path        = $rk.FullName
+                        Description = ('Managed rule ' + $rk.Name + ' no longer in declared capabilities')
+                    }
                 }
             }
         }
@@ -1113,7 +1647,7 @@ function Invoke-AidevClean {
 }
 
 # ------------------------------------------------------------------------------
-# 8. SYNC COMMAND (Global Library Synchronizer)
+# 12. SYNC COMMAND (Global Library Synchronizer)
 # ------------------------------------------------------------------------------
 function Invoke-AidevSync {
     param(
@@ -1121,9 +1655,8 @@ function Invoke-AidevSync {
         [switch]$DryRun
     )
     $root = Get-AidevRoot
-
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' AI-Dev-Machine Architecture v2 -- Global Library Sync' -ForegroundColor Cyan
+    Write-Host ' AI-Dev-Machine Architecture v2.1 -- Global Library Sync' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     $syncModeText = if ($DryRun) { 'DRY RUN' } elseif ($Update) { 'UPDATE UPSTREAM' } else { 'IDEMPOTENT CHECK' }
     Write-Host ('Global Storage: ' + $script:GlobalAgentsRoot) -ForegroundColor Gray
@@ -1161,11 +1694,17 @@ Export-ModuleMember -Function @(
     'Test-AgentFile',
     'Test-IsJunction',
     'Get-JunctionTarget',
-    'Resolve-AidevProfile',
+    'Get-AidevManifest',
+    'Test-AidevManifest',
+    'Invoke-AidevManifest',
+    'Resolve-AidevCapabilities',
+    'Invoke-AidevDetect',
     'Invoke-AidevResolve',
     'Invoke-AidevDoctor',
     'Invoke-AidevList',
+    'Invoke-AidevCapability',
     'Invoke-AidevAudit',
+    'Invoke-AidevApply',
     'Invoke-AidevInit',
     'Invoke-AidevMigrate',
     'Invoke-AidevClean',

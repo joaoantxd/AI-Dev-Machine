@@ -4,13 +4,28 @@ param(
     [string]$Command = 'help',
 
     [Parameter(Position = 1)]
-    [string]$Target = '.',
+    [string]$Arg1 = '',
+
+    [Parameter(Position = 2)]
+    [string]$Arg2 = '',
+
+    [Parameter(Position = 3)]
+    [string]$Arg3 = '',
+
+    [Parameter()]
+    [string]$Preset = '',
 
     [Parameter()]
     [string]$Profile = '',
 
     [Parameter()]
+    [string[]]$Capability = @(),
+
+    [Parameter()]
     [switch]$DryRun,
+
+    [Parameter()]
+    [switch]$AutoApprove,
 
     [Parameter()]
     [switch]$Update,
@@ -28,35 +43,65 @@ $ErrorActionPreference = 'Stop'
 $coreModule = Join-Path $PSScriptRoot 'core\AidevCore.psm1'
 Import-Module $coreModule -Force
 
+$effectivePreset = if ($Preset) { $Preset } elseif ($Profile) { $Profile } else { '' }
+
 switch ($Command.ToLower()) {
     'doctor' {
-        Invoke-AidevDoctor -WorkspacePath $Target
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevDoctor -WorkspacePath $target
     }
-    'list' {
-        Invoke-AidevList -Category $Category
+    'detect' {
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevDetect -WorkspacePath $target
+    }
+    'manifest' {
+        $action = if ($Arg1) { $Arg1 } else { 'show' }
+        $target = if ($Arg2) { $Arg2 } else { '.' }
+        $p = if ($effectivePreset) { $effectivePreset } else { 'base' }
+        Invoke-AidevManifest -Action $action -WorkspacePath $target -Preset $p -Capabilities $Capability -Force:$Force
+    }
+    'capability' {
+        $action = if ($Arg1) { $Arg1 } else { 'list' }
+        $id = if ($Arg2) { $Arg2 } else { $null }
+        $target = if ($Arg3) { $Arg3 } else { '.' }
+        Invoke-AidevCapability -Action $action -Id $id -WorkspacePath $target
     }
     'resolve' {
-        Invoke-AidevResolve -WorkspacePath $Target -Profile $Profile
-    }
-    'audit' {
-        Invoke-AidevAudit -WorkspacePath $Target
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevResolve -WorkspacePath $target -Preset $effectivePreset -Capabilities $Capability
     }
     'init' {
-        $prof = if ($Profile) { $Profile } else { 'base' }
-        Invoke-AidevInit -WorkspacePath $Target -Profile $prof -Force:$Force
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        $p = if ($effectivePreset) { $effectivePreset } else { 'base' }
+        Invoke-AidevInit -WorkspacePath $target -Preset $p -Capabilities $Capability -Force:$Force
+    }
+    'apply' {
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevApply -WorkspacePath $target -DryRun:$DryRun -Force:$Force
+    }
+    'audit' {
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevAudit -WorkspacePath $target
     }
     'migrate' {
-        $prof = if ($Profile) { $Profile } else { 'base' }
-        Invoke-AidevMigrate -WorkspacePath $Target -Profile $prof -DryRun:$DryRun -Force:$Force
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        $p = if ($effectivePreset) { $effectivePreset } else { 'base' }
+        Invoke-AidevMigrate -WorkspacePath $target -Preset $p -Capabilities $Capability -DryRun:$DryRun -AutoApprove:$AutoApprove -Force:$Force
     }
     'clean' {
-        Invoke-AidevClean -WorkspacePath $Target -DryRun:$DryRun -Force:$Force
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevClean -WorkspacePath $target -DryRun:$DryRun -Force:$Force
     }
     'prune' {
-        Invoke-AidevClean -WorkspacePath $Target -DryRun:$DryRun -Force:$Force
+        $target = if ($Arg1) { $Arg1 } else { '.' }
+        Invoke-AidevClean -WorkspacePath $target -DryRun:$DryRun -Force:$Force
     }
     'sync' {
         Invoke-AidevSync -Update:$Update -DryRun:$DryRun
+    }
+    'list' {
+        $cat = if ($Arg1) { $Arg1 } else { $Category }
+        Invoke-AidevList -Category $cat
     }
     'test' {
         $testScript = Join-Path $PSScriptRoot 'tests\run-tests.ps1'
@@ -68,21 +113,33 @@ switch ($Command.ToLower()) {
     }
     default {
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host " AI-Dev-Machine CLI -- Architecture v2" -ForegroundColor Cyan
+        Write-Host " AI-Dev-Machine CLI -- Architecture v2.1" -ForegroundColor Cyan
+        Write-Host " Capability-Driven Governance & Multi-Agent Materialization" -ForegroundColor Cyan
         Write-Host "============================================================" -ForegroundColor Cyan
-        Write-Host 'Usage: .\aidev.ps1 <command> [target] [options]'
+        Write-Host 'Usage: .\aidev.ps1 <command> [args...] [options]'
         Write-Host ''
-        Write-Host 'Commands:' -ForegroundColor Yellow
-        Write-Host '  doctor [path]              : Inspect system, tools, registries, and workspace status (read-only)'
-        Write-Host '  list [skills|agents|mcps]  : List managed skills, agents, MCPs, plugins, and profiles from registry'
-        Write-Host '  resolve [path] [-Profile]  : Resolve and explain provenance of all components for a profile'
-        Write-Host '  audit [path]               : Audit existing project architecture and compatibility (read-only)'
-        Write-Host '  init [path] [-Profile ...] : Initialize a new project with Architecture v2'
-        Write-Host '  migrate [path] [-DryRun]   : Upgrade project from legacy monolithic junction to v2 isolated structure'
-        Write-Host '  clean [path] [-DryRun]     : Clean obsolete generated links and expired backups'
-        Write-Host '  sync [-Update] [-DryRun]   : Synchronize canonical global library in %USERPROFILE%\.agents'
-        Write-Host '  test                       : Execute the comprehensive automated test suite'
+        Write-Host 'Inspection Commands (Read-Only):' -ForegroundColor Yellow
+        Write-Host '  doctor [path]                  : Comprehensive 6-point system, schema, and workspace diagnostic'
+        Write-Host '  detect [path]                  : Heuristic fact observation and manifest suggestion (read-only)'
+        Write-Host '  manifest validate [path]       : Validate .aidev.json against schema v1 and capability graph'
+        Write-Host '  manifest show [path]           : Display current project manifest (.aidev.json)'
+        Write-Host '  capability list                : List all atomic capabilities registered in registry/capabilities.json'
+        Write-Host '  capability show <id>           : Show details, rules, skills, and agents of a capability'
+        Write-Host '  resolve [path]                 : Resolve effective graph configuration, provenance, and gates'
+        Write-Host '  audit [path]                   : 3-way reconciliation (Detected Reality vs Declared vs Materialized)'
+        Write-Host '  list [capabilities|profiles...] : List registry categories'
         Write-Host ''
-        Write-Host 'Profiles available: base, web-supabase, windows-desktop, monorepo' -ForegroundColor Gray
+        Write-Host 'Materialization & Project Commands (Write/Mutative):' -ForegroundColor Yellow
+        Write-Host '  manifest init [path] [-Preset] : Initialize .aidev.json manifest without materializing'
+        Write-Host '  capability add <id> [path]     : Add an atomic capability to .aidev.json'
+        Write-Host '  capability remove <id> [path]  : Remove a capability from .aidev.json'
+        Write-Host '  init [path] [-Preset]          : Initialize a new project with .aidev.json and apply materialization'
+        Write-Host '  apply [path] [-DryRun]         : Explicitly materialize .aidev.json into .agents/, rules, and configs'
+        Write-Host '  migrate [path] [-DryRun]       : Adopt legacy project with backup and automatic rollback on failure'
+        Write-Host '  clean [path] [-DryRun]         : Prune obsolete managed rules, orphan skill junctions, and expired backups'
+        Write-Host '  sync [-Update] [-DryRun]       : Sync global canonical library in %USERPROFILE%\.agents'
+        Write-Host '  test                           : Execute comprehensive automated test suite'
+        Write-Host ''
+        Write-Host 'Convenience Presets: base, web-supabase, windows-desktop, monorepo' -ForegroundColor Gray
     }
 }

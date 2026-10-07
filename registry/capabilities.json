@@ -1,0 +1,402 @@
+﻿{
+  "$schema": "../schemas/aidev-manifest.schema.json",
+  "version": "2.1.0",
+  "capabilities": [
+    {
+      "id": "core",
+      "name": "Core Engineering Invariants",
+      "description": "Universal engineering baseline: deep modules, git discipline, evidence-based verification, systematic debugging, cognitive specialists and documentation MCP.",
+      "category": "core",
+      "requires": [],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [
+        "architecture-invariants.md",
+        "git-workflow.md",
+        "verification.md"
+      ],
+      "skills": [
+        "systematic-debugging",
+        "verification-before-completion",
+        "ponytail"
+      ],
+      "agents": [
+        "researcher",
+        "reviewer",
+        "security-reviewer"
+      ],
+      "mcps": [
+        "context7"
+      ],
+      "validationDefaults": {},
+      "detectionHints": []
+    },
+    {
+      "id": "monorepo",
+      "name": "Monorepo Workspace Topology",
+      "description": "Multi-package repository with shared libraries, package boundaries and workspace orchestration.",
+      "category": "topology",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [
+        "architecture-invariants.md"
+      ],
+      "skills": [],
+      "agents": [
+        "software-architect"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "fileExists", "pattern": "pnpm-workspace.yaml", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "lerna.json", "confidence": "certain" },
+        { "type": "contentMatch", "file": "package.json", "pattern": "\"workspaces\"", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript Language Standards",
+      "description": "Strict typechecking, modern ECMAScript, interface contracts and type ergonomics.",
+      "category": "language",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [],
+      "agents": [],
+      "mcps": [],
+      "validationDefaults": {
+        "typecheck": "npx tsc --noEmit"
+      },
+      "detectionHints": [
+        { "type": "fileExists", "pattern": "tsconfig.json", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "tsconfig.base.json", "confidence": "certain" },
+        { "type": "packageDependency", "package": "typescript", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "dotnet",
+      "name": ".NET & C# Platform",
+      "description": "C# memory safety, async/await idioms, IDisposable/SafeHandle lifecycle and .NET CLI tooling.",
+      "category": "language",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [],
+      "agents": [
+        "backend-architect"
+      ],
+      "mcps": [],
+      "validationDefaults": {
+        "build": "dotnet build",
+        "test": "dotnet test"
+      },
+      "detectionHints": [
+        { "type": "globExists", "pattern": "**/*.csproj", "confidence": "certain" },
+        { "type": "globExists", "pattern": "**/*.sln", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python Language & Ecosystem",
+      "description": "Python virtual environments, type annotations, PEP standards and pytest.",
+      "category": "language",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [],
+      "agents": [],
+      "mcps": [],
+      "validationDefaults": {
+        "test": "pytest"
+      },
+      "detectionHints": [
+        { "type": "fileExists", "pattern": "pyproject.toml", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "requirements.txt", "confidence": "strong" },
+        { "type": "fileExists", "pattern": "Pipfile", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "react",
+      "name": "React Frontend Craft",
+      "description": "Modern React patterns, component decomposition, custom hooks, accessible design and styling.",
+      "category": "frontend",
+      "requires": ["core"],
+      "recommends": ["typescript"],
+      "conflicts": [],
+      "rules": [
+        "web-guidelines.md"
+      ],
+      "skills": [
+        "ui-ux-pro-max",
+        "frontend-design",
+        "impeccable",
+        "web-design-guidelines"
+      ],
+      "agents": [
+        "frontend-developer"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "packageDependency", "package": "react", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js Fullstack Framework",
+      "description": "Next.js App Router, React Server Components, Server Actions and Core Web Vitals optimization.",
+      "category": "frontend",
+      "requires": ["react"],
+      "recommends": ["typescript", "browser-testing"],
+      "conflicts": [],
+      "rules": [
+        "web-guidelines.md"
+      ],
+      "skills": [
+        "vercel-react-best-practices"
+      ],
+      "agents": [
+        "frontend-developer"
+      ],
+      "mcps": [
+        "chrome-devtools-mcp"
+      ],
+      "validationDefaults": {
+        "build": "next build",
+        "dev": "next dev"
+      },
+      "detectionHints": [
+        { "type": "packageDependency", "package": "next", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "next.config.js", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "next.config.mjs", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "next.config.ts", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "nestjs",
+      "name": "NestJS Backend Architecture",
+      "description": "Modular enterprise backend, dependency injection, controllers, providers, guards and Fastify/Express.",
+      "category": "backend",
+      "requires": ["core", "typescript"],
+      "recommends": ["postgres"],
+      "conflicts": [],
+      "rules": [
+        "architecture-invariants.md"
+      ],
+      "skills": [],
+      "agents": [
+        "backend-architect"
+      ],
+      "mcps": [],
+      "validationDefaults": {
+        "test": "npm test",
+        "build": "nest build"
+      },
+      "detectionHints": [
+        { "type": "packageDependency", "package": "@nestjs/core", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL Relational Database",
+      "description": "SQL schema design, migrations, relational integrity, indexing and query performance analysis.",
+      "category": "database",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [
+        "database-postgres.md"
+      ],
+      "skills": [
+        "supabase-postgres-best-practices"
+      ],
+      "agents": [
+        "database-optimizer"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "packageDependency", "package": "pg", "confidence": "strong" },
+        { "type": "packageDependency", "package": "kysely", "confidence": "strong" },
+        { "type": "packageDependency", "package": "prisma", "confidence": "strong" }
+      ]
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase BaaS & Auth/RLS",
+      "description": "Supabase managed Postgres, Row Level Security (RLS), auth policies, storage and migrations.",
+      "category": "database",
+      "requires": ["postgres"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [
+        "database-postgres.md"
+      ],
+      "skills": [
+        "supabase",
+        "supabase-postgres-best-practices"
+      ],
+      "agents": [
+        "database-optimizer"
+      ],
+      "mcps": [
+        "supabase"
+      ],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "packageDependency", "package": "@supabase/supabase-js", "confidence": "certain" },
+        { "type": "globExists", "pattern": "supabase/migrations/*.sql", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite Embedded Database",
+      "description": "Embedded SQL storage, WAL mode, schema migrations and local data integrity.",
+      "category": "database",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [],
+      "agents": [
+        "database-optimizer"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "packageDependency", "package": "better-sqlite3", "confidence": "certain" },
+        { "type": "packageDependency", "package": "sqlite3", "confidence": "certain" },
+        { "type": "globExists", "pattern": "**/*.sqlite", "confidence": "strong" },
+        { "type": "globExists", "pattern": "**/*.db", "confidence": "strong" }
+      ]
+    },
+    {
+      "id": "electron",
+      "name": "Electron Desktop Architecture",
+      "description": "Electron main and renderer processes, IPC security, native bridges, WebCodecs and canvas acceleration.",
+      "category": "platform",
+      "requires": ["core"],
+      "recommends": ["react", "typescript"],
+      "conflicts": [],
+      "rules": [],
+      "skills": [
+        "playwright"
+      ],
+      "agents": [
+        "frontend-developer"
+      ],
+      "mcps": [],
+      "validationDefaults": {
+        "dev": "electron ."
+      },
+      "detectionHints": [
+        { "type": "packageDependency", "package": "electron", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "windows-desktop",
+      "name": "Windows Desktop & Native Client",
+      "description": "Win32, WPF, WinUI 3, single-threaded apartments (STA), unmanaged handles and WinApp CLI automation.",
+      "category": "platform",
+      "requires": ["core"],
+      "recommends": ["hardware-qa"],
+      "conflicts": [],
+      "rules": [
+        "windows-desktop.md"
+      ],
+      "skills": [
+        "winapp"
+      ],
+      "agents": [
+        "test-automation-engineer",
+        "software-architect"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "globExists", "pattern": "**/*Windows*.csproj", "confidence": "certain" },
+        { "type": "globExists", "pattern": "**/*WinUI*.csproj", "confidence": "certain" },
+        { "type": "globExists", "pattern": "**/*Wpf*.csproj", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "browser-testing",
+      "name": "Browser & E2E Testing (Playwright)",
+      "description": "End-to-end browser testing, accessibility testing, network mocking and visual regression.",
+      "category": "testing",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [
+        "playwright"
+      ],
+      "agents": [
+        "test-automation-engineer"
+      ],
+      "mcps": [],
+      "validationDefaults": {
+        "e2e": "npx playwright test"
+      },
+      "detectionHints": [
+        { "type": "fileExists", "pattern": "playwright.config.ts", "confidence": "certain" },
+        { "type": "fileExists", "pattern": "playwright.config.js", "confidence": "certain" },
+        { "type": "packageDependency", "package": "@playwright/test", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "security-audit",
+      "name": "Security Audit & Threat Modeling",
+      "description": "Security reviews, threat modeling, ethical hacking PoCs (Strix) and SAST scanner (Semgrep).",
+      "category": "security",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [
+        "architecture-invariants.md"
+      ],
+      "skills": [
+        "security-best-practices",
+        "security-threat-model",
+        "strix"
+      ],
+      "agents": [
+        "security-reviewer"
+      ],
+      "mcps": [
+        "semgrep"
+      ],
+      "validationDefaults": {},
+      "detectionHints": [
+        { "type": "globExists", "pattern": "strix_runs/*", "confidence": "certain" },
+        { "type": "fileExists", "pattern": ".semgrep.yml", "confidence": "certain" }
+      ]
+    },
+    {
+      "id": "hardware-qa",
+      "name": "Hardware & Physical Verification Gates",
+      "description": "Physical display capture, multi-monitor topology, audio/input simulation and manual hardware checkpoints.",
+      "category": "specialized",
+      "requires": ["core"],
+      "recommends": [],
+      "conflicts": [],
+      "rules": [],
+      "skills": [
+        "winapp"
+      ],
+      "agents": [
+        "test-automation-engineer"
+      ],
+      "mcps": [],
+      "validationDefaults": {},
+      "detectionHints": []
+    }
+  ]
+}
+
+
+

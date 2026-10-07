@@ -1,7 +1,11 @@
 ﻿{
-    "profile":  "base",
-    "version":  "2.0.0",
-    "timestamp":  "2026-10-07T17:49:51Z",
+    "schemaVersion":  1,
+    "version":  "2.1.0",
+    "timestamp":  "2026-10-07T18:14:44Z",
+    "preset":  "base",
+    "resolvedCapabilities":  [
+                                 "core"
+                             ],
     "managedRules":  [
                          "architecture-invariants.md",
                          "git-workflow.md",

@@ -1,140 +1,206 @@
-# AI Dev Machine — Architecture v2
+# AI-Dev-Machine — Architecture v2.1
 
-Um kit determinístico e portátil para configurar, manter e orquestrar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
-
----
-
-## 1. O que é a Architecture v2?
-
-A **Architecture v2** foi projetada para resolver a sobrecarga cognitiva e a poluição de contexto nos coding agents.
-
-> **Princípio Central:** Aumentar a qualidade, inteligência, previsibilidade e autonomia dos coding agents, fornecendo o contexto certo no momento certo e automatizando deterministicamente aquilo que não precisa consumir raciocínio da IA.
-
-### O que mudou da v1 para a v2:
-- **Fim da Regra Zero Monolítica:** O agente não carrega obrigatoriamente 5 a 10 skills em toda interação inicial. `AGENTS.md` atua como uma constituição enxuta de invariantes essenciais.
-- **Isolamento de Projetos:** Eliminação de junction monolítica (`.agents -> %USERPROFILE%\.agents`). Cada workspace possui sua pasta `.agents/` física e independente.
-- **Registry Canônico Único:** Centralização de metadados em `registry/` (skills, agents, mcps, plugins, profiles), eliminando catálogos manuais duplicados.
-- **Especialistas Cognitivos:** Introdução de agentes com papéis mentais bem definidos: `researcher` (investigação read-only e Graphify), `reviewer` (desafio e validação de diffs) e `security-reviewer` (AppSec).
-- **Profiles Composáveis:** Perfis (`base`, `web-supabase`, `windows-desktop`, `monorepo`) para compor regras, skills e MCPs adequados à natureza do projeto.
-- **CLI Unificada `aidev`:** Ponto único de orquestração para diagnósticos, auditorias, migrações seguras, inicialização e sincronização.
+> **Capability-Driven Framework & Multi-Agent Governance Platform**
+> Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
 
 ---
 
-## 2. CLI `aidev` (PowerShell)
+## 1. Princípios Arquiteturais da v2.1
 
-A CLI `aidev.ps1` é o ponto de entrada canônico para automações no AI-Dev-Machine.
+A **Architecture v2.1** evolui o modelo anterior para um framework orientado a capacidades atômicas e declarativas, separando claramente:
 
+```text
+Registry (registry/capabilities.json)
+    ↓
+descreve componentes, rules, skills, agents e MCPs atômicos disponíveis
+
+Detection (aidev detect)
+    ↓
+observa fatos estruturais do repositório (read-only, nunca força política)
+
+Project Manifest (.aidev.json)
+    ↓
+declara a intenção aprovada e versionada pelo desenvolvedor
+
+Resolver (aidev resolve)
+    ↓
+resolve o grafo determinístico (dependências, ciclos, conflitos, proveniência)
+
+Adapters / Materializer (aidev apply)
+    ↓
+materializa a configuração isolada (.agents/) para cada runtime de IA
+```
+
+### O que mudou na v2.1:
+- **Project Manifest (`.aidev.json`)**: Intenção do projeto declarada em manifesto versionado, validado contra schema JSON Draft-07 (`schemas/aidev-manifest.schema.json`).
+- **Capabilities Composáveis (`registry/capabilities.json`)**: 16 capabilities atômicas combináveis (`core`, `typescript`, `dotnet`, `python`, `react`, `nextjs`, `nestjs`, `postgres`, `supabase`, `sqlite`, `electron`, `windows-desktop`, `browser-testing`, `security-audit`, `hardware-qa`).
+- **Profiles como Presets**: Perfis (`base`, `web-supabase`, `windows-desktop`, `monorepo`) atuam como atalhos para composição de capabilities.
+- **Três Estados Epistemológicos**: Distinção clara entre **Detected** (fatos observados), **Inferred** (sugestões) e **Declared** (política aprovada no manifesto).
+- **Validation Gates Genéricos**: Suporte declarativo para validações automatizadas (`automated`), condicionais (`onFiles`), humanas (`human`) e de hardware (`hardware` — nunca auto-aprovadas pela máquina).
+- **3-Way Reconciliation Audit (`aidev audit`)**: Auditoria contínua comparando Realidade Detectada vs Manifesto Declarado vs Estado Materializado.
+- **Extensibilidade Sem Core Changes**: Adicionar novas tecnologias exige apenas entrada JSON e templates — zero alterações no engine PowerShell.
+
+---
+
+## 2. CLI `aidev` (Lifecycle de Comandos)
+
+A CLI `aidev.ps1` orquestra o ciclo de vida completo:
+
+### Comandos de Inspeção (Read-Only)
 ```powershell
-# Executar diagnósticos no sistema, ferramentas, registries e projeto
+# Diagnóstico completo de 6 pontos (ferramentas, schemas, storage global, runtimes, tokens)
 .\aidev.ps1 doctor [caminho]
 
-# Listar componentes disponíveis no registry canônico
-.\aidev.ps1 list [skills|agents|mcps|plugins|profiles]
+# Detecção de fatos estruturais e sugestão de manifesto (read-only)
+.\aidev.ps1 detect [caminho]
 
-# Auditar conformidade de um projeto existente (somente leitura)
+# Validar .aidev.json contra schema v1 e grafo de capabilities
+.\aidev.ps1 manifest validate [caminho]
+
+# Exibir conteúdo do manifesto .aidev.json
+.\aidev.ps1 manifest show [caminho]
+
+# Listar todas as capabilities disponíveis no catálogo
+.\aidev.ps1 capability list
+
+# Inspecionar detalhes, regras, skills e agentes de uma capability
+.\aidev.ps1 capability show <id>
+
+# Resolver configuração efetiva, proveniência e validation gates
+.\aidev.ps1 resolve [caminho]
+
+# Auditoria de reconciliação de 3 vias (Detected vs Declared vs Materialized)
 .\aidev.ps1 audit [caminho]
 
-# Simular migração segura de um projeto para a Architecture v2 (zero escritas)
-.\aidev.ps1 migrate [caminho] -DryRun
+# Listar categorias do registry canônico (skills, agents, mcps, plugins, profiles, capabilities)
+.\aidev.ps1 list [categoria]
+```
 
-# Aplicar migração segura com backup automático e proteção contra sobrescrita
-.\aidev.ps1 migrate [caminho] -Profile base
+### Comandos de Materialização & Modificação (Write / Mutative)
+```powershell
+# Inicializar apenas o manifesto .aidev.json (sem materializar)
+.\aidev.ps1 manifest init [caminho] [-Preset base]
 
-# Inicializar um novo projeto com Architecture v2 e profile específico
-.\aidev.ps1 init [caminho] -Profile web-supabase
+# Adicionar capability atômica ao .aidev.json
+.\aidev.ps1 capability add <id> [caminho]
 
-# Sincronizar a biblioteca global canônica em %USERPROFILE%\.agents
+# Remover capability do .aidev.json
+.\aidev.ps1 capability remove <id> [caminho]
+
+# Inicializar novo projeto (cria .aidev.json e executa apply)
+.\aidev.ps1 init [caminho] [-Preset web-supabase]
+
+# Materializar explicitamente o .aidev.json em .agents/ e arquivos de governança
+.\aidev.ps1 apply [caminho] [-DryRun] [-Force]
+
+# Adotar projeto existente com backup automático e rollback em caso de falha
+.\aidev.ps1 migrate [caminho] [-DryRun] [-AutoApprove]
+
+# Podar regras gerenciadas obsoletas e links órfãos preservando arquivos locais
+.\aidev.ps1 clean [caminho] [-DryRun]
+
+# Sincronizar biblioteca global canônica em %USERPROFILE%\.agents
 .\aidev.ps1 sync [-Update] [-DryRun]
 
-# Executar a suíte completa de testes automatizados
+# Executar suíte completa de testes automatizados
 .\aidev.ps1 test
 ```
 
 ---
 
-## 3. Estrutura de um Projeto v2
-
-Um projeto compatível com a Architecture v2 é organizado da seguinte forma:
+## 3. Estrutura Canônica de um Projeto v2.1
 
 ```text
 meu-projeto/
-├── AGENTS.md                  # Constituição enxuta de invariantes e comandos
-├── GEMINI.md                  # Bridge nativo para Antigravity / Gemini (@./AGENTS.md)
+├── .aidev.json                # Manifesto declarativo versionado (Intenção Aprovada)
+├── AGENTS.md                  # Constituição enxuta derivada com invariantes e comandos
+├── GEMINI.md                  # Bridge nativo para Antigravity / Gemini
 ├── .agents/                   # Diretório físico ISOLADO (ignorado pelo git)
-│   ├── rules/                 # Regras contextuais (architecture, git, stack)
-│   ├── skills/                # Links individuais para skills habilitadas no projeto
+│   ├── .aidev_metadata.json   # Estado materializado e tracking de proveniência
+│   ├── rules/                 # Regras contextuais (managed + local/external)
+│   ├── skills/                # Links individuais para skills das capabilities ativas
 │   ├── agents/                # Especialistas cognitivos e de domínio
-│   ├── plugins/               # Plugins Antigravity
-│   ├── hooks.json             # Hooks determinísticos de proteção e ciclo de vida
-│   └── mcp_config.json        # Configuração de MCPs habilitados no projeto
-├── docs/                      # Conhecimento humano e histórico sob demanda
-│   ├── architecture/          # Visão arquitetural e diagramas
-│   ├── decisions/             # Architecture Decision Records (ADRs)
-│   └── runbooks/              # Runbooks operacionais e procedimentos
+│   ├── hooks.json             # Hooks determinísticos de segurança pré-execução
+│   ├── scripts/               # Scripts de checagem determinística (safety-check)
+│   └── mcp_config.json        # MCPs habilitados de acordo com as capabilities
 └── src/                       # Código-fonte da aplicação
 ```
 
 ---
 
-## 4. Três Categorias de Conhecimento
+## 4. Project Manifest (`.aidev.json`)
 
-Para otimizar o foco da IA sem comprometer o raciocínio profundo:
+Exemplo de manifesto para um projeto fullstack:
 
-1. **Instrução Permanente (`AGENTS.md`)**:
-   - Invariantes inegociáveis do projeto (ex: não expor secrets, não fazer ações destrutivas sem autorização, comandos canônicos de teste).
-   - Deve ser conciso e verificável.
-2. **Conhecimento Contextual (`.agents/rules/`, `.agents/skills/`, `.agents/agents/`)**:
-   - Carregado sob demanda quando a tarefa exigir (ex: regras de Supabase/Postgres, UI/UX craft, análise com Graphify, E2E com Playwright).
-3. **Documentação Histórica (`docs/`)**:
-   - ADRs, runbooks, post-mortems e diagramas.
-   - Não consome contexto permanentemente, sendo consultado pela IA apenas quando relevante.
+```json
+{
+  "$schema": "./schemas/aidev-manifest.schema.json",
+  "schemaVersion": 1,
+  "preset": "web-supabase",
+  "capabilities": [
+    "core",
+    "monorepo",
+    "typescript",
+    "react",
+    "nextjs",
+    "postgres",
+    "supabase",
+    "browser-testing"
+  ],
+  "projectRules": [
+    ".agents/rules/local-business-rules.md"
+  ],
+  "validationGates": {
+    "commands": {
+      "dev": "pnpm dev",
+      "build": "pnpm build",
+      "test": "pnpm test",
+      "typecheck": "pnpm typecheck",
+      "lint": "pnpm lint",
+      "e2e": "pnpm test:e2e"
+    },
+    "automated": [
+      {
+        "id": "api-tests",
+        "description": "Executar testes de API",
+        "command": "pnpm",
+        "args": ["test", "--filter", "@app/api"],
+        "cwd": "apps/api"
+      }
+    ],
+    "human": [
+      {
+        "id": "visual-acceptance",
+        "description": "Aprovação visual de UI antes do release",
+        "requiredFor": ["release"]
+      }
+    ],
+    "hardware": [
+      {
+        "id": "multi-monitor-qa",
+        "description": "Verificação física em setup multi-monitor",
+        "requiredFor": ["release"],
+        "checklist": ["Verificar DPI scaling", "Verificar captura HDMI"]
+      }
+    ]
+  }
+}
+```
 
 ---
 
-## 5. Especialistas & Agentes
+## 5. Validation Gates & Regras Human/Hardware
 
-### Especialistas Cognitivos (Separação Mental de Papéis)
-- **`researcher`**: Investigação aprofundada, navegação arquitetural, levantamento de evidências e Graphify. Modo estrito somente leitura (nunca altera código).
-- **`reviewer`**: Análise crítica e independente de diffs, validação de especificações, detecção de regressões e testes de caso de borda.
-- **`security-reviewer`**: Auditoria de segurança de código, análise de superfície de ataque, SAST e conformidade com OWASP.
-
-### Especialistas de Domínio (Agency Agents)
-- **`software-architect`**: Decisões macro, bounded contexts (DDD) e matrizes de trade-off.
-- **`backend-architect`**: Contratos de API, resiliência e migrações zero-downtime.
-- **`frontend-developer`**: Engenharia de componentes, estado, acessibilidade WCAG e Core Web Vitals.
-- **`database-optimizer`**: Planos de execução (`EXPLAIN ANALYZE`), estratégias de índices e RLS.
-- **`security-architect`**: Modelagem de ameaças e trust boundaries.
-- **`test-automation-engineer`**: Automação E2E (Playwright, WinApp) e eliminação de flakes.
-- **`devops-automator`**: Pipelines de CI/CD (GitHub Actions), Docker e automação de release.
+- **Automated Gates**: Comandos estruturados com `command`, `args` e `cwd` evitando cascas de shell opacas.
+- **Conditional Gates**: Execução vinculada a padrões de arquivos alterados (`onFiles`).
+- **Human Gates**: Checkpoints mandatórios de validação humana (a máquina **nunca** auto-aprova).
+- **Hardware Gates**: Especialização declarativa de checkpoint físico/ambiente que exige evidência humana direta.
 
 ---
 
-## 6. Profiles Composáveis
+## 6. Segurança e Invariantes
 
-| Profile | Finalidade | Regras Habilitadas | Skills Principais |
-|---|---|---|---|
-| **`base`** | Engenharia padrão universal | Invariantes, Git, Verification | `context-engineering`, `systematic-debugging`, `diagnosing-bugs`, `ponytail`, `calm`, `graphify`, `codebase-design`, `devils-advocate`, `code-review` |
-| **`web-supabase`** | Web fullstack moderno | Web Guidelines, Database Postgres | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `vercel-react-best-practices`, `supabase`, `supabase-postgres-best-practices`, `playwright` |
-| **`windows-desktop`** | Aplicações desktop Windows | Windows Desktop Guidelines | `winapp`, `playwright`, `security-best-practices` |
-| **`monorepo`** | Monorepos e arquiteturas modulares | Modular Invariants | `domain-modeling`, `improve-codebase-architecture`, `understand-anything` |
-
----
-
-## 7. Registry Canônico (`registry/`)
-
-A fonte única da verdade para todo o ecossistema reside em arquivos JSON estruturados:
-
-- [`registry/skills.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/skills.json): 33 Skills canônicas catalogadas com categoria, repositório de origem, ferramentas compatíveis e descrição.
-- [`registry/agents.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/agents.json): 10 Agentes (3 cognitivos + 7 de domínio) com papéis, ferramentas e personas.
-- [`registry/mcps.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/mcps.json): 10 Servidores MCP com escopo, transporte e variáveis de autenticação.
-- [`registry/plugins.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/plugins.json): 6 Plugins composáveis para Antigravity.
-- [`registry/profiles.json`](file:///c:/Users/CONTABILIDADE/Documents/AI-Dev-Machine/registry/profiles.json): 4 Perfis arquiteturais prontos para uso.
-
----
-
-## 8. Segurança e Idempotência
-
-- **Zero Caminhos Hardcoded**: Toda configuração respeita `$env:USERPROFILE` e caminhos relativos ao projeto.
-- **Proteção de Secrets**: Verificações do `doctor` auditam a presença de variáveis de ambiente sem expor ou versionar valores confidenciais.
-- **Backups e Rollback**: Qualquer operação de `migrate` gera backup automático antes de tocar no disco e possui rotina de restauração automática em caso de falha.
-- **Preservação de Conteúdo Externo**: Scripts e ferramentas respeitam a tag `[PRESERVE EXTERNAL]`, nunca removendo artefatos customizados pelo usuário.
+- **Proteção contra Path Traversal**: Validação estrita garante que `projectRules` e caminhos declarados residem dentro dos limites do workspace.
+- **Isolamento Completo**: Zero poluição de contexto ou cruzamento entre projetos diferentes.
+- **Transações e Rollback**: Falhas durante migrações disparam restauração atômica do estado original a partir de backups dedicados.
+- **Preservação de Propriedade Local**: Arquivos e regras locais nunca são sobrescritos ou deletados pelas rotinas de automação.

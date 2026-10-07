@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI-Dev-Machine Project Manifest Schema",
+  "description": "Declarative, version-controlled project specification for AI-Dev-Machine Architecture v2.1.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "capabilities"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URI to the JSON Schema."
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1,
+      "description": "The schema version of this manifest (must be 1 for v2.1)."
+    },
+    "preset": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Optional convenience preset used as starting point (e.g. base, web-supabase, windows-desktop, monorepo, custom)."
+    },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      },
+      "description": "List of atomic capability IDs composed in this project."
+    },
+    "projectRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of relative paths to project-owned custom rules (e.g. .agents/rules/business-rules.md)."
+    },
+    "customSkills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of additional skill IDs enabled beyond capability defaults."
+    },
+    "customAgents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of additional agent IDs enabled beyond capability defaults."
+    },
+    "customMcps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of additional MCP server IDs enabled beyond capability defaults."
+    },
+    "validationGates": {
+      "type": "object",
+      "description": "Declared automated and human validation gates for the project.",
+      "properties": {
+        "commands": {
+          "type": "object",
+          "description": "Canonical named commands (e.g. build, test, typecheck, lint, dev, e2e).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "automated": {
+          "type": "array",
+          "description": "Structured automated validation gates.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "command"
+            ],
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "command": { "type": "string" },
+              "args": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "cwd": { "type": "string" },
+              "onFiles": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "human": {
+          "type": "array",
+          "description": "Human inspection and acceptance checkpoints (never auto-passed by AI).",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "description"
+            ],
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "requiredFor": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "hardware": {
+          "type": "array",
+          "description": "Hardware and physical environment validation checkpoints.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "description"
+            ],
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "requiredFor": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "checklist": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
