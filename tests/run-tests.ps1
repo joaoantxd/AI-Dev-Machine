@@ -539,6 +539,53 @@ try {
         }
     }
 
+    # --------------------------------------------------------------------------
+    # 12. End-to-End Greenfield and Brownfield Project Lifecycle
+    # --------------------------------------------------------------------------
+    Write-Host "`n--- 12. Greenfield & Brownfield E2E Lifecycle ---" -ForegroundColor Yellow
+
+    # Greenfield New Project
+    $greenWs = Join-Path $tempBase 'FixtureGreenfieldNew'
+    $null = New-Item -ItemType Directory -Path $greenWs -Force
+
+    Assert-Test "Greenfield new project full lifecycle (init, validate, resolve, audit, apply)" {
+        Invoke-AidevInit -WorkspacePath $greenWs -Preset 'web-supabase' -Force
+        $val = Invoke-AidevManifest -Action 'validate' -WorkspacePath $greenWs
+        if (-not $val.Valid) { throw "Greenfield manifest validation failed" }
+        $res = Invoke-AidevResolve -WorkspacePath $greenWs
+        if (@($res.ResolvedCapabilities) -notcontains 'react') { throw "Greenfield resolve missing capability" }
+        $audit = Invoke-AidevAudit -WorkspacePath $greenWs
+        if (-not $audit.HasManifest) { throw "Greenfield audit did not recognize manifest" }
+        if (@($audit.MaterializedRules).Count -eq 0) { throw "Greenfield audit reported 0 materialized rules" }
+    }
+
+    # Brownfield Adoption with Spaces in Path
+    $brownWs = Join-Path $tempBase 'Fixture Brownfield With Spaces'
+    $null = New-Item -ItemType Directory -Path $brownWs -Force
+    $srcDir = Join-Path $brownWs 'src'
+    $null = New-Item -ItemType Directory -Path $srcDir -Force
+    Set-Content -LiteralPath (Join-Path $brownWs 'package.json') -Value '{"name":"legacy-app","dependencies":{"react":"18.0.0","next":"14.0.0"}}' -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $srcDir 'index.js') -Value 'console.log("Legacy application code");' -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $brownWs 'AGENTS.md') -Value '# Custom Legacy AGENTS.md' -Encoding utf8
+
+    Assert-Test "Brownfield adoption of existing repo with spaces (detect, audit, migrate, verify preservation)" {
+        $det = Invoke-AidevDetect -WorkspacePath $brownWs
+        if (@($det.SuggestedCapabilities | Select-Object -ExpandProperty Id) -notcontains 'nextjs') {
+            throw "Failed to detect Next.js in Brownfield fixture"
+        }
+        $auditPre = Invoke-AidevAudit -WorkspacePath $brownWs
+        if ($auditPre.HasManifest) { throw "Pre-migration brownfield should not have manifest" }
+
+        Invoke-AidevMigrate -WorkspacePath $brownWs -AutoApprove -Force
+
+        $auditPost = Invoke-AidevAudit -WorkspacePath $brownWs
+        if (-not $auditPost.HasManifest) { throw "Post-migration brownfield missing manifest" }
+        if ($auditPost.IsMonolithicJunction) { throw "Post-migration brownfield still has junction" }
+
+        $srcContent = Get-Content -LiteralPath (Join-Path $srcDir 'index.js') -Raw -Encoding utf8
+        if (-not $srcContent.Contains("Legacy application code")) { throw "Brownfield migration corrupted source code!" }
+    }
+
 } finally {
     if (Test-Path -LiteralPath $tempBase) {
         Get-ChildItem -LiteralPath $tempBase -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' } | ForEach-Object {

@@ -1193,8 +1193,8 @@ function Invoke-AidevAudit {
     Write-Host ''
     Write-Host 'Audit Summary:' -ForegroundColor Cyan
     Write-Host ('  Declared Capabilities   : ' + ($declaredCapIds -join ', '))
-    Write-Host ('  Materialized Rules      : ' + $materializedRules.Count)
-    Write-Host ('  Materialized Skills     : ' + $materializedSkills.Count)
+    Write-Host ('  Materialized Rules      : ' + @($materializedRules).Count)
+    Write-Host ('  Materialized Skills     : ' + @($materializedSkills).Count)
     Write-Host ('  Migration/Sync Needed   : ' + $migrationNeeded)
 
     return [pscustomobject]@{

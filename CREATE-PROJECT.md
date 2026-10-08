@@ -1,59 +1,71 @@
-# Guia Rápido — Criação de Novos Projetos com IA (Greenfield)
+# Guia Rápido — Criação e Adoção de Projetos com IA
 
-Este guia orienta o início de um novo projeto do zero utilizando a **AI-Dev-Machine Architecture v2**.
-
----
-
-## 1. Entendimento do Produto (Diálogo Inicial)
-
-Antes de criar código, converse com a IA para alinhar:
-- **Problema & Proposta de Valor**: O que o produto resolve e para quem.
-- **Plataforma & Stack**: Web, Desktop (Windows), API, Monorepo ou CLI.
-- **Requisitos Críticos**: Autenticação, banco de dados, UI/UX, testes ou segurança.
+> **AI-Dev-Machine Architecture v2.1**
+> Para os primeiros prompts prontos para copiar e colar diretamente no Antigravity IDE, consulte [docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md).
 
 ---
 
-## 2. Escolha do Profile Arquitetural
+## 1. Entendimento do Software & Composição de Capabilities
 
-Selecione o profile mais adequado no registry:
+O AI-Dev-Machine v2.1 é **capability-driven**: você pode escolher um preset conveniente como ponto de partida e adicionar capabilities atômicas (`core`, `typescript`, `python`, `react`, `nextjs`, `nestjs`, `postgres`, `supabase`, `sqlite`, `electron`, `windows-desktop`, `browser-testing`, `security-audit`, `hardware-qa`).
 
-| Profile | Indicado Para | Capacidades Habilitadas |
+| Preset | Indicado Para | Capabilities Padrão |
 |---|---|---|
-| **`base`** | Projetos gerais, CLIs, APIs enxutas e bibliotecas | Invariantes, Git workflow, Verification gate, debugging e YAGNI |
-| **`web-supabase`** | Aplicações Web fullstack (Next.js, React, Supabase) | Web guidelines, Postgres/RLS, UI/UX craft, Playwright E2E |
-| **`windows-desktop`** | Aplicações desktop Windows (WinUI 3, WPF, C#, Electron) | Windows guidelines, UI thread safety, WinApp CLI physical QA |
-| **`monorepo`** | Módulos múltiplos e arquiteturas complexas | Modular architecture invariants, Domain modeling, refactoring |
+| **`base`** | Projetos gerais, CLIs, bibliotecas e APIs enxutas | `core` |
+| **`web-supabase`** | Aplicações Web fullstack modernas | `core`, `typescript`, `react`, `nextjs`, `postgres`, `supabase`, `browser-testing` |
+| **`windows-desktop`** | Aplicações desktop nativas Windows | `core`, `typescript`, `electron`, `windows-desktop`, `hardware-qa` |
+| **`monorepo`** | Monorepos multi-pacote modulares | `core`, `monorepo`, `typescript` |
+| **`custom`** | Composição granular sob medida | Seleção explícita de capabilities |
 
 ---
 
-## 3. Inicialização Automatizada com a CLI `aidev`
+## 2. Inicialização de um Novo Projeto (Greenfield)
 
 Execute no terminal PowerShell:
 
 ```powershell
-# Exemplo 1: Inicializar um projeto web com Supabase
-powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-app" -Profile web-supabase
+# 1. Inicializar com preset web-supabase
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-app" -Preset web-supabase
 
-# Exemplo 2: Inicializar um projeto desktop Windows
-powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-desktop" -Profile windows-desktop
+# 2. Inicializar com preset windows-desktop
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-desktop" -Preset windows-desktop
 
-# Exemplo 3: Inicializar um projeto base
-powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-projeto" -Profile base
+# 3. Inicializar com preset base
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 init "c:\caminho\para\meu-projeto" -Preset base
+```
+
+---
+
+## 3. Composição Granular de Capabilities
+
+Você pode refinar o manifesto `.aidev.json` adicionando ou removendo capacidades a qualquer momento:
+
+```powershell
+# Inicializar manifesto vazio/base
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 manifest init "c:\caminho\para\meu-projeto" -Preset base
+
+# Adicionar capacidades adicionais
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 capability add python "c:\caminho\para\meu-projeto"
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 capability add sqlite "c:\caminho\para\meu-projeto"
+
+# Materializar a governança isolada (.agents/)
+powershell -ExecutionPolicy Bypass -File .\aidev.ps1 apply "c:\caminho\para\meu-projeto"
 ```
 
 ---
 
 ## 4. O que a CLI Scaffolda Automaticamente
 
-- `AGENTS.md`: Constituição enxuta de invariantes e comandos canônicos.
-- `GEMINI.md`: Bridge nativo para Antigravity/Gemini CLI.
-- `.agents/`: Diretório físico isolado com regras, agentes cognitivos, hooks e MCPs específicos do profile.
-- `docs/`: Estrutura para ADRs, visão arquitetural e runbooks (carregados sob demanda).
+- `.aidev.json`: Manifesto declarativo versionado com a intenção aprovada.
+- `AGENTS.md`: Constituição universal enxuta de invariantes e comandos canônicos.
+- `GEMINI.md`: Bridge nativo para Antigravity / Gemini CLI.
+- `.agents/`: Diretório físico isolado com regras gerenciadas, especialistas cognitivos, hooks e MCPs.
+- `.gitignore`: Atualizado para rastrear regras e agentes locais enquanto ignora links de skills e backups.
 
 ---
 
 ## 5. Próximos Passos no Novo Projeto
 
-1. Abra o novo projeto no seu editor / Antigravity IDE.
-2. Personalize a seção `Canonical Commands` em `AGENTS.md` (instalação, dev, testes, build).
-3. Desenvolva seguindo o princípio de **Progressive Disclosure**: consulte regras e invoque especialistas sob demanda.
+1. Abra o workspace no **Antigravity IDE**.
+2. Personalize a seção `validationGates.commands` em `.aidev.json` e `Canonical Commands` em `AGENTS.md`.
+3. Desenvolva com segurança através de **Progressive Disclosure**.

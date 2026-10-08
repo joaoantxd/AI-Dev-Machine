@@ -2,6 +2,8 @@
 
 > **Capability-Driven Framework & Multi-Agent Governance Platform**
 > Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
+>
+> 🚀 **Primeiros Passos no Antigravity**: Para os prompts prontos de inicialização e adoção de projetos, consulte **[docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md)**.
 
 ---
 
