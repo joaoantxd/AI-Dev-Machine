@@ -248,22 +248,43 @@ try {
     }
 }
 
-# --- Multi-IA Exposure & Cleanup ---
-# By default in Architecture v2, technical skills are Library-Only.
-# Prune old global symlinks from ~/.gemini/config/skills to ensure Antigravity discovers only project-scoped skills.
+# --- Global Exposure in Antigravity IDE (~/.gemini/config/skills) ---
+# Synchronize canonical skills as physical directories so Antigravity IDE natively discovers all 33 skills
 $globalGeminiSkills = Join-Path $env:USERPROFILE '.gemini\config\skills'
-if (Test-Path -LiteralPath $globalGeminiSkills) {
-    $existingLinks = @(Get-ChildItem -LiteralPath $globalGeminiSkills)
-    foreach ($link in $existingLinks) {
-        $shouldExpose = ($Managed | Where-Object { $_.Name -eq $link.Name -and $_.GlobalExposure })
-        if (-not $shouldExpose) {
-            if (Test-IsCorrectJunction -Path $link.FullName -ExpectedTarget (Join-Path $SkillsRoot $link.Name)) {
+if (-not (Test-Path -LiteralPath $globalGeminiSkills -PathType Container)) {
+    if (-not $DryRun) {
+        $null = New-Item -ItemType Directory -Path $globalGeminiSkills -Force
+    }
+}
+
+if (Test-Path -LiteralPath $SkillsRoot) {
+    $existingGlobalItems = @(Get-ChildItem -LiteralPath $globalGeminiSkills -ErrorAction SilentlyContinue)
+    if ($existingGlobalItems.Count -gt 0 -and -not $DryRun) {
+        $backupDir = Join-Path $env:USERPROFILE (".gemini\config\skills_backup_" + (Get-Date -Format 'yyyyMMdd_HHmmss'))
+        Copy-Item -LiteralPath $globalGeminiSkills -Destination $backupDir -Recurse -Force
+        Write-Host "  [BACKUP CREATED] $backupDir" -ForegroundColor DarkGray
+    }
+
+    $allCanonicalSkills = @(Get-ChildItem -LiteralPath $SkillsRoot -Directory)
+    foreach ($skDir in $allCanonicalSkills) {
+        $skDest = Join-Path $globalGeminiSkills $skDir.Name
+        $skMd = Join-Path $skDir.FullName 'SKILL.md'
+        if (Test-Path -LiteralPath $skMd) {
+            if (Test-IsCorrectJunction -Path $skDest -ExpectedTarget $skDir.FullName) {
                 if (-not $DryRun) {
-                    cmd /c "rmdir `"$($link.FullName)`"" | Out-Null
-                    Write-Host "[PRUNED GLOBAL EXPOSURE] $($link.Name) -> Library Only" -ForegroundColor Cyan
-                } else {
-                    Write-Host "[WOULD PRUNE GLOBAL EXPOSURE] $($link.Name)" -ForegroundColor Yellow
+                    cmd /c "rmdir `"$skDest`"" | Out-Null
                 }
+            }
+            if (-not $DryRun) {
+                if (-not (Test-Path -LiteralPath $skDest)) {
+                    Copy-Item -LiteralPath $skDir.FullName -Destination $skDest -Recurse -Force
+                    Write-Host "[GLOBAL DISCOVERY READY] $($skDir.Name)" -ForegroundColor Green
+                } else {
+                    Copy-Item -LiteralPath (Join-Path $skDir.FullName '*') -Destination $skDest -Recurse -Force
+                    Write-Host "[GLOBAL DISCOVERY UPDATED] $($skDir.Name)" -ForegroundColor Green
+                }
+            } else {
+                Write-Host "[WOULD EXPOSE GLOBALLY] $($skDir.Name)" -ForegroundColor Yellow
             }
         }
     }
@@ -279,7 +300,7 @@ if (Test-Path -LiteralPath $legacyGlobalRule) {
 }
 
 if ($failures.Count -eq 0) {
-    Write-Host "SUCCESS: Canonical skills library is up to date ($SkillsRoot)" -ForegroundColor Green
+    Write-Host "SUCCESS: Canonical skills library is up to date ($SkillsRoot) and globally exposed ($globalGeminiSkills)" -ForegroundColor Green
     exit 0
 } else {
     Write-Host "INCOMPLETE: $($failures.Count) skill(s) failed validation." -ForegroundColor Red
