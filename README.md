@@ -3,14 +3,44 @@
 > **Capability-Driven Framework & Multi-Agent Governance Platform**
 > Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
 >
-> 🎯 **Prompt-Mestre do ChatGPT**: Para o prompt universal que estabelece o ChatGPT como Engenheiro de Prompts, consulte **[docs/PROMPT-MESTRE-CHATGPT.md](docs/PROMPT-MESTRE-CHATGPT.md)**.
-> 🤖 **Instruções Globais do ChatGPT**: Para configurar instruções persistentes na conta, consulte **[docs/CHATGPT-INSTRUCOES-GLOBAIS.md](docs/CHATGPT-INSTRUCOES-GLOBAIS.md)**.
-> 🚀 **Primeiro Prompt no Antigravity**: Para o prompt universal de inventário e organização (Fase 0), consulte **[docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md)**.
+> 🎯 **Prompt-Mestre Universal**: [docs/PROMPT-MESTRE-CHATGPT.md](docs/PROMPT-MESTRE-CHATGPT.md) — Engenheiro universal de prompts para qualquer IA ou domínio.
+> 🤖 **Instruções Globais ChatGPT**: [docs/CHATGPT-INSTRUCOES-GLOBAIS.md](docs/CHATGPT-INSTRUCOES-GLOBAIS.md) — Configuração persistente para a conta do ChatGPT.
+> 🚀 **Primeiro Prompt Antigravity**: [docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md) — Fase 0 de inventário e organização do workspace (read-only).
 > 🧠 **Segundo Cérebro (Obsidian)**: Hub operacional de decisões, arquitetura e handoffs entre agentes.
 
 ---
 
-## 1. Princípios Arquiteturais da v2.1
+## 1. Prompts Prontos para Uso (`Ctrl+A → Ctrl+C → Ctrl+V`)
+
+Os arquivos de prompts na pasta `docs/` contêm **exclusivamente o texto final a ser enviado**, sem introduções, explicações ou blocos de código markdown delimitadores. Basta abrir o arquivo, selecionar tudo (`Ctrl+A`), copiar (`Ctrl+C`) e colar (`Ctrl+V`) diretamente no destino:
+
+| Documento | Destino de Aplicação | Função Principal |
+| :--- | :--- | :--- |
+| **[`docs/CHATGPT-INSTRUCOES-GLOBAIS.md`](docs/CHATGPT-INSTRUCOES-GLOBAIS.md)** | **ChatGPT** → *Configurações* → *Personalizar ChatGPT* → Campo *"Como você gostaria que o ChatGPT respondesse?"* | Transforma o ChatGPT de forma permanente em um **Engenheiro Universal de Prompts**, com especialização em software (AI-Dev-Machine e Antigravity) para todas as conversas da conta. |
+| **[`docs/PROMPT-MESTRE-CHATGPT.md`](docs/PROMPT-MESTRE-CHATGPT.md)** | Primeira mensagem de uma nova conversa no **ChatGPT**, **Claude**, **Gemini**, ou instruções de um **Custom GPT / Projeto**. | Ativa a atuação de **Arquiteto de Instruções e Engenheiro de Prompts de Elite** para qualquer modelo, ferramenta, mídia (imagem, vídeo, áudio, código) ou finalidade. |
+| **[`docs/PRIMEIRO-PROMPT.md`](docs/PRIMEIRO-PROMPT.md)** | Painel de chat do **Google Antigravity IDE** ao abrir qualquer workspace novo ou existente. | Executa a **Fase 0: Inventário, Compreensão e Organização** em modo estritamente *somente leitura*, mapeando a estrutura e governança antes de qualquer código. |
+
+### Fluxo Operacional Integrado
+
+```text
+1. Abertura do Workspace no Antigravity
+   └── Copie e cole docs/PRIMEIRO-PROMPT.md no chat do Antigravity.
+   └── O Antigravity gera o inventário factual (read-only) do ambiente.
+
+2. Engenharia e Arquitetura de Prompts no ChatGPT
+   └── O ChatGPT (configurado via docs/CHATGPT-INSTRUCOES-GLOBAIS.md ou docs/PROMPT-MESTRE-CHATGPT.md)
+       consome o inventário e concebe prompts técnicos cirúrgicos com escopo delimitado.
+
+3. Execução Controlada no Antigravity
+   └── O Antigravity executa a implementação sob as regras do AI-Dev-Machine v2.1 (.aidev.json, capabilities e gates).
+
+4. Continuidade e Segundo Cérebro (Obsidian)
+   └── Decisões arquiteturais (ADRs), status de sprint e handoffs são documentados para sessões futuras.
+```
+
+---
+
+## 2. Princípios Arquiteturais da v2.1
 
 A **Architecture v2.1** evolui o modelo anterior para um framework orientado a capacidades atômicas e declarativas, separando claramente:
 
@@ -47,7 +77,7 @@ materializa a configuração isolada (.agents/) para cada runtime de IA
 
 ---
 
-## 2. CLI `aidev` (Lifecycle de Comandos)
+## 3. CLI `aidev` (Lifecycle de Comandos)
 
 A CLI `aidev.ps1` orquestra o ciclo de vida completo:
 
@@ -113,7 +143,7 @@ A CLI `aidev.ps1` orquestra o ciclo de vida completo:
 
 ---
 
-## 3. Estrutura Canônica de um Projeto v2.1
+## 4. Estrutura Canônica de um Projeto v2.1
 
 ```text
 meu-projeto/
@@ -133,7 +163,7 @@ meu-projeto/
 
 ---
 
-## 4. Project Manifest (`.aidev.json`)
+## 5. Project Manifest (`.aidev.json`)
 
 Exemplo de manifesto para um projeto fullstack:
 
@@ -194,7 +224,7 @@ Exemplo de manifesto para um projeto fullstack:
 
 ---
 
-## 5. Validation Gates & Regras Human/Hardware
+## 6. Validation Gates & Regras Human/Hardware
 
 - **Automated Gates**: Comandos estruturados com `command`, `args` e `cwd` evitando cascas de shell opacas.
 - **Conditional Gates**: Execução vinculada a padrões de arquivos alterados (`onFiles`).
@@ -203,7 +233,7 @@ Exemplo de manifesto para um projeto fullstack:
 
 ---
 
-## 6. Segurança e Invariantes
+## 7. Segurança e Invariantes
 
 - **Proteção contra Path Traversal**: Validação estrita garante que `projectRules` e caminhos declarados residem dentro dos limites do workspace.
 - **Isolamento Completo**: Zero poluição de contexto ou cruzamento entre projetos diferentes.

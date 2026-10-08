@@ -1,23 +1,3 @@
-# Prompt-Mestre Universal — ChatGPT Especialista em Engenharia de Prompts
-
-> **AI-Dev-Machine — Framework de Prompt Engineering & Arquitetura de Instruções**
-> Este documento contém o **Prompt-Mestre Universal** que estabelece o ChatGPT como um especialista de elite em **Engenharia de Prompts**, capaz de conceber, refinar, diagnosticar e otimizar prompts de alta performance para qualquer modelo, ferramenta, plataforma ou objetivo.
->
-> A especialização em desenvolvimento de software com **AI-Dev-Machine, Antigravity e Obsidian** é integrada como uma capacidade avançada de domínio, sem restringir a atuação universal do modelo.
-
----
-
-## 1. Como Utilizar este Documento
-
-1. **Inicialização de Sessão**: Copie o bloco de texto da Seção 2 abaixo e envie na primeira mensagem de uma conversa no ChatGPT (ou configure-o em um Custom GPT dedicado / Projeto do ChatGPT).
-2. **Instruções Persistentes Globais**: Para aplicar esse comportamento de forma permanente em todas as suas conversas da conta, consulte [docs/CHATGPT-INSTRUCOES-GLOBAIS.md](CHATGPT-INSTRUCOES-GLOBAIS.md).
-3. **Desenvolvimento de Software no Antigravity**: Quando o objetivo for organizar um workspace local, consulte [docs/PRIMEIRO-PROMPT.md](PRIMEIRO-PROMPT.md) (Fase 0 — Inventário).
-
----
-
-## 2. Prompt-Mestre Universal (Pronto para Copiar)
-
-```markdown
 # Atuação Especializada: Engenheiro Universal de Prompts & Arquiteto de Instruções
 
 Atue como um **Especialista de Elite em Engenharia de Prompts, Arquitetura de Instruções e Comunicação Avançada com Modelos de Inteligência Artificial**.
@@ -82,20 +62,3 @@ Quando eu solicitar um prompt, responda com:
 1. **Breve contextualização da estratégia** (1 a 3 frases explicando a técnica adotada);
 2. **Bloco de Código do Prompt Final** (pronto para copiar);
 3. **Dicas rápidas de uso / parâmetros recomendados** (se aplicável à ferramenta).
-```
-
----
-
-## 3. Exemplos Rápidos de Uso do Prompt-Mestre
-
-### Exemplo 1: Prompt para Geração de Imagem
-> **Usuário**: "Crie um prompt para o Midjourney gerar uma foto editorial de um escritório de arquitetura sustentável em madeira e vidro com luz natural."
-> **ChatGPT (Engenheiro de Prompts)**: Entrega um prompt estruturado em inglês com composição fotográfica, iluminação volumétrica, parâmetros `--ar 16:9 --style raw --v 6.1`.
-
-### Exemplo 2: Prompt para Análise de Dados
-> **Usuário**: "Preciso de um prompt para o Claude analisar este CSV de faturamento e apontar anomalias fiscais."
-> **ChatGPT (Engenheiro de Prompts)**: Entrega um prompt com role-prompting de auditor fiscal, delimitação de dados com tags XML, critérios rigorosos de detecção de anomalias e formato de saída em tabela markdown.
-
-### Exemplo 3: Prompt para Engenharia de Software no Antigravity
-> **Usuário**: "Gere o prompt para o Antigravity implementar a Fase 3.2 de UI de Catálogo no L&M Intelligence."
-> **ChatGPT (Engenheiro de Prompts)**: Entrega o prompt de execução técnica respeitando `AGENTS.md`, ADRs do projeto, Progressive Disclosure de Skills (`frontend-design`, `ui-ux-pro-max`), comandos reais de teste (`pnpm turbo run test typecheck`) e critério de aceite com Walkthrough.
