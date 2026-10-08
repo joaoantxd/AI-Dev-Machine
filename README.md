@@ -3,7 +3,9 @@
 > **Capability-Driven Framework & Multi-Agent Governance Platform**
 > Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
 >
-> 🚀 **Primeiros Passos no Antigravity**: Para os prompts prontos de inicialização e adoção de projetos, consulte **[docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md)**.
+> 🚀 **Primeiro Prompt no Antigravity**: Para o prompt universal de inventário e organização do workspace, consulte **[docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md)**.
+> 🤖 **Instruções Globais do ChatGPT**: Para configurar o ChatGPT como arquiteto e gerador de prompts, consulte **[docs/CHATGPT-INSTRUCOES-GLOBAIS.md](docs/CHATGPT-INSTRUCOES-GLOBAIS.md)**.
+> 🧠 **Segundo Cérebro (Obsidian)**: Hub operacional de decisões, arquitetura e handoffs entre agentes.
 
 ---
 
