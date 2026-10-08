@@ -1303,7 +1303,7 @@ function Invoke-AidevApply {
         }
     }
 
-    # 4. Materialize .agents/skills/ (Junctions to Global Library)
+    # 4. Materialize .agents/skills/ (Physical Directory Copies for Native IDE Discovery)
     $targetSkillsDir = Join-Path $agentsDir 'skills'
     if (-not (Test-Path -LiteralPath $targetSkillsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetSkillsDir -Force
@@ -1312,20 +1312,26 @@ function Invoke-AidevApply {
     foreach ($sObj in $resolved.Skills) {
         $skillId = $sObj.Name
         $skillDest = Join-Path $targetSkillsDir $skillId
-        if (-not (Test-Path -LiteralPath $skillDest)) {
-            $globalSkill = Join-Path $script:GlobalSkillsRoot $skillId
-            $localSkill = Join-Path $root ('skills\' + $skillId)
-            if (Test-Path -LiteralPath $globalSkill) {
-                $null = cmd /c "mklink /J `"$skillDest`" `"$globalSkill`"" 2>&1
+        $globalSkill = Join-Path $script:GlobalSkillsRoot $skillId
+        $localSkill = Join-Path $root ('skills\' + $skillId)
+        $sourceSkillPath = if (Test-Path -LiteralPath $globalSkill) { $globalSkill } elseif (Test-Path -LiteralPath $localSkill) { $localSkill } else { $null }
+
+        # Remove legacy junction safely if present
+        if (Test-IsJunction -Path $skillDest) {
+            cmd /c "rmdir `"$skillDest`"" | Out-Null
+        }
+
+        if ($sourceSkillPath) {
+            if (-not (Test-Path -LiteralPath $skillDest) -or $Force) {
+                if (Test-Path -LiteralPath $skillDest) {
+                    Remove-Item -LiteralPath $skillDest -Recurse -Force
+                }
+                Copy-Item -LiteralPath $sourceSkillPath -Destination $skillDest -Recurse -Force
                 $managedSkills += $skillId
-                Write-Host ('  [LINKED SKILL] .agents/skills/' + $skillId + ' -> Global Library') -ForegroundColor Green
-            } elseif (Test-Path -LiteralPath $localSkill) {
-                $null = cmd /c "mklink /J `"$skillDest`" `"$localSkill`"" 2>&1
+                Write-Host ('  [MATERIALIZED SKILL] .agents/skills/' + $skillId + ' (Physical Copy for IDE)') -ForegroundColor Green
+            } else {
                 $managedSkills += $skillId
-                Write-Host ('  [LINKED SKILL] .agents/skills/' + $skillId + ' -> Local Skill') -ForegroundColor Green
             }
-        } else {
-            $managedSkills += $skillId
         }
     }
 
@@ -1567,7 +1573,7 @@ function Invoke-AidevClean {
         }
     }
 
-    # 2. Check for orphan skill junctions
+    # 2. Check for orphan skills (junctions or physical directories)
     $wsAgents = Join-Path $ws '.agents'
     $skillsDir = Join-Path $wsAgents 'skills'
     if (Test-Path -LiteralPath $skillsDir) {
@@ -1581,7 +1587,13 @@ function Invoke-AidevClean {
                     $plannedCleanups += [pscustomobject]@{
                         Type        = 'Orphan Skill Link'
                         Path        = $sk.FullName
-                        Description = ('Skill link ' + $sk.Name + ' no longer in declared capabilities')
+                        Description = ('Skill junction ' + $sk.Name + ' no longer in declared capabilities')
+                    }
+                } else {
+                    $plannedCleanups += [pscustomobject]@{
+                        Type        = 'Orphan Skill Directory'
+                        Path        = $sk.FullName
+                        Description = ('Physical skill directory ' + $sk.Name + ' no longer in declared capabilities')
                     }
                 }
             }
@@ -1634,6 +1646,9 @@ function Invoke-AidevClean {
         if ($item.Type -eq 'Orphan Skill Link') {
             cmd /c "rmdir `"$($item.Path)`"" | Out-Null
             Write-Host ('  [REMOVED LINK] ' + $item.Path) -ForegroundColor Green
+        } elseif ($item.Type -eq 'Orphan Skill Directory') {
+            Remove-Item -LiteralPath $item.Path -Recurse -Force
+            Write-Host ('  [REMOVED SKILL] ' + $item.Path) -ForegroundColor Green
         } elseif ($item.Type -eq 'Backup Directory') {
             Remove-Item -LiteralPath $item.Path -Recurse -Force
             Write-Host ('  [DELETED BACKUP] ' + $item.Path) -ForegroundColor Green
