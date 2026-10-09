@@ -1,23 +1,24 @@
 ---
 name: skill-routing
-description: Spontaneous discovery, continuous multi-phase domain routing, and dynamic activation of pertinent skills.
+description: Continuous, multi-turn, and dynamic skill routing across the entire lifecycle of single-task and multi-task conversations.
 trigger: always_on
 ---
 
-# Automatic & Dynamic Skill Routing Across the Entire Task Lifecycle
+# Continuous & Dynamic Skill Routing Across Multi-Turn Conversations
 
-## 1. Continuous Lifecycle Triggers (Dynamic Activation)
-Do not restrict skill selection only to Gate 0. Re-evaluate skill relevance dynamically as the task evolves across all phases:
+## 1. Multi-Turn & Per-Request Lifecycle Triggers
+Do not treat skill evaluation as a one-time event at session start. Re-evaluate available `<skills>` continuously across every turn and phase of the conversation:
 
-1. **Task Initialization (Gate 0 / Pre-Execution Discovery)**:
-   - When receiving a request, match the initial task intent against available `<skills>` in the system prompt.
-   - If a skill directly matches the domain, read its `SKILL.md` via `view_file` as your FIRST action before executing deep work.
+1. **Every New User Request / Shift of Intent (Multi-Turn Re-evaluation)**:
+   - Whenever the user sends a new message or starts a new task in the same conversation (e.g., transitioning from debugging to architecture, from architecture to UI/UX, or from backend to testing):
+   - **Immediately match the new request's intent against available `<skills>` in the system prompt**.
+   - If the new intent matches a skill that has not yet been loaded in this conversation, **read its `SKILL.md` via `view_file` as your FIRST action in that turn** before performing deep exploration or edits.
 
 2. **Stack & Technology Discovery**:
-   - When inspecting workspace files and discovering specific frameworks, databases, or tooling not mentioned in the user's initial prompt (e.g., PostgreSQL/Supabase, Next.js, Playwright, WinApp/UIA), load the corresponding domain skill immediately upon discovery.
+   - When inspecting workspace files and discovering specific frameworks, databases, or tooling not mentioned in the prompt (e.g., PostgreSQL/Supabase, Next.js, Playwright, WinApp/UIA), load the corresponding domain skill immediately upon discovery.
 
-3. **Phase & Domain Shifts**:
-   - When transitioning between different engineering phases within the same task (e.g., moving from architectural mapping to UI styling, database modeling, or security auditing), activate the skill corresponding to the new phase before proceeding.
+3. **Phase & Subtask Transitions**:
+   - When moving between different engineering phases within the same task (e.g., moving from architectural mapping to interface design, database modeling, or security auditing), activate the skill corresponding to the new phase.
 
 4. **Failures, Regressions & Unexpected Errors**:
    - When encountering a failing test, build error, unexpected runtime exception, or complex bug during execution, immediately activate `systematic-debugging` (4-phase root cause analysis) or `diagnosing-bugs` before attempting speculative fixes.
@@ -30,7 +31,7 @@ Do not restrict skill selection only to Gate 0. Re-evaluate skill relevance dyna
 ## 2. Spontaneous Domain Mapping
 Spontaneously activate the pertinent skill when the intent or domain emerges, even if the user never mentions skill names:
 
-- **Codebase Mapping & Architecture**: Load `graphify` (knowledge graph), `calm` (call graph & blast radius), or `understand-anything` (.ua domain map).
+- **Architecture, Codebase Mapping & Migrations**: Load `graphify` (knowledge graph & topology), `calm` (call graph & blast radius), `improve-codebase-architecture` (structural refactoring & modular deepening), `codebase-design` (deep modules & interfaces), or `understand-anything` (.ua domain map).
 - **Bugs, Failures & Regressions**: Load `systematic-debugging` (investigation before fixes) or `diagnosing-bugs`.
 - **UI/UX, Styling & Components**: Load `ui-ux-pro-max` (design systems & tokens), `frontend-design` (distinctive aesthetics), or `impeccable` (craft & polish).
 - **Security & Vulnerabilities**: Load `cybersecurity-review` (9 security dimensions), `security-best-practices`, or `security-threat-model`.
@@ -43,9 +44,9 @@ Spontaneously activate the pertinent skill when the intent or domain emerges, ev
 ---
 
 ## 3. Operational Discipline & Progressive Disclosure
-- **Load on Demand**: Read `SKILL.md` via `view_file` at the exact point in the lifecycle where the need arises.
-- **No Redundant Re-Reading**: Do NOT re-read a `SKILL.md` if it was already loaded earlier in the conversation context.
+- **Load on Demand**: Read `SKILL.md` via `view_file` at the exact point where a new need or new request arises.
+- **No Lifetime Limit (Multi-Skill Conversations)**: A conversation is NOT limited to 1–2 skills overall. As conversations progress through multiple topics, load each new pertinent skill as needed. The 1–2 guideline applies only as a preference for concurrent focus on a single subtask.
+- **Reuse Already Loaded Skills**: If a skill was loaded in an earlier turn and remains relevant, its instructions are already in context—do NOT call `view_file` redundantly on the same `SKILL.md`. Simply continue applying its instructions.
 - **No Per-Command Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
-- **Targeted Loading**: Load only the 1-2 skills pertinent to the current active phase. Never bulk-load unrelated skills.
 - **Triviality Exemption**: For trivial 1-line typo fixes, answering general conceptual questions, or when no catalog skill matches, proceed directly without artificial skill loading.
 - **Follow & Cite**: Apply the specific procedures, checklists, and scripts described in the loaded `SKILL.md`.

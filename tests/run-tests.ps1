@@ -597,11 +597,13 @@ try {
         $content = Get-Content -LiteralPath $rulePath -Raw -Encoding utf8
 
         if (-not $content.Contains('trigger: always_on')) { throw 'Missing trigger: always_on in frontmatter' }
-        if (-not $content.Contains('Task Initialization')) { throw 'Missing Phase 1: Task Initialization trigger' }
-        if (-not $content.Contains('Stack & Technology Discovery')) { throw 'Missing Phase 2: Stack Discovery trigger' }
-        if (-not $content.Contains('Phase & Domain Shifts')) { throw 'Missing Phase 3: Phase Shifts trigger' }
-        if (-not $content.Contains('Failures, Regressions & Unexpected Errors')) { throw 'Missing Phase 4: Failures and Regressions trigger' }
-        if (-not $content.Contains('Review, Security & Verification Gates')) { throw 'Missing Phase 5: Review and Verification trigger' }
+        if (-not $content.Contains('Every New User Request')) { throw 'Missing Multi-Turn per-request trigger' }
+        if (-not $content.Contains('Stack & Technology Discovery')) { throw 'Missing Stack Discovery trigger' }
+        if (-not $content.Contains('Phase & Subtask Transitions')) { throw 'Missing Phase & Subtask Transitions trigger' }
+        if (-not $content.Contains('Failures, Regressions & Unexpected Errors')) { throw 'Missing Failures & Regressions trigger' }
+        if (-not $content.Contains('Review, Security & Verification Gates')) { throw 'Missing Review & Verification trigger' }
+        if (-not $content.Contains('No Lifetime Limit (Multi-Skill Conversations)')) { throw 'Missing Multi-Skill Conversations no-lifetime-limit clause' }
+        if (-not $content.Contains('Reuse Already Loaded Skills')) { throw 'Missing Reuse Already Loaded Skills clause' }
         if (-not $content.Contains('systematic-debugging')) { throw 'Missing systematic-debugging in domain mapping' }
         if (-not $content.Contains('verification-before-completion')) { throw 'Missing verification-before-completion in domain mapping' }
         if (-not $content.Contains('Progressive Disclosure')) { throw 'Missing Progressive Disclosure invariants' }
@@ -728,6 +730,56 @@ try {
         # 5. Verification Gate: Before claiming success
         $r5 = Route-SkillSimulation -LifecyclePhase 'VerificationGate' -Context @{ AboutToClaimComplete = $true }
         if ($r5 -ne 'verification-before-completion') { throw ('Phase 5 route expected verification-before-completion, got ' + $r5) }
+    }
+
+    Assert-Test "Multi-turn conversation simulation with 3 successive natural user requests" {
+        $conversationLoadedSkills = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+        function Process-UserTurn {
+            param([string]$UserPrompt)
+            $newSkillToLoad = $null
+
+            if ($UserPrompt -match 'arquitetura|estrutura|depend|control plane|mapeamento') {
+                $targetSkill = 'graphify'
+                if (-not $conversationLoadedSkills.Contains($targetSkill)) {
+                    $newSkillToLoad = $targetSkill
+                    $null = $conversationLoadedSkills.Add($targetSkill)
+                }
+            } elseif ($UserPrompt -match 'falha|erro|bug|exce|intermitente|investigar') {
+                $targetSkill = 'systematic-debugging'
+                if (-not $conversationLoadedSkills.Contains($targetSkill)) {
+                    $newSkillToLoad = $targetSkill
+                    $null = $conversationLoadedSkills.Add($targetSkill)
+                }
+            } elseif ($UserPrompt -match 'interface|layout|cores|acessibilidade|estiliza|ui') {
+                $targetSkill = 'ui-ux-pro-max'
+                if (-not $conversationLoadedSkills.Contains($targetSkill)) {
+                    $newSkillToLoad = $targetSkill
+                    $null = $conversationLoadedSkills.Add($targetSkill)
+                }
+            }
+            return $newSkillToLoad
+        }
+
+        # Turn 1: Architectural analysis
+        $turn1Skill = Process-UserTurn -UserPrompt 'Por favor analise a arquitetura e mapeamento do Control Plane'
+        if ($turn1Skill -ne 'graphify') { throw ('Turn 1 expected to load graphify, got ' + $turn1Skill) }
+
+        # Turn 2: Technical bug investigation in same conversation
+        $turn2Skill = Process-UserTurn -UserPrompt 'Encontrei uma falha tecnica intermitente na sincronizacao de mensagens'
+        if ($turn2Skill -ne 'systematic-debugging') { throw ('Turn 2 expected to load systematic-debugging, got ' + $turn2Skill) }
+
+        # Turn 3: UI review or validation in same conversation
+        $turn3Skill = Process-UserTurn -UserPrompt 'Agora vamos revisar a acessibilidade, contraste e cores da interface web'
+        if ($turn3Skill -ne 'ui-ux-pro-max') { throw ('Turn 3 expected to load ui-ux-pro-max, got ' + $turn3Skill) }
+
+        # Turn 4: Continuation of UI task (skill reuse - no redundant reload)
+        $turn4Skill = Process-UserTurn -UserPrompt 'Ajuste os botoes da interface para manter o mesmo estilo de layout'
+        if ($turn4Skill -ne $null) { throw ('Turn 4 should reuse already loaded skill without reloading, got ' + $turn4Skill) }
+
+        if ($conversationLoadedSkills.Count -ne 3) {
+            throw 'Expected exactly 3 distinct skills loaded across the multi-turn session'
+        }
     }
 
 } finally {
