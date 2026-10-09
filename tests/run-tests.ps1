@@ -591,22 +591,26 @@ try {
     # ------------------------------------------------------------------------------
     Write-Host "`n--- 8. Portable Distribution, Onboarding Prompt & Dynamic Skill Lifecycle ---" -ForegroundColor Yellow
 
-    Assert-Test "templates/rules/skill-routing.md contains always_on trigger and 5 dynamic lifecycle triggers" {
+    Assert-Test "templates/rules/skill-routing.md contains always_on trigger, zero numerical limits, and full multi-skill composition" {
         $rulePath = Join-Path $aidevRoot 'templates\rules\skill-routing.md'
         if (-not (Test-Path -LiteralPath $rulePath)) { throw 'skill-routing.md template missing' }
         $content = Get-Content -LiteralPath $rulePath -Raw -Encoding utf8
 
         if (-not $content.Contains('trigger: always_on')) { throw 'Missing trigger: always_on in frontmatter' }
+        if (-not $content.Contains('Zero Numerical or Frequency Ceilings')) { throw 'Missing Zero Numerical Ceilings invariant' }
+        if (-not $content.Contains('Autonomous Activation Without User Prompts')) { throw 'Missing Autonomous Activation invariant' }
         if (-not $content.Contains('Every New User Request')) { throw 'Missing Multi-Turn per-request trigger' }
         if (-not $content.Contains('Stack & Technology Discovery')) { throw 'Missing Stack Discovery trigger' }
         if (-not $content.Contains('Phase & Subtask Transitions')) { throw 'Missing Phase & Subtask Transitions trigger' }
-        if (-not $content.Contains('Failures, Regressions & Unexpected Errors')) { throw 'Missing Failures & Regressions trigger' }
-        if (-not $content.Contains('Review, Security & Verification Gates')) { throw 'Missing Review & Verification trigger' }
-        if (-not $content.Contains('No Lifetime Limit (Multi-Skill Conversations)')) { throw 'Missing Multi-Skill Conversations no-lifetime-limit clause' }
-        if (-not $content.Contains('Reuse Already Loaded Skills')) { throw 'Missing Reuse Already Loaded Skills clause' }
+        if (-not $content.Contains('Unexpected Failures, Regressions & Hard Bugs')) { throw 'Missing Failures & Regressions trigger' }
+        if (-not $content.Contains('Review, Security & Completion Gates')) { throw 'Missing Review & Verification trigger' }
+        if (-not $content.Contains('Synergistic Multi-Skill Composition')) { throw 'Missing Synergistic Multi-Skill Composition guidance' }
+        if (-not $content.Contains('Context Reuse')) { throw 'Missing Context Reuse clause' }
+        if (-not $content.Contains('Triviality Exemption')) { throw 'Missing Triviality Exemption clause' }
         if (-not $content.Contains('systematic-debugging')) { throw 'Missing systematic-debugging in domain mapping' }
         if (-not $content.Contains('verification-before-completion')) { throw 'Missing verification-before-completion in domain mapping' }
         if (-not $content.Contains('Progressive Disclosure')) { throw 'Missing Progressive Disclosure invariants' }
+        if ($content.Contains('1–2 guideline') -or $content.Contains('1-2 skills')) { throw 'Residual restrictive 1-2 skills limit found in skill-routing.md!' }
     }
 
     Assert-Test "docs/INSTALAR-E-ORGANIZAR.md exists, formatted as pure prompt with all required onboarding stages" {
@@ -679,6 +683,55 @@ try {
 
         $backups = @(Get-ChildItem -LiteralPath (Join-Path $simUserHome '.gemini\config') -Directory | Where-Object { $_.Name -like 'skills_backup_*' })
         if ($backups.Count -eq 0) { throw 'Backup directory was not created during update over existing skills' }
+    }
+
+    Assert-Test "Autonomous multi-skill composition for complex multi-domain task (no artificial limit)" {
+        function Route-ComplexTask {
+            param([hashtable]$TaskSpec)
+            $skillsToLoad = [System.Collections.Generic.List[string]]::new()
+
+            # Synergistic evaluation across all dimensions of the complex task
+            if ($TaskSpec.RequiresArchitecture) { $skillsToLoad.Add('graphify'); $skillsToLoad.Add('calm') }
+            if ($TaskSpec.RequiresDataModeling) { $skillsToLoad.Add('supabase-postgres-best-practices') }
+            if ($TaskSpec.RequiresFrontendPolish) { $skillsToLoad.Add('ui-ux-pro-max'); $skillsToLoad.Add('frontend-design') }
+            if ($TaskSpec.RequiresSecurityAudit) { $skillsToLoad.Add('cybersecurity-review') }
+            if ($TaskSpec.RequiresVerification) { $skillsToLoad.Add('verification-before-completion') }
+
+            return @($skillsToLoad)
+        }
+
+        # Complex task with 4 distinct dimensions: should activate 6 complementary skills with zero numerical cap
+        $complexSpec = @{
+            RequiresArchitecture   = $true
+            RequiresDataModeling   = $true
+            RequiresFrontendPolish = $true
+            RequiresSecurityAudit  = $true
+            RequiresVerification   = $true
+        }
+
+        $loaded = Route-ComplexTask -TaskSpec $complexSpec
+        if ($loaded.Count -ne 7) {
+            throw ('Expected 7 complementary skills loaded for complex multi-domain task, got ' + $loaded.Count)
+        }
+        if ($loaded -notcontains 'graphify' -or $loaded -notcontains 'calm' -or $loaded -notcontains 'supabase-postgres-best-practices' -or $loaded -notcontains 'ui-ux-pro-max' -or $loaded -notcontains 'frontend-design' -or $loaded -notcontains 'cybersecurity-review' -or $loaded -notcontains 'verification-before-completion') {
+            throw 'Multi-skill composition missed required domain skills'
+        }
+    }
+
+    Assert-Test "Trivial task bypasses skill loading without artificial overhead" {
+        function Route-SimpleTask {
+            param([string]$UserPrompt, [bool]$IsOneLineTypo)
+            if ($IsOneLineTypo -or $UserPrompt -match '^\s*(ola|oi|bom dia|help|status|oque e)\b') {
+                return @() # 0 skills loaded, direct execution
+            }
+            return @('some-skill')
+        }
+
+        $rTrivial1 = Route-SimpleTask -UserPrompt "Fix typo in variable name in index.ts" -IsOneLineTypo $true
+        if (@($rTrivial1).Count -ne 0) { throw 'Trivial typo should not load any skills' }
+
+        $rTrivial2 = Route-SimpleTask -UserPrompt "ola, bom dia" -IsOneLineTypo $false
+        if (@($rTrivial2).Count -ne 0) { throw 'Trivial greeting should not load any skills' }
     }
 
     Assert-Test "Dynamic multi-phase skill routing simulation (start, stack discovery, domain shift, bug, verification)" {

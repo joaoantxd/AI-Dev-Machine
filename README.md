@@ -106,8 +106,8 @@ O ecossistema AI-Dev-Machine elimina a necessidade de ativação manual ou inje�
      - **Mudança de Fase/Domínio**: Ao transitar de arquitetura para UI/UX ou segurança.
      - **Erros e Regressões**: Ativação espontânea de `systematic-debugging` ou `diagnosing-bugs`.
      - **Portões de Verificação**: Ativação de `verification-before-completion` antes de declarar sucesso.
-5. **Progressive Disclosure & Disciplina**:
-   - Carrega apenas 1 a 2 Skills relevantes no momento exato via `view_file` no `SKILL.md`. Sem bulk-loading e sem sobrecarga em tarefas triviais.
+5. **Progressive Disclosure Sem Teto Artificial**:
+   - Carrega as Skills pertinentes no momento exato via `view_file` no `SKILL.md`, sem limites numéricos arbitrários (0, 1 ou múltiplas complementares) e sem sobrecarga em tarefas triviais.
 
 ---
 
