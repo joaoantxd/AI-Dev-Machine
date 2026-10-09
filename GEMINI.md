@@ -1,4 +1,4 @@
-# GEMINI.md — AI-Dev-Machine
+﻿# GEMINI.md — AI-Dev-Machine
 
 > **Google Antigravity & Gemini CLI Native Bridge**
 > Project invariants are defined in `AGENTS.md`. Workspace customizations are organized in `.agents/`.
@@ -12,3 +12,4 @@
 - **Subagents**: Discovered in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`).
 - **MCP Servers**: Declared in `.agents/mcp_config.json`.
 - **Hooks**: Enforced via `.agents/hooks.json`.
+

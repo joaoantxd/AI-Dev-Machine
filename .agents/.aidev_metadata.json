@@ -1,7 +1,7 @@
 ﻿{
     "schemaVersion":  1,
     "version":  "2.1.0",
-    "timestamp":  "2026-10-08T17:40:33Z",
+    "timestamp":  "2026-10-09T08:16:51Z",
     "preset":  "base",
     "resolvedCapabilities":  [
                                  "core"
@@ -9,7 +9,8 @@
     "managedRules":  [
                          "architecture-invariants.md",
                          "git-workflow.md",
-                         "verification.md"
+                         "verification.md",
+                         "skill-routing.md"
                      ],
     "managedAgents":  [
                           "researcher.md",

@@ -299,6 +299,22 @@ if (Test-Path -LiteralPath $legacyGlobalRule) {
     }
 }
 
+# Ensure global skill routing rule is active in Antigravity global configuration
+$globalRulesDir = Join-Path $env:USERPROFILE '.gemini\config\rules'
+if (-not (Test-Path -LiteralPath $globalRulesDir -PathType Container)) {
+    if (-not $DryRun) { $null = New-Item -ItemType Directory -Path $globalRulesDir -Force }
+}
+$skillRoutingTemplate = Join-Path $PSScriptRoot 'templates\rules\skill-routing.md'
+if (Test-Path -LiteralPath $skillRoutingTemplate) {
+    $globalSkillRouting = Join-Path $globalRulesDir 'skill-routing.md'
+    if (-not $DryRun) {
+        Copy-Item -LiteralPath $skillRoutingTemplate -Destination $globalSkillRouting -Force
+        Write-Host "[GLOBAL RULE SYNCED] skill-routing.md" -ForegroundColor Green
+    } else {
+        Write-Host "[WOULD SYNC GLOBAL RULE] skill-routing.md" -ForegroundColor Yellow
+    }
+}
+
 if ($failures.Count -eq 0) {
     Write-Host "SUCCESS: Canonical skills library is up to date ($SkillsRoot) and globally exposed ($globalGeminiSkills)" -ForegroundColor Green
     exit 0

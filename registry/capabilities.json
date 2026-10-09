@@ -13,7 +13,8 @@
       "rules": [
         "architecture-invariants.md",
         "git-workflow.md",
-        "verification.md"
+        "verification.md",
+        "skill-routing.md"
       ],
       "skills": [
         "systematic-debugging",
@@ -397,6 +398,9 @@
     }
   ]
 }
+
+
+
 
 
 
