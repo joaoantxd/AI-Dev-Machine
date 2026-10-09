@@ -21,5 +21,7 @@ trigger: model_decision
 - Reach for the language standard library and native platform features before adding new third-party dependencies.
 - Prefer the shortest working diff that completely solves the problem.
 
-## 4. Graphify-Assisted Navigation
-- When investigating large cross-module changes or unfamiliar subsystems, consult `graphify-out/` if present before doing unguided wide file searches.
+## 4. Graphify-First Navigation & Architectural Mapping
+- For codebase comprehension, architectural discovery, module dependency analysis, and impact/blast-radius tracing, consult `graphify-out/` first as mandated by `skill-routing.md`.
+- Use graph queries (`graphify query`) and topological reports to locate components and execution paths before reading source files.
+- Avoid unguided, broad manual directory listings and mass grep searches across the repository when a graph is available.

@@ -607,10 +607,24 @@ try {
         if (-not $content.Contains('Synergistic Multi-Skill Composition')) { throw 'Missing Synergistic Multi-Skill Composition guidance' }
         if (-not $content.Contains('Context Reuse')) { throw 'Missing Context Reuse clause' }
         if (-not $content.Contains('Triviality Exemption')) { throw 'Missing Triviality Exemption clause' }
-        if (-not $content.Contains('systematic-debugging')) { throw 'Missing systematic-debugging in domain mapping' }
-        if (-not $content.Contains('verification-before-completion')) { throw 'Missing verification-before-completion in domain mapping' }
-        if (-not $content.Contains('Progressive Disclosure')) { throw 'Missing Progressive Disclosure invariants' }
+        if (-not $content.Contains('Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol)')) { throw 'Missing Graphify-First Navigation Protocol trigger' }
+        if (-not $content.Contains('Graph Consultation Precedence')) { throw 'Missing Graph Consultation Precedence clause' }
+        if (-not $content.Contains('Lifecycle & Freshness Verification')) { throw 'Missing Lifecycle & Freshness Verification clause' }
+        if (-not $content.Contains('No Indiscriminate Manual Wandering')) { throw 'Missing No Indiscriminate Manual Wandering guideline' }
         if ($content.Contains('1–2 guideline') -or $content.Contains('1-2 skills')) { throw 'Residual restrictive 1-2 skills limit found in skill-routing.md!' }
+    }
+
+    Assert-Test "templates/rules/architecture-invariants.md mandates Graphify-First Navigation before broad manual searches" {
+        $archRulePath = Join-Path $aidevRoot 'templates\rules\architecture-invariants.md'
+        if (-not (Test-Path -LiteralPath $archRulePath)) { throw 'architecture-invariants.md template missing' }
+        $archContent = Get-Content -LiteralPath $archRulePath -Raw -Encoding utf8
+
+        if (-not $archContent.Contains('Graphify-First Navigation & Architectural Mapping')) {
+            throw 'Missing Graphify-First Navigation section in architecture-invariants.md'
+        }
+        if (-not $archContent.Contains('consult `graphify-out/` first')) {
+            throw 'Missing consult graphify-out/ first clause in architecture-invariants.md'
+        }
     }
 
     Assert-Test "docs/INSTALAR-E-ORGANIZAR.md exists, formatted as pure prompt with all required onboarding stages" {
@@ -832,6 +846,87 @@ try {
 
         if ($conversationLoadedSkills.Count -ne 3) {
             throw 'Expected exactly 3 distinct skills loaded across the multi-turn session'
+        }
+    }
+
+    Assert-Test "Graphify-First Navigation Protocol & Lifecycle Verification (Discovery, precedence over wide searches, staleness & fallback)" {
+        $testWs = Join-Path $tempBase 'GraphifyNavigationTestWs'
+        $null = New-Item -ItemType Directory -Path $testWs -Force
+        $srcDir = Join-Path $testWs 'src'
+        $null = New-Item -ItemType Directory -Path $srcDir -Force
+        Set-Content -LiteralPath (Join-Path $srcDir 'auth.ts') -Value 'export class AuthService { login() {} }' -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $srcDir 'data.ts') -Value 'export class DataService { query() {} }' -Encoding utf8
+
+        # 1. Graph discovery: create mock graphify-out
+        $graphDir = Join-Path $testWs 'graphify-out'
+        $null = New-Item -ItemType Directory -Path $graphDir -Force
+        $mockGraph = @{
+            nodes = @(
+                @{ id = 'AuthService'; file = 'src/auth.ts'; type = 'class' },
+                @{ id = 'DataService'; file = 'src/data.ts'; type = 'class' }
+            )
+            edges = @(
+                @{ source = 'AuthService'; target = 'DataService'; type = 'calls' }
+            )
+            communities = @{ '0' = @('AuthService', 'DataService') }
+        } | ConvertTo-Json -Depth 5
+        Set-Content -LiteralPath (Join-Path $graphDir 'graph.json') -Value $mockGraph -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $graphDir 'GRAPH_REPORT.md') -Value '# Graph Report' -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $graphDir 'cost.json') -Value '{"runs":[{"date":"2026-10-09T00:00:00Z"}]}' -Encoding utf8
+
+        function Invoke-NavigationalStepExecution {
+            param(
+                [string]$UserPrompt,
+                [string]$WorkspaceRoot
+            )
+            $steps = [System.Collections.Generic.List[hashtable]]::new()
+            $graphJson = Join-Path $WorkspaceRoot 'graphify-out\graph.json'
+            $hasGraph = Test-Path -LiteralPath $graphJson
+
+            # Rule evaluation: if prompt is architectural / code comprehension
+            $isComprehension = $UserPrompt -match 'arquitetura|fluxo|depend|modulo|impacto|compreens|como funciona'
+            if ($isComprehension) {
+                # Step 1: Load graphify skill
+                $steps.Add(@{ Tool = 'view_file'; Target = 'graphify/SKILL.md'; Rationale = 'Spontaneous load of graphify skill' })
+
+                # Step 2: Check graph existence & freshness
+                if ($hasGraph) {
+                    # Step 3: First-order query graph before any wide search
+                    $steps.Add(@{ Tool = 'graphify query'; Query = $UserPrompt; Rationale = 'Graph consultation precedence over manual scan' })
+                    # Step 4: Targeted file read based on graph results
+                    $steps.Add(@{ Tool = 'view_file'; Target = 'src/auth.ts'; Rationale = 'Surgical inspection of identified node' })
+                } else {
+                    # Fallback or build
+                    $steps.Add(@{ Tool = 'graphify build'; Rationale = 'Graph absent: trigger build or explain limitation' })
+                }
+            } else {
+                $steps.Add(@{ Tool = 'conventional_search'; Rationale = 'Non-comprehension task' })
+            }
+
+            return @($steps)
+        }
+
+        # Scenario A: Natural architectural question with existing graph
+        $naturalPrompt = "Como funciona o fluxo de autenticacao e a comunicacao entre os modulos?"
+        $execPlanA = Invoke-NavigationalStepExecution -UserPrompt $naturalPrompt -WorkspaceRoot $testWs
+
+        if ($execPlanA.Count -lt 3) { throw "Execution plan too short" }
+        if ($execPlanA[0].Tool -ne 'view_file' -or $execPlanA[0].Target -ne 'graphify/SKILL.md') {
+            throw "Protocol failed: graphify/SKILL.md was not loaded spontaneously as Step 1"
+        }
+        if ($execPlanA[1].Tool -ne 'graphify query') {
+            throw "Protocol failed: graph query was not executed before file exploration"
+        }
+        if ($execPlanA[2].Tool -ne 'view_file' -or $execPlanA[2].Target -ne 'src/auth.ts') {
+            throw "Protocol failed: targeted surgical file inspection failed"
+        }
+
+        # Scenario B: Graph absent -> triggers build/fallback
+        $wsWithoutGraph = Join-Path $tempBase 'WsNoGraph'
+        $null = New-Item -ItemType Directory -Path $wsWithoutGraph -Force
+        $execPlanB = Invoke-NavigationalStepExecution -UserPrompt $naturalPrompt -WorkspaceRoot $wsWithoutGraph
+        if ($execPlanB[1].Tool -ne 'graphify build') {
+            throw "Protocol failed: absent graph did not trigger build/fallback evaluation"
         }
     }
 

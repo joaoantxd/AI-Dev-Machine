@@ -51,7 +51,7 @@ npm run build
 
 ## 4. Workflows & Progressive Disclosure
 
-- **Architecture Discovery & Cross-Module Impact**: Use Graphify (`graphify query`) when `graphify-out/` is present, or CALM for call graph analysis.
+- **Architecture Discovery, Comprehension & Cross-Module Impact**: Use Graphify (`graphify query`) as primary navigation protocol when `graphify-out/` is present before manual file searches; use CALM for symbol-level call graph analysis.
 - **Bugs & Regressions**: Activate `systematic-debugging` or `diagnosing-bugs`.
 - **UI & Web Craft**: Consult `ui-ux-pro-max`, `frontend-design`, or `impeccable`.
 - **Database & Supabase**: Consult `supabase-postgres-best-practices`.

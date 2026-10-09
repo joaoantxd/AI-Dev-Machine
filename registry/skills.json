@@ -148,7 +148,7 @@
     {
       "id": "graphify",
       "name": "graphify",
-      "description": "Persistent knowledge graph analysis of dependencies, communities and architectural topology.",
+      "description": "First-order codebase navigation, architectural topology, module dependencies, flows, and impact analysis via persistent knowledge graphs.",
       "category": "architecture",
       "repo": "Graphify-Labs/graphify",
       "branch": "v8",

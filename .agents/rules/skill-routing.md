@@ -47,6 +47,16 @@ Re-evaluate the catalog of available `<skills>` continuously across every turn, 
 5. **Review, Security & Completion Gates**:
    - When entering the review, security audit, or completion phase, activate `verification-before-completion`, `cybersecurity-review`, or `code-review` before declaring work finished.
 
+6. **Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol)**:
+   - For ANY task involving codebase comprehension, architecture discovery, module dependency mapping, cross-module flow tracing, or blast radius / impact analysis:
+     a) **Spontaneous Load**: Immediately activate `graphify` (`view_file` on `SKILL.md`) as the primary navigation skill on Turn 1.
+     b) **Graph Consultation Precedence**: Discover if `graphify-out/graph.json` exists. If present, query the graph first (via `graphify query "<question>"`, reading `graphify-out/GRAPH_REPORT.md` / `graph.json`, or NetworkX traversal) to map topological clusters, god nodes, and dependency paths BEFORE performing broad `list_dir`, global `grep_search`, or opening dozens of source files.
+     c) **Targeted Surgical Inspection**: Use the graph query output to pinpoint the exact target files and symbols, and only then open targeted files via `view_file`.
+     d) **Lifecycle & Freshness Verification**:
+        - *Graph Present & Fresh*: Query immediately.
+        - *Graph Present but Outdated (code modified since graph generation)*: Run incremental update (`graphify <path> --update`) if safe and proportional, or query the existing graph while noting newly modified files.
+        - *Graph Absent*: If safe, non-destructive, and proportional (standard repository, no prohibited operations), generate the graph via `graphify .` following `SKILL.md`. If building the graph is unfeasible (e.g. read-only environment, single-file trivial query, or explicit constraint), explain the limitation and proceed with targeted conventional exploration.
+
 ---
 
 ## 3. Synergistic Multi-Skill Composition Examples
@@ -70,7 +80,7 @@ Complementary Skills should be actively combined when addressing multi-faceted t
 
 Spontaneously map tasks and technical domains to catalog skills:
 
-- **Architecture & Codebase Topology**: `graphify`, `calm`, `understand-anything`, `codebase-design`, `improve-codebase-architecture`, `domain-modeling`.
+- **Architecture, Codebase Navigation & Topology**: `graphify` (primary graph navigation & code comprehension), `calm` (call graph & blast radius), `understand-anything`, `codebase-design`, `improve-codebase-architecture`, `domain-modeling`.
 - **Debugging & Root-Cause Analysis**: `systematic-debugging`, `diagnosing-bugs`.
 - **Frontend, UI/UX, Design Systems & Motion**: `ui-ux-pro-max`, `frontend-design`, `impeccable`, `web-design-guidelines`, `vercel-react-best-practices`.
 - **Database, SQL, RLS & Migrations**: `supabase`, `supabase-postgres-best-practices`.
@@ -85,6 +95,7 @@ Spontaneously map tasks and technical domains to catalog skills:
 
 - **Load on Demand**: Read `SKILL.md` via `view_file` at the exact point where a new domain need arises.
 - **Context Reuse**: Skills loaded in earlier turns remain active in the conversation context. Do NOT call `view_file` redundantly on the same `SKILL.md` if its guidance is already present.
+- **No Indiscriminate Manual Wandering**: Do NOT perform blind recursive directory listings (`list_dir`) or mass grep sweeps across whole repositories when a knowledge graph (`graphify-out/`) is available or can be queried. Graph navigation must precede file-by-file inspection.
 - **Triviality Exemption**: For trivial 1-line typo fixes, pure conceptual questions, or when no catalog skill matches, proceed directly without loading skills or inserting artificial pauses.
 - **Zero Command-Level Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
 - **Deep Fidelity**: Rigorously apply the checklists, workflows, and domain rules defined in the loaded `SKILL.md`.
