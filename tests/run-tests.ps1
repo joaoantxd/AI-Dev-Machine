@@ -686,7 +686,7 @@ try {
     }
 
     Assert-Test "Autonomous multi-skill composition for complex multi-domain task (no artificial limit)" {
-        function Route-ComplexTask {
+        function Invoke-ComplexTaskRouting {
             param([hashtable]$TaskSpec)
             $skillsToLoad = [System.Collections.Generic.List[string]]::new()
 
@@ -709,7 +709,7 @@ try {
             RequiresVerification   = $true
         }
 
-        $loaded = Route-ComplexTask -TaskSpec $complexSpec
+        $loaded = Invoke-ComplexTaskRouting -TaskSpec $complexSpec
         if ($loaded.Count -ne 7) {
             throw ('Expected 7 complementary skills loaded for complex multi-domain task, got ' + $loaded.Count)
         }
@@ -719,7 +719,7 @@ try {
     }
 
     Assert-Test "Trivial task bypasses skill loading without artificial overhead" {
-        function Route-SimpleTask {
+        function Invoke-SimpleTaskRouting {
             param([string]$UserPrompt, [bool]$IsOneLineTypo)
             if ($IsOneLineTypo -or $UserPrompt -match '^\s*(ola|oi|bom dia|help|status|oque e)\b') {
                 return @() # 0 skills loaded, direct execution
@@ -727,15 +727,15 @@ try {
             return @('some-skill')
         }
 
-        $rTrivial1 = Route-SimpleTask -UserPrompt "Fix typo in variable name in index.ts" -IsOneLineTypo $true
+        $rTrivial1 = Invoke-SimpleTaskRouting -UserPrompt "Fix typo in variable name in index.ts" -IsOneLineTypo $true
         if (@($rTrivial1).Count -ne 0) { throw 'Trivial typo should not load any skills' }
 
-        $rTrivial2 = Route-SimpleTask -UserPrompt "ola, bom dia" -IsOneLineTypo $false
+        $rTrivial2 = Invoke-SimpleTaskRouting -UserPrompt "ola, bom dia" -IsOneLineTypo $false
         if (@($rTrivial2).Count -ne 0) { throw 'Trivial greeting should not load any skills' }
     }
 
     Assert-Test "Dynamic multi-phase skill routing simulation (start, stack discovery, domain shift, bug, verification)" {
-        function Route-SkillSimulation {
+        function Invoke-SkillSimulation {
             param([string]$LifecyclePhase, [hashtable]$Context)
             switch ($LifecyclePhase) {
                 'TaskStart' {
@@ -765,30 +765,30 @@ try {
         }
 
         # 1. Gate 0: Initial intent
-        $r1 = Route-SkillSimulation -LifecyclePhase 'TaskStart' -Context @{ Intent = 'architecture' }
+        $r1 = Invoke-SkillSimulation -LifecyclePhase 'TaskStart' -Context @{ Intent = 'architecture' }
         if ($r1 -ne 'graphify') { throw ('Phase 1 route expected graphify, got ' + $r1) }
 
         # 2. Stack Discovery: Found Supabase during inspection
-        $r2 = Route-SkillSimulation -LifecyclePhase 'StackDiscovery' -Context @{ DiscoveredStack = @('supabase', 'postgres') }
+        $r2 = Invoke-SkillSimulation -LifecyclePhase 'StackDiscovery' -Context @{ DiscoveredStack = @('supabase', 'postgres') }
         if ($r2 -ne 'supabase-postgres-best-practices') { throw ('Phase 2 route expected supabase-postgres-best-practices, got ' + $r2) }
 
         # 3. Domain Shift: Transition to UI
-        $r3 = Route-SkillSimulation -LifecyclePhase 'DomainShift' -Context @{ NewDomain = 'frontend-ui' }
+        $r3 = Invoke-SkillSimulation -LifecyclePhase 'DomainShift' -Context @{ NewDomain = 'frontend-ui' }
         if ($r3 -ne 'ui-ux-pro-max') { throw ('Phase 3 route expected ui-ux-pro-max, got ' + $r3) }
 
         # 4. Unexpected Failure: Test breaks mid-execution
-        $r4 = Route-SkillSimulation -LifecyclePhase 'UnexpectedFailure' -Context @{ HasError = $true }
+        $r4 = Invoke-SkillSimulation -LifecyclePhase 'UnexpectedFailure' -Context @{ HasError = $true }
         if ($r4 -ne 'systematic-debugging') { throw ('Phase 4 route expected systematic-debugging, got ' + $r4) }
 
         # 5. Verification Gate: Before claiming success
-        $r5 = Route-SkillSimulation -LifecyclePhase 'VerificationGate' -Context @{ AboutToClaimComplete = $true }
+        $r5 = Invoke-SkillSimulation -LifecyclePhase 'VerificationGate' -Context @{ AboutToClaimComplete = $true }
         if ($r5 -ne 'verification-before-completion') { throw ('Phase 5 route expected verification-before-completion, got ' + $r5) }
     }
 
     Assert-Test "Multi-turn conversation simulation with 3 successive natural user requests" {
         $conversationLoadedSkills = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
-        function Process-UserTurn {
+        function Invoke-UserTurnProcessing {
             param([string]$UserPrompt)
             $newSkillToLoad = $null
 
@@ -815,19 +815,19 @@ try {
         }
 
         # Turn 1: Architectural analysis
-        $turn1Skill = Process-UserTurn -UserPrompt 'Por favor analise a arquitetura e mapeamento do Control Plane'
+        $turn1Skill = Invoke-UserTurnProcessing -UserPrompt 'Por favor analise a arquitetura e mapeamento do Control Plane'
         if ($turn1Skill -ne 'graphify') { throw ('Turn 1 expected to load graphify, got ' + $turn1Skill) }
 
         # Turn 2: Technical bug investigation in same conversation
-        $turn2Skill = Process-UserTurn -UserPrompt 'Encontrei uma falha tecnica intermitente na sincronizacao de mensagens'
+        $turn2Skill = Invoke-UserTurnProcessing -UserPrompt 'Encontrei uma falha tecnica intermitente na sincronizacao de mensagens'
         if ($turn2Skill -ne 'systematic-debugging') { throw ('Turn 2 expected to load systematic-debugging, got ' + $turn2Skill) }
 
         # Turn 3: UI review or validation in same conversation
-        $turn3Skill = Process-UserTurn -UserPrompt 'Agora vamos revisar a acessibilidade, contraste e cores da interface web'
+        $turn3Skill = Invoke-UserTurnProcessing -UserPrompt 'Agora vamos revisar a acessibilidade, contraste e cores da interface web'
         if ($turn3Skill -ne 'ui-ux-pro-max') { throw ('Turn 3 expected to load ui-ux-pro-max, got ' + $turn3Skill) }
 
         # Turn 4: Continuation of UI task (skill reuse - no redundant reload)
-        $turn4Skill = Process-UserTurn -UserPrompt 'Ajuste os botoes da interface para manter o mesmo estilo de layout'
+        $turn4Skill = Invoke-UserTurnProcessing -UserPrompt 'Ajuste os botoes da interface para manter o mesmo estilo de layout'
         if ($turn4Skill -ne $null) { throw ('Turn 4 should reuse already loaded skill without reloading, got ' + $turn4Skill) }
 
         if ($conversationLoadedSkills.Count -ne 3) {
