@@ -586,6 +586,150 @@ try {
         if (-not $srcContent.Contains("Legacy application code")) { throw "Brownfield migration corrupted source code!" }
     }
 
+    # ------------------------------------------------------------------------------
+    # 8. Portable Distribution, Onboarding Prompt & Dynamic Skill Lifecycle Tests
+    # ------------------------------------------------------------------------------
+    Write-Host "`n--- 8. Portable Distribution, Onboarding Prompt & Dynamic Skill Lifecycle ---" -ForegroundColor Yellow
+
+    Assert-Test "templates/rules/skill-routing.md contains always_on trigger and 5 dynamic lifecycle triggers" {
+        $rulePath = Join-Path $aidevRoot 'templates\rules\skill-routing.md'
+        if (-not (Test-Path -LiteralPath $rulePath)) { throw 'skill-routing.md template missing' }
+        $content = Get-Content -LiteralPath $rulePath -Raw -Encoding utf8
+
+        if (-not $content.Contains('trigger: always_on')) { throw 'Missing trigger: always_on in frontmatter' }
+        if (-not $content.Contains('Task Initialization')) { throw 'Missing Phase 1: Task Initialization trigger' }
+        if (-not $content.Contains('Stack & Technology Discovery')) { throw 'Missing Phase 2: Stack Discovery trigger' }
+        if (-not $content.Contains('Phase & Domain Shifts')) { throw 'Missing Phase 3: Phase Shifts trigger' }
+        if (-not $content.Contains('Failures, Regressions & Unexpected Errors')) { throw 'Missing Phase 4: Failures and Regressions trigger' }
+        if (-not $content.Contains('Review, Security & Verification Gates')) { throw 'Missing Phase 5: Review and Verification trigger' }
+        if (-not $content.Contains('systematic-debugging')) { throw 'Missing systematic-debugging in domain mapping' }
+        if (-not $content.Contains('verification-before-completion')) { throw 'Missing verification-before-completion in domain mapping' }
+        if (-not $content.Contains('Progressive Disclosure')) { throw 'Missing Progressive Disclosure invariants' }
+    }
+
+    Assert-Test "docs/INSTALAR-E-ORGANIZAR.md exists, formatted as pure prompt with all required onboarding stages" {
+        $promptPath = Join-Path $aidevRoot 'docs\INSTALAR-E-ORGANIZAR.md'
+        if (-not (Test-Path -LiteralPath $promptPath)) { throw 'docs/INSTALAR-E-ORGANIZAR.md missing' }
+        $pContent = Get-Content -LiteralPath $promptPath -Raw -Encoding utf8
+
+        if (-not $pContent.StartsWith('# AI-Dev-Machine')) {
+            throw 'docs/INSTALAR-E-ORGANIZAR.md must start directly with prompt title'
+        }
+        if (-not $pContent.Contains('ETAPA 1:')) { throw 'Missing Etapa 1 in onboarding prompt' }
+        if (-not $pContent.Contains('ETAPA 2:')) { throw 'Missing Etapa 2 in onboarding prompt' }
+        if (-not $pContent.Contains('ETAPA 3:')) { throw 'Missing Etapa 3 in onboarding prompt' }
+        if (-not $pContent.Contains('ETAPA 4:')) { throw 'Missing Etapa 4 in onboarding prompt' }
+        if (-not $pContent.Contains('ETAPA 5:')) { throw 'Missing Etapa 5 in onboarding prompt' }
+        if ($pContent.Contains('CONTABILIDADE')) { throw 'Hardcoded username found in onboarding prompt!' }
+    }
+
+    Assert-Test "Isolated temporary user profile simulation (install, physical discovery, custom skill preservation, backups)" {
+        $simUserHome = Join-Path $tempBase 'SimulatedUserHome'
+        $null = New-Item -ItemType Directory -Path $simUserHome -Force
+
+        # Pre-seed existing custom user skill and custom agent
+        $customSkillDir = Join-Path $simUserHome '.gemini\config\skills\custom-user-skill'
+        $null = New-Item -ItemType Directory -Path $customSkillDir -Force
+        Set-Content -LiteralPath (Join-Path $customSkillDir 'SKILL.md') -Value "---\nname: custom-user-skill\ndescription: Custom user skill\n---\n# Custom Skill Content" -Encoding utf8
+
+        $customAgentDir = Join-Path $simUserHome '.gemini\config\agents'
+        $null = New-Item -ItemType Directory -Path $customAgentDir -Force
+        Set-Content -LiteralPath (Join-Path $customAgentDir 'custom-user-agent.md') -Value "---\nname: custom-user-agent\ndescription: Custom user agent\n---\n# Custom Agent" -Encoding utf8
+
+        # Run installation targeting simulated user home
+        $skillsScript = Join-Path $aidevRoot 'install-skills.ps1'
+        $agentsScript = Join-Path $aidevRoot 'install-agents.ps1'
+
+        & powershell -ExecutionPolicy Bypass -File $skillsScript -UserProfileOverride $simUserHome
+        if ($LASTEXITCODE -ne 0) { throw 'install-skills.ps1 failed in simulated environment' }
+
+        & powershell -ExecutionPolicy Bypass -File $agentsScript -UserProfileOverride $simUserHome
+        if ($LASTEXITCODE -ne 0) { throw 'install-agents.ps1 failed in simulated environment' }
+
+        # Verify physical discovery directory has 33 skills + custom skill
+        $geminiSkills = Join-Path $simUserHome '.gemini\config\skills'
+        $installedSkills = @(Get-ChildItem -LiteralPath $geminiSkills -Directory)
+        if ($installedSkills.Count -lt 34) { throw ('Expected at least 34 skills, found ' + $installedSkills.Count) }
+
+        # Verify custom skill was preserved
+        if (-not (Test-Path -LiteralPath (Join-Path $customSkillDir 'SKILL.md'))) {
+            throw 'Pre-existing custom user skill was destroyed during installation!'
+        }
+
+        # Verify global rule exists and has always_on trigger
+        $globalRule = Join-Path $simUserHome '.gemini\config\rules\skill-routing.md'
+        if (-not (Test-Path -LiteralPath $globalRule)) { throw 'Global skill-routing.md rule missing in simulated user home' }
+        $ruleContent = Get-Content -LiteralPath $globalRule -Raw -Encoding utf8
+        if (-not $ruleContent.Contains('trigger: always_on')) { throw 'Global rule missing always_on trigger' }
+
+        # Verify cognitive specialists installed in global agents directory
+        $researcherAgent = Join-Path $simUserHome '.gemini\config\agents\researcher.md'
+        if (-not (Test-Path -LiteralPath $researcherAgent)) { throw 'researcher.md missing in global agents directory' }
+
+        # Verify custom agent preserved
+        if (-not (Test-Path -LiteralPath (Join-Path $customAgentDir 'custom-user-agent.md'))) {
+            throw 'Pre-existing custom user agent was destroyed!'
+        }
+
+        # Test Idempotence & Backup creation on update
+        & powershell -ExecutionPolicy Bypass -File $skillsScript -UserProfileOverride $simUserHome
+        if ($LASTEXITCODE -ne 0) { throw 'install-skills.ps1 failed on idempotent second run' }
+
+        $backups = @(Get-ChildItem -LiteralPath (Join-Path $simUserHome '.gemini\config') -Directory | Where-Object { $_.Name -like 'skills_backup_*' })
+        if ($backups.Count -eq 0) { throw 'Backup directory was not created during update over existing skills' }
+    }
+
+    Assert-Test "Dynamic multi-phase skill routing simulation (start, stack discovery, domain shift, bug, verification)" {
+        function Route-SkillSimulation {
+            param([string]$LifecyclePhase, [hashtable]$Context)
+            switch ($LifecyclePhase) {
+                'TaskStart' {
+                    if ($Context.Intent -eq 'architecture') { return 'graphify' }
+                    if ($Context.Intent -eq 'debugging') { return 'systematic-debugging' }
+                    return $null
+                }
+                'StackDiscovery' {
+                    if ($Context.DiscoveredStack -contains 'supabase') { return 'supabase-postgres-best-practices' }
+                    if ($Context.DiscoveredStack -contains 'react') { return 'vercel-react-best-practices' }
+                    return $null
+                }
+                'DomainShift' {
+                    if ($Context.NewDomain -eq 'frontend-ui') { return 'ui-ux-pro-max' }
+                    if ($Context.NewDomain -eq 'security-audit') { return 'cybersecurity-review' }
+                    return $null
+                }
+                'UnexpectedFailure' {
+                    if ($Context.HasError) { return 'systematic-debugging' }
+                    return $null
+                }
+                'VerificationGate' {
+                    if ($Context.AboutToClaimComplete) { return 'verification-before-completion' }
+                    return $null
+                }
+            }
+        }
+
+        # 1. Gate 0: Initial intent
+        $r1 = Route-SkillSimulation -LifecyclePhase 'TaskStart' -Context @{ Intent = 'architecture' }
+        if ($r1 -ne 'graphify') { throw ('Phase 1 route expected graphify, got ' + $r1) }
+
+        # 2. Stack Discovery: Found Supabase during inspection
+        $r2 = Route-SkillSimulation -LifecyclePhase 'StackDiscovery' -Context @{ DiscoveredStack = @('supabase', 'postgres') }
+        if ($r2 -ne 'supabase-postgres-best-practices') { throw ('Phase 2 route expected supabase-postgres-best-practices, got ' + $r2) }
+
+        # 3. Domain Shift: Transition to UI
+        $r3 = Route-SkillSimulation -LifecyclePhase 'DomainShift' -Context @{ NewDomain = 'frontend-ui' }
+        if ($r3 -ne 'ui-ux-pro-max') { throw ('Phase 3 route expected ui-ux-pro-max, got ' + $r3) }
+
+        # 4. Unexpected Failure: Test breaks mid-execution
+        $r4 = Route-SkillSimulation -LifecyclePhase 'UnexpectedFailure' -Context @{ HasError = $true }
+        if ($r4 -ne 'systematic-debugging') { throw ('Phase 4 route expected systematic-debugging, got ' + $r4) }
+
+        # 5. Verification Gate: Before claiming success
+        $r5 = Route-SkillSimulation -LifecyclePhase 'VerificationGate' -Context @{ AboutToClaimComplete = $true }
+        if ($r5 -ne 'verification-before-completion') { throw ('Phase 5 route expected verification-before-completion, got ' + $r5) }
+    }
+
 } finally {
     if (Test-Path -LiteralPath $tempBase) {
         Get-ChildItem -LiteralPath $tempBase -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' } | ForEach-Object {

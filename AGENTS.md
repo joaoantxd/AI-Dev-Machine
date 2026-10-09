@@ -1,4 +1,4 @@
-﻿# AGENTS.md — AI-Dev-Machine
+# AGENTS.md — AI-Dev-Machine
 
 > **Universal Agent Constitution & Operating Invariants**
 > Keep this root constitution concise and universal. Detailed domain guidance lives in `.agents/rules/`, `.agents/skills/`, and `.agents/agents/` and is discovered on demand.
@@ -11,7 +11,7 @@
 2. **Safety & Working Tree**: Never execute destructive operations (`DROP`, `TRUNCATE`, `git push --force`, `rm -rf`) without explicit authorization. Preserve the user's uncommitted working tree.
 3. **Evidence-Based Completion**: Never declare a task complete, fixed, or passing without fresh validation evidence (tests, build, typecheck, or command output).
 4. **Deep Modules & YAGNI**: Prefer the standard library, reuse existing utilities, and keep interfaces small and cohesive. Avoid speculative abstractions.
-5. **Automatic Skill & Progressive Routing**: Identify and load relevant domain skills (`view_file` on `SKILL.md`) at the start of non-trivial tasks before executing ad-hoc searches or edits. Never bulk-load unrelated skills.
+5. **Automatic & Dynamic Skill Routing**: Identify and load relevant domain skills (`view_file` on `SKILL.md`) dynamically throughout the task lifecycle (task start, stack discovery, domain shifts, unexpected bugs, review/verification). Never bulk-load unrelated skills.
 
 ---
 

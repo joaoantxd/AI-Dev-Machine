@@ -2,7 +2,8 @@
 param(
     [switch]$DryRun,
     [switch]$Update,
-    [string]$WorkspacePath
+    [string]$WorkspacePath,
+    [string]$UserProfileOverride
 )
 
 Set-StrictMode -Version Latest
@@ -12,7 +13,8 @@ $ErrorActionPreference = 'Stop'
 # AI-Dev-Machine v2 -- Canonical Specialists Library Manager
 # Canonical Storage (Library): %USERPROFILE%\.agents\agents
 # ==============================================================================
-$AgentsRoot = Join-Path $env:USERPROFILE '.agents\agents'
+$effectiveUserProfile = if ($UserProfileOverride) { $UserProfileOverride } else { $env:USERPROFILE }
+$AgentsRoot = Join-Path $effectiveUserProfile '.agents\agents'
 
 $registryFile = Join-Path $PSScriptRoot 'registry\agents.json'
 if (-not (Test-Path -LiteralPath $registryFile)) {
@@ -151,11 +153,65 @@ if ($neededAgents.Count -gt 0) {
     }
 }
 
-# Preservacao de agentes locais customizados
+# Sincronizacao de Especialistas Cognitivos (researcher, reviewer, security-reviewer)
+$cognitiveAgents = @('researcher.md', 'reviewer.md', 'security-reviewer.md')
+$cognitiveDir = Join-Path $PSScriptRoot 'templates\agents'
+if (Test-Path -LiteralPath $cognitiveDir -PathType Container) {
+    foreach ($ca in $cognitiveAgents) {
+        $src = Join-Path $cognitiveDir $ca
+        $dest = Join-Path $AgentsRoot $ca
+        if (Test-Path -LiteralPath $src) {
+            if (-not (Test-Path -LiteralPath $dest) -or $Update) {
+                if (-not $DryRun) {
+                    Copy-Item -LiteralPath $src -Destination $dest -Force
+                    Write-Host "[INSTALLED COGNITIVE] $ca" -ForegroundColor Green
+                } else {
+                    Write-Host "[WOULD SYNC COGNITIVE] $ca" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "[PRESENT COGNITIVE] $ca"
+            }
+        }
+    }
+}
+
+# Sincronizacao global para Antigravity IDE (~/.gemini/config/agents)
+$globalGeminiAgents = Join-Path $effectiveUserProfile '.gemini\config\agents'
+if (-not (Test-Path -LiteralPath $globalGeminiAgents -PathType Container)) {
+    if (-not $DryRun) {
+        $null = New-Item -ItemType Directory -Path $globalGeminiAgents -Force
+    }
+}
+
+if (Test-Path -LiteralPath $AgentsRoot) {
+    $existingGlobalAgents = @(Get-ChildItem -LiteralPath $globalGeminiAgents -Filter '*.md' -File -ErrorAction SilentlyContinue)
+    $canonicalAgents = @(Get-ChildItem -LiteralPath $AgentsRoot -Filter '*.md' -File)
+    $canonicalSlugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($agFile in $canonicalAgents) {
+        $null = $canonicalSlugs.Add($agFile.Name)
+        $destFile = Join-Path $globalGeminiAgents $agFile.Name
+        if (-not $DryRun) {
+            Copy-Item -LiteralPath $agFile.FullName -Destination $destFile -Force
+            Write-Host "[GLOBAL AGENT READY] $($agFile.Name)" -ForegroundColor Green
+        } else {
+            Write-Host "[WOULD EXPOSE AGENT GLOBALLY] $($agFile.Name)" -ForegroundColor Yellow
+        }
+    }
+
+    # Preservacao de agentes locais customizados
+    foreach ($external in $existingGlobalAgents) {
+        if (-not $canonicalSlugs.Contains($external.Name)) {
+            Write-Host "[PRESERVE EXTERNAL GLOBAL AGENT] $($external.Name)" -ForegroundColor Cyan
+        }
+    }
+}
+
+# Preservacao de agentes locais customizados em AgentsRoot
 if (Test-Path -LiteralPath $AgentsRoot -PathType Container) {
-    $managedSlugs = @($ManagedAgents.Slug | ForEach-Object { "$_.md" })
+    $managedSlugs = @($ManagedAgents.Slug | ForEach-Object { "$_.md" }) + $cognitiveAgents
     foreach ($external in @(Get-ChildItem -LiteralPath $AgentsRoot -Filter '*.md' -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin $managedSlugs })) {
-        Write-Host "[PRESERVE EXTERNAL] $($external.Name)"
+        Write-Host "[PRESERVE EXTERNAL] $($external.Name)" -ForegroundColor Cyan
     }
 }
 

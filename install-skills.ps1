@@ -3,7 +3,8 @@ param(
     [switch]$DryRun,
     [switch]$Update,
     [string]$WorkspacePath,
-    [switch]$ExposeGlobal
+    [switch]$ExposeGlobal,
+    [string]$UserProfileOverride
 )
 
 Set-StrictMode -Version Latest
@@ -13,7 +14,8 @@ $ErrorActionPreference = 'Stop'
 # AI-Dev-Machine v2 -- Canonical Skills Library Manager
 # Canonical Storage (Library): %USERPROFILE%\.agents\skills
 # ==============================================================================
-$SkillsRoot = Join-Path $env:USERPROFILE '.agents\skills'
+$effectiveUserProfile = if ($UserProfileOverride) { $UserProfileOverride } else { $env:USERPROFILE }
+$SkillsRoot = Join-Path $effectiveUserProfile '.agents\skills'
 
 # Registry is the Single Source of Truth
 $registryFile = Join-Path $PSScriptRoot 'registry\skills.json'
@@ -114,7 +116,7 @@ function Set-ManagedSkillDirectory {
             Move-Item -LiteralPath $destDir -Destination $backupDir -Force
         }
         $null = New-Item -ItemType Directory -Path $destDir -Force
-        Copy-Item -LiteralPath (Join-Path $SourceDirectoryPath '*') -Destination $destDir -Recurse -Force
+        Get-ChildItem -LiteralPath $SourceDirectoryPath | Copy-Item -Destination $destDir -Recurse -Force
         if (-not (Test-SkillDirectory -Path $destDir -ExpectedName $Skill.ExpectedName)) {
             throw "Validacao pos-copia falhou para a skill $($Skill.Name)"
         }
@@ -201,6 +203,29 @@ try {
             continue
         }
 
+        # Check local canonical cache if present before attempting network git clone
+        $machineSkillsBase = Join-Path $env:USERPROFILE '.agents\skills'
+        $unresolvedSkills = @()
+        foreach ($skill in $neededSkills) {
+            $machineSkillDir = Join-Path $machineSkillsBase $skill.Name
+            if (-not $Update -and ($machineSkillsBase -ine $SkillsRoot) -and (Test-Path -LiteralPath $machineSkillDir -PathType Container) -and (Test-SkillDirectory -Path $machineSkillDir -ExpectedName $skill.ExpectedName)) {
+                if ($DryRun) {
+                    Write-Host "[WOULD COPY CACHED] $($skill.Name)"
+                } else {
+                    try {
+                        Set-ManagedSkillDirectory -Skill $skill -SourceDirectoryPath $machineSkillDir
+                        Write-Host "[INSTALLED CACHED] $($skill.Name)"
+                    } catch {
+                        $unresolvedSkills += $skill
+                    }
+                }
+            } else {
+                $unresolvedSkills += $skill
+            }
+        }
+        $neededSkills = $unresolvedSkills
+        if ($neededSkills.Count -eq 0) { continue }
+
         if ($DryRun) {
             foreach ($skill in $neededSkills) {
                 Write-Host "[WOULD SYNC] $($skill.Name) from $repo"
@@ -250,7 +275,7 @@ try {
 
 # --- Global Exposure in Antigravity IDE (~/.gemini/config/skills) ---
 # Synchronize canonical skills as physical directories so Antigravity IDE natively discovers all 33 skills
-$globalGeminiSkills = Join-Path $env:USERPROFILE '.gemini\config\skills'
+$globalGeminiSkills = Join-Path $effectiveUserProfile '.gemini\config\skills'
 if (-not (Test-Path -LiteralPath $globalGeminiSkills -PathType Container)) {
     if (-not $DryRun) {
         $null = New-Item -ItemType Directory -Path $globalGeminiSkills -Force
@@ -260,13 +285,15 @@ if (-not (Test-Path -LiteralPath $globalGeminiSkills -PathType Container)) {
 if (Test-Path -LiteralPath $SkillsRoot) {
     $existingGlobalItems = @(Get-ChildItem -LiteralPath $globalGeminiSkills -ErrorAction SilentlyContinue)
     if ($existingGlobalItems.Count -gt 0 -and -not $DryRun) {
-        $backupDir = Join-Path $env:USERPROFILE (".gemini\config\skills_backup_" + (Get-Date -Format 'yyyyMMdd_HHmmss'))
+        $backupDir = Join-Path $effectiveUserProfile (".gemini\config\skills_backup_" + (Get-Date -Format 'yyyyMMdd_HHmmss'))
         Copy-Item -LiteralPath $globalGeminiSkills -Destination $backupDir -Recurse -Force
         Write-Host "  [BACKUP CREATED] $backupDir" -ForegroundColor DarkGray
     }
 
     $allCanonicalSkills = @(Get-ChildItem -LiteralPath $SkillsRoot -Directory)
+    $canonicalNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($skDir in $allCanonicalSkills) {
+        $null = $canonicalNames.Add($skDir.Name)
         $skDest = Join-Path $globalGeminiSkills $skDir.Name
         $skMd = Join-Path $skDir.FullName 'SKILL.md'
         if (Test-Path -LiteralPath $skMd) {
@@ -288,10 +315,17 @@ if (Test-Path -LiteralPath $SkillsRoot) {
             }
         }
     }
+
+    # Log preservation of external / custom user skills
+    foreach ($item in $existingGlobalItems) {
+        if ($item.PSIsContainer -and -not $canonicalNames.Contains($item.Name)) {
+            Write-Host "[PRESERVE EXTERNAL SKILL] $($item.Name)" -ForegroundColor Cyan
+        }
+    }
 }
 
 # Clean up legacy global rule if present
-$legacyGlobalRule = Join-Path $env:USERPROFILE '.gemini\config\rules\ai-dev-machine.md'
+$legacyGlobalRule = Join-Path $effectiveUserProfile '.gemini\config\rules\ai-dev-machine.md'
 if (Test-Path -LiteralPath $legacyGlobalRule) {
     if (-not $DryRun) {
         Remove-Item -LiteralPath $legacyGlobalRule -Force -ErrorAction SilentlyContinue
@@ -300,7 +334,7 @@ if (Test-Path -LiteralPath $legacyGlobalRule) {
 }
 
 # Ensure global skill routing rule is active in Antigravity global configuration
-$globalRulesDir = Join-Path $env:USERPROFILE '.gemini\config\rules'
+$globalRulesDir = Join-Path $effectiveUserProfile '.gemini\config\rules'
 if (-not (Test-Path -LiteralPath $globalRulesDir -PathType Container)) {
     if (-not $DryRun) { $null = New-Item -ItemType Directory -Path $globalRulesDir -Force }
 }

@@ -1667,14 +1667,17 @@ function Invoke-AidevClean {
 function Invoke-AidevSync {
     param(
         [switch]$Update,
-        [switch]$DryRun
+        [switch]$DryRun,
+        [string]$UserProfileOverride
     )
     $root = Get-AidevRoot
+    $effectiveUser = if ($UserProfileOverride) { $UserProfileOverride } else { $env:USERPROFILE }
+    $storageRoot = Join-Path $effectiveUser '.agents'
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host ' AI-Dev-Machine Architecture v2.1 -- Global Library Sync' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     $syncModeText = if ($DryRun) { 'DRY RUN' } elseif ($Update) { 'UPDATE UPSTREAM' } else { 'IDEMPOTENT CHECK' }
-    Write-Host ('Global Storage: ' + $script:GlobalAgentsRoot) -ForegroundColor Gray
+    Write-Host ('Global Storage: ' + $storageRoot) -ForegroundColor Gray
     Write-Host ('Mode          : ' + $syncModeText) -ForegroundColor Gray
     Write-Host ''
 
@@ -1690,6 +1693,10 @@ function Invoke-AidevSync {
     if ($Update) {
         $psArgsSkills += '-Update'
         $psArgsAgents += '-Update'
+    }
+    if ($UserProfileOverride) {
+        $psArgsSkills += @('-UserProfileOverride', $UserProfileOverride)
+        $psArgsAgents += @('-UserProfileOverride', $UserProfileOverride)
     }
 
     Write-Host '--- Syncing Skills ---' -ForegroundColor Yellow
