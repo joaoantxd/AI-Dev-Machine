@@ -161,17 +161,90 @@ if (Test-Path -LiteralPath $cognitiveDir -PathType Container) {
         $src = Join-Path $cognitiveDir $ca
         $dest = Join-Path $AgentsRoot $ca
         if (Test-Path -LiteralPath $src) {
-            if (-not (Test-Path -LiteralPath $dest) -or $Update) {
-                if (-not $DryRun) {
-                    Copy-Item -LiteralPath $src -Destination $dest -Force
-                    Write-Host "[INSTALLED COGNITIVE] $ca" -ForegroundColor Green
-                } else {
-                    Write-Host "[WOULD SYNC COGNITIVE] $ca" -ForegroundColor Yellow
-                }
+            if (-not $DryRun) {
+                Copy-Item -LiteralPath $src -Destination $dest -Force
+                Write-Host "[SYNCED COGNITIVE] $ca" -ForegroundColor Green
             } else {
-                Write-Host "[PRESENT COGNITIVE] $ca"
+                Write-Host "[WOULD SYNC COGNITIVE] $ca" -ForegroundColor Yellow
             }
         }
+    }
+}
+
+function Optimize-AgentDefinition {
+    param(
+        [Parameter(Mandatory)][string]$AgentFilePath,
+        [Parameter(Mandatory)][string]$Slug
+    )
+    if (-not (Test-Path -LiteralPath $AgentFilePath -PathType Leaf)) { return }
+    $proactiveDescriptions = @{
+        'software-architect'       = 'Use proactively via invoke_subagent whenever designing system architecture, defining module boundaries, modeling DDD bounded contexts, evaluating trade-offs, planning cross-package refactorings, or writing ADRs.'
+        'backend-architect'        = 'Use proactively via invoke_subagent whenever designing or implementing backend services, APIs (NestJS, Fastify, Express, .NET), Windows Services (Session 0), IPC protocols, signaling servers, or distributed systems.'
+        'frontend-developer'       = 'Use proactively via invoke_subagent whenever building, styling, refactoring, or optimizing frontend UI, React components, Next.js 16 App Router pages, Electron renderer interfaces, accessibility (WCAG), or Core Web Vitals.'
+        'database-optimizer'       = 'Use proactively via invoke_subagent whenever designing or modifying database schemas, writing PostgreSQL/Supabase migrations, configuring Row Level Security (RLS), optimizing SQL/Kysely queries, indexing, or tuning SQLite.'
+        'security-architect'       = 'Use proactively via invoke_subagent whenever performing threat modeling, analyzing trust boundaries, designing multi-tenant isolation, hardening Windows Service DACLs/IPC, or architecting authentication and cryptography.'
+        'test-automation-engineer' = 'Use proactively via invoke_subagent whenever creating, debugging, or stabilizing E2E and integration tests using Playwright (browser/Electron), WinApp CLI (Windows UIA desktop automation), or unit test suites.'
+        'devops-automator'         = 'Use proactively via invoke_subagent whenever configuring CI/CD pipelines, packaging installers (MSI, Electron Builder), automating auto-update & rollback lifecycles, Docker, or build/release scripts.'
+    }
+    $agentSkillsMap = @{
+        'software-architect'       = @('graphify', 'calm', 'codebase-design', 'improve-codebase-architecture', 'domain-modeling', 'devils-advocate')
+        'backend-architect'        = @('graphify', 'calm', 'codebase-design', 'improve-codebase-architecture', 'security-best-practices', 'systematic-debugging', 'ponytail')
+        'frontend-developer'       = @('graphify', 'ui-ux-pro-max', 'frontend-design', 'impeccable', 'web-design-guidelines', 'vercel-react-best-practices')
+        'database-optimizer'       = @('graphify', 'supabase-postgres-best-practices', 'supabase', 'domain-modeling')
+        'security-architect'       = @('graphify', 'security-threat-model', 'cybersecurity-review', 'security-best-practices', 'strix')
+        'test-automation-engineer' = @('graphify', 'playwright', 'winapp', 'systematic-debugging', 'diagnosing-bugs', 'verification-before-completion')
+        'devops-automator'         = @('graphify', 'security-review', 'verification-before-completion', 'ponytail')
+    }
+
+    $raw = Get-Content -LiteralPath $AgentFilePath -Raw -Encoding utf8
+    if ($raw -notmatch '(?s)^---\r?\n(.*?)\r?\n---(.*)$') { return }
+    $fm = $Matches[1]
+    $body = $Matches[2]
+    $changed = $false
+
+    if ($proactiveDescriptions.ContainsKey($Slug)) {
+        $newDesc = $proactiveDescriptions[$Slug]
+        $fmLines = $fm -split "\r?\n"
+        $newFmLines = [System.Collections.Generic.List[string]]::new()
+        $replacedDesc = $false
+        foreach ($line in $fmLines) {
+            if ($line -match '^description:\s*(.*)$') {
+                $curVal = $Matches[1].Trim().Trim('"', "'")
+                if ($curVal -ne $newDesc) {
+                    $newFmLines.Add("description: `"$newDesc`"")
+                    $replacedDesc = $true
+                } else {
+                    $newFmLines.Add($line)
+                }
+            } else {
+                $newFmLines.Add($line)
+            }
+        }
+        if ($replacedDesc) {
+            $fm = ($newFmLines -join "`r`n")
+            $changed = $true
+        }
+    }
+
+    if ($agentSkillsMap.ContainsKey($Slug)) {
+        $skillsList = ($agentSkillsMap[$Slug] | ForEach-Object { '  - `.agents/skills/' + $_ + '/SKILL.md`' }) -join "`r`n"
+        $graphifyHighlight = '> **`graphify` (`.agents/skills/graphify/SKILL.md`) é uma skill excelente e indispensável**: Sempre carregue `graphify/SKILL.md` via `view_file` no Turno 1 e consulte `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` (`graphify query "<pergunta>"`) antes de vasculhar arquivos manualmente para entender a arquitetura, god nodes e dependências rapidamente.'
+        $skillSection = "`r`n`r`n" + '## Mandatory Downloaded Skill Routing (`always_on`)' + "`r`n`r`n" + $graphifyHighlight + "`r`n`r`n" + 'On Turn 1, before reading repository code or proposing changes, you MUST load the relevant downloaded skills for your domain via `view_file`:' + "`r`n" + $skillsList + "`r`n"
+        if ($body -match '(?s)\r?\n\r?\n## Mandatory Downloaded Skill Routing.*$') {
+            $newBody = [regex]::Replace($body, '(?s)\r?\n\r?\n## Mandatory Downloaded Skill Routing.*$', $skillSection)
+            if ($newBody -ne $body) {
+                $body = $newBody
+                $changed = $true
+            }
+        } else {
+            $body = $body.TrimEnd() + $skillSection
+            $changed = $true
+        }
+    }
+
+    if ($changed) {
+        $updated = "---`r`n" + $fm.TrimEnd() + "`r`n---`r`n" + $body.TrimStart("`r", "`n")
+        Set-Content -LiteralPath $AgentFilePath -Value $updated -Encoding utf8
     }
 }
 
@@ -190,6 +263,10 @@ if (Test-Path -LiteralPath $AgentsRoot) {
 
     foreach ($agFile in $canonicalAgents) {
         $null = $canonicalSlugs.Add($agFile.Name)
+        $slugName = [IO.Path]::GetFileNameWithoutExtension($agFile.Name)
+        if (-not $DryRun) {
+            Optimize-AgentDefinition -AgentFilePath $agFile.FullName -Slug $slugName
+        }
         $destFile = Join-Path $globalGeminiAgents $agFile.Name
         if (-not $DryRun) {
             Copy-Item -LiteralPath $agFile.FullName -Destination $destFile -Force

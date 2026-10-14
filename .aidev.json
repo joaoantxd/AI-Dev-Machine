@@ -5,6 +5,9 @@
   "capabilities": [
     "core"
   ],
+  "customSkills": [
+    "vercel-react-best-practices"
+  ],
   "projectRules": [],
   "validationGates": {
     "commands": {

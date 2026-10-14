@@ -290,6 +290,78 @@ if (Test-Path -LiteralPath $SkillsRoot) {
         Write-Host "  [BACKUP CREATED] $backupDir" -ForegroundColor DarkGray
     }
 
+    $proactiveDescriptions = @{
+        'improve-codebase-architecture' = 'Use proactively whenever refactoring, restructuring modules, reducing coupling, fixing shallow modules, or improving codebase architecture and testability. Scans codebases for module-deepening opportunities and architectural friction.'
+        'security-best-practices'       = 'Use proactively whenever writing, reviewing, or hardening Python, JavaScript/TypeScript, or Go code that touches auth, input validation, IPC, network, crypto, file I/O, or database queries to enforce secure-by-default patterns.'
+        'security-threat-model'         = 'Use proactively when designing or reviewing architecture, authentication, IPC bridges, multi-tenant boundaries, remote control protocols, or APIs to enumerate trust boundaries, assets, attacker capabilities, abuse paths, and mitigations.'
+        'devils-advocate'               = 'Use proactively to stress-test architectural plans, complex designs, risky migrations, and critical code changes via pre-mortem, inversion, and blind-spot analysis to catch failure modes early.'
+        'code-review'                   = 'Use proactively when reviewing code changes, auditing diffs/PRs/branches, or validating that an implementation adheres to repository coding standards and task specifications.'
+        'codebase-design'               = 'Use proactively whenever designing new modules/services/classes, refactoring interfaces, deciding where boundaries or seams belong, or improving code testability and modularity using deep-module principles.'
+        'domain-modeling'               = 'Use proactively when modeling business domains, defining entities/types/schemas, clarifying codebase terminology, writing or editing CONTEXT.md, or recording architectural decision records (ADRs).'
+        'diagnosing-bugs'               = 'Use proactively alongside systematic-debugging whenever investigating hard bugs, exceptions, test failures, race conditions, or performance regressions before proposing code fixes.'
+        'web-design-guidelines'         = 'Use proactively whenever building, editing, or reviewing web/desktop UI components to enforce Web Interface Guidelines, accessibility, keyboard navigation, focus states, and UX polish.'
+        'context-engineering'           = 'Use proactively when organizing project governance (AGENTS.md, GEMINI.md, .agents/rules), structuring context for large codebases, or optimizing progressive disclosure.'
+        'review-skills'                 = 'Use proactively when auditing, organizing, or validating skill directories (.agents/skills) for duplicates, broken references, frontmatter validity, composability issues, and skill gaps.'
+        'prompt-master'                 = 'Use whenever writing, refining, or calibrating system prompts, agent instructions, LLM prompts, rules, or subagent prompts.'
+    }
+
+    function Optimize-SkillFrontmatter {
+        param([string]$SkillMdPath, [string]$SkillName)
+        if (-not (Test-Path -LiteralPath $SkillMdPath -PathType Leaf)) { return }
+        $raw = Get-Content -LiteralPath $SkillMdPath -Raw -Encoding utf8
+        if ($raw -notmatch '(?s)^---\r?\n(.*?)\r?\n---(\r?\n.*)?$') { return }
+        $fm = $matches[1]
+        $body = $matches[2]
+        $changed = $false
+
+        # 1. Strip disable-model-invocation: true so Antigravity IDE never hides downloaded skills from <skills>
+        if ($fm -match '(?m)^disable-model-invocation:\s*true\s*\r?\n?') {
+            $fm = [regex]::Replace($fm, '(?m)^disable-model-invocation:\s*true\s*\r?\n?', '')
+            $changed = $true
+        }
+
+        # 2. Replace restrictive upstream descriptions ("Trigger only when...", "Do not trigger...") with proactive autonomous descriptions
+        if ($proactiveDescriptions.ContainsKey($SkillName)) {
+            $newDesc = $proactiveDescriptions[$SkillName]
+            $lines = @($fm -split "\r?\n")
+            $newLines = [System.Collections.Generic.List[string]]::new()
+            $inDescBlock = $false
+            $replacedDesc = $false
+            foreach ($line in $lines) {
+                if ($line -match '^description:\s*(.*)$') {
+                    $newLines.Add(('description: "' + $newDesc + '"'))
+                    $replacedDesc = $true
+                    $valPart = $matches[1].Trim()
+                    if ($valPart -eq '>' -or $valPart -eq '>-' -or $valPart -eq '|' -or $valPart -eq '|-') {
+                        $inDescBlock = $true
+                    } else {
+                        $inDescBlock = $false
+                    }
+                    continue
+                }
+                if ($inDescBlock) {
+                    if ($line -match '^\s+') {
+                        continue
+                    } else {
+                        $inDescBlock = $false
+                    }
+                }
+                if ($line.Trim().Length -gt 0) {
+                    $newLines.Add($line)
+                }
+            }
+            if ($replacedDesc) {
+                $fm = ($newLines -join "`r`n")
+                $changed = $true
+            }
+        }
+
+        if ($changed) {
+            $updated = "---`r`n" + $fm.TrimEnd() + "`r`n---" + $body
+            Set-Content -LiteralPath $SkillMdPath -Value $updated -Encoding utf8
+        }
+    }
+
     $allCanonicalSkills = @(Get-ChildItem -LiteralPath $SkillsRoot -Directory)
     $canonicalNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($skDir in $allCanonicalSkills) {
@@ -297,6 +369,9 @@ if (Test-Path -LiteralPath $SkillsRoot) {
         $skDest = Join-Path $globalGeminiSkills $skDir.Name
         $skMd = Join-Path $skDir.FullName 'SKILL.md'
         if (Test-Path -LiteralPath $skMd) {
+            if (-not $DryRun) {
+                Optimize-SkillFrontmatter -SkillMdPath $skMd -SkillName $skDir.Name
+            }
             if (Test-IsCorrectJunction -Path $skDest -ExpectedTarget $skDir.FullName) {
                 if (-not $DryRun) {
                     cmd /c "rmdir `"$skDest`"" | Out-Null
@@ -307,7 +382,8 @@ if (Test-Path -LiteralPath $SkillsRoot) {
                     Copy-Item -LiteralPath $skDir.FullName -Destination $skDest -Recurse -Force
                     Write-Host "[GLOBAL DISCOVERY READY] $($skDir.Name)" -ForegroundColor Green
                 } else {
-                    Copy-Item -LiteralPath (Join-Path $skDir.FullName '*') -Destination $skDest -Recurse -Force
+                    Remove-Item -LiteralPath $skDest -Recurse -Force
+                    Copy-Item -LiteralPath $skDir.FullName -Destination $skDest -Recurse -Force
                     Write-Host "[GLOBAL DISCOVERY UPDATED] $($skDir.Name)" -ForegroundColor Green
                 }
             } else {

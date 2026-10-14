@@ -980,6 +980,36 @@ function Invoke-AidevDoctor {
         Write-Host ('  [LEGACY WARNING] Workspace .agents is a monolithic junction -> ' + $target) -ForegroundColor DarkYellow
     } elseif (Test-Path -LiteralPath $wsAgents) {
         Write-Host '  [OK] Workspace .agents is an isolated physical directory (Architecture v2.1 compliant)' -ForegroundColor Green
+        $wsSkillsDir = Join-Path $wsAgents 'skills'
+        if (Test-Path -LiteralPath $wsSkillsDir) {
+            $skillItems = @(Get-ChildItem -LiteralPath $wsSkillsDir -Directory -Force -ErrorAction SilentlyContinue)
+            $skillJunctions = @($skillItems | Where-Object { Test-IsJunction -Path $_.FullName })
+            if ($skillJunctions.Count -gt 0) {
+                Write-Host ('  [LEGACY WARNING] ' + $skillJunctions.Count + ' skill(s) in .agents/skills/ are NTFS junctions (run "aidev apply" to materialize physical copies)') -ForegroundColor DarkYellow
+            } else {
+                Write-Host ('  [OK] .agents/skills/ contains ' + $skillItems.Count + ' physical skill directory(ies) (0 junctions)') -ForegroundColor Green
+            }
+        }
+        $wsAgentsDir = Join-Path $wsAgents 'agents'
+        if (Test-Path -LiteralPath $wsAgentsDir) {
+            $agentItems = @(Get-ChildItem -LiteralPath $wsAgentsDir -Filter '*.md' -File -ErrorAction SilentlyContinue)
+            Write-Host ('  [OK] .agents/agents/ contains ' + $agentItems.Count + ' specialized subagent(s)') -ForegroundColor Green
+        }
+        $wsRoutingRule = Join-Path $wsAgents 'rules\skill-routing.md'
+        if (Test-Path -LiteralPath $wsRoutingRule) {
+            Write-Host '  [OK] .agents/rules/skill-routing.md active (always_on)' -ForegroundColor Green
+        } else {
+            Write-Host '  [MISSING RULE] .agents/rules/skill-routing.md not found (run "aidev apply")' -ForegroundColor DarkYellow
+        }
+        $wsHooks = Join-Path $wsAgents 'hooks.json'
+        if (Test-Path -LiteralPath $wsHooks) {
+            $hooksRaw = Get-Content -LiteralPath $wsHooks -Raw -Encoding utf8
+            if ($hooksRaw -match '-File \.agents/scripts/safety-check\.ps1' -or $hooksRaw -match '\[Console\]::Out\.WriteLine') {
+                Write-Host '  [LEGACY WARNING] .agents/hooks.json uses legacy relative path (run "aidev apply" to repair)' -ForegroundColor DarkYellow
+            } else {
+                Write-Host '  [OK] .agents/hooks.json configured with resilient safety-check path' -ForegroundColor Green
+            }
+        }
     }
 
     # 6. MCP Environment Variables Check (Without Exposing Secrets)
@@ -1163,6 +1193,7 @@ function Invoke-AidevAudit {
     $declaredCapIds = if ($manifest -and $manifest.capabilities) { @($manifest.capabilities) } else { @() }
     $materializedRules = if (Test-Path (Join-Path $wsAgents 'rules')) { @(Get-ChildItem (Join-Path $wsAgents 'rules') -Filter '*.md' | Select-Object -ExpandProperty Name) } else { @() }
     $materializedSkills = if (Test-Path (Join-Path $wsAgents 'skills')) { @(Get-ChildItem (Join-Path $wsAgents 'skills') -Directory | Select-Object -ExpandProperty Name) } else { @() }
+    $materializedAgents = if (Test-Path (Join-Path $wsAgents 'agents')) { @(Get-ChildItem (Join-Path $wsAgents 'agents') -Filter '*.md' -File | Select-Object -ExpandProperty Name) } else { @() }
 
     Write-Host ''
     Write-Host '--- 3-Way Reconciliation Audit ---' -ForegroundColor Yellow
@@ -1180,6 +1211,18 @@ function Invoke-AidevAudit {
 
     # 2. Declared vs Materialized
     $migrationNeeded = $false
+    $skillJunctionNames = @()
+    if (Test-Path -LiteralPath (Join-Path $wsAgents 'skills')) {
+        $skillJunctionNames = @(Get-ChildItem -LiteralPath (Join-Path $wsAgents 'skills') -Directory -Force -ErrorAction SilentlyContinue | Where-Object { Test-IsJunction -Path $_.FullName } | Select-Object -ExpandProperty Name)
+    }
+    $hasRoutingRule = Test-Path -LiteralPath (Join-Path $wsAgents 'rules\skill-routing.md')
+    $hooksFile = Join-Path $wsAgents 'hooks.json'
+    $hasLegacyHooks = (Test-Path -LiteralPath $hooksFile) -and ((Get-Content -LiteralPath $hooksFile -Raw -Encoding utf8) -match '-File \.agents/scripts/safety-check\.ps1|\[Console\]::Out\.WriteLine')
+    $agentsMdFile = Join-Path $ws 'AGENTS.md'
+    $geminiMdFile = Join-Path $ws 'GEMINI.md'
+    $hasUpdatedConstitution = (Test-Path -LiteralPath $agentsMdFile) -and ((Get-Content -LiteralPath $agentsMdFile -Raw -Encoding utf8) -match 'skill-routing\.md')
+    $hasUpdatedBridge = (Test-Path -LiteralPath $geminiMdFile) -and ((Get-Content -LiteralPath $geminiMdFile -Raw -Encoding utf8) -match 'skill-routing\.md')
+
     if (-not $manifest) {
         Write-Host '  [AUDIT / NO MANIFEST] .aidev.json missing. Run "aidev init" or "aidev migrate".' -ForegroundColor Yellow
         $migrationNeeded = $true
@@ -1188,23 +1231,43 @@ function Invoke-AidevAudit {
         $migrationNeeded = $true
     } else {
         Write-Host '  [AUDIT / OK] .aidev.json present and .agents is an isolated physical directory' -ForegroundColor Green
+        if ($skillJunctionNames.Count -gt 0) {
+            Write-Host ('  [AUDIT / LEGACY SKILL JUNCTIONS] ' + $skillJunctionNames.Count + ' skill(s) are NTFS junctions: ' + ($skillJunctionNames -join ', ')) -ForegroundColor Yellow
+            $migrationNeeded = $true
+        }
+        if (-not $hasRoutingRule) {
+            Write-Host '  [AUDIT / MISSING RULE] .agents/rules/skill-routing.md missing. Run "aidev apply".' -ForegroundColor Yellow
+            $migrationNeeded = $true
+        }
+        if ($hasLegacyHooks) {
+            Write-Host '  [AUDIT / LEGACY HOOKS] .agents/hooks.json uses legacy relative path. Run "aidev apply".' -ForegroundColor Yellow
+            $migrationNeeded = $true
+        }
+        if (-not $hasUpdatedConstitution -or -not $hasUpdatedBridge) {
+            Write-Host '  [AUDIT / OUTDATED CONSTITUTION] AGENTS.md or GEMINI.md missing skill-routing.md protocol. Run "aidev apply".' -ForegroundColor Yellow
+            $migrationNeeded = $true
+        }
     }
 
     Write-Host ''
     Write-Host 'Audit Summary:' -ForegroundColor Cyan
     Write-Host ('  Declared Capabilities   : ' + ($declaredCapIds -join ', '))
     Write-Host ('  Materialized Rules      : ' + @($materializedRules).Count)
-    Write-Host ('  Materialized Skills     : ' + @($materializedSkills).Count)
+    Write-Host ('  Materialized Skills     : ' + @($materializedSkills).Count + ' (' + $skillJunctionNames.Count + ' junction(s))')
+    Write-Host ('  Materialized Agents     : ' + @($materializedAgents).Count)
     Write-Host ('  Migration/Sync Needed   : ' + $migrationNeeded)
 
     return [pscustomobject]@{
         Workspace            = $ws
         HasManifest          = ($manifest -ne $null)
         IsMonolithicJunction = (Test-IsJunction -Path $wsAgents)
+        SkillJunctionCount   = $skillJunctionNames.Count
+        HasSkillRoutingRule  = $hasRoutingRule
         DetectedCapIds       = $detectedCapIds
         DeclaredCapIds       = $declaredCapIds
         MaterializedRules    = $materializedRules
         MaterializedSkills   = $materializedSkills
+        MaterializedAgents   = $materializedAgents
         MigrationNeeded      = $migrationNeeded
     }
 }
@@ -1293,13 +1356,11 @@ function Invoke-AidevApply {
         if ($cognitiveAgents -contains ($agentSlug + '.md')) { continue }
         $agentFileName = ($agentSlug + '.md')
         $destFile = Join-Path $targetAgentsDir $agentFileName
-        if (-not (Test-Path -LiteralPath $destFile) -or $Force) {
-            $globalAgent = Join-Path $script:GlobalAgentsDir $agentFileName
-            if (Test-Path -LiteralPath $globalAgent) {
-                Copy-Item -LiteralPath $globalAgent -Destination $destFile -Force
-                $managedAgents += $agentFileName
-                Write-Host ('  [LINKED AGENT] .agents/agents/' + $agentFileName + ' (Domain Specialist)') -ForegroundColor Green
-            }
+        $globalAgent = Join-Path $script:GlobalAgentsDir $agentFileName
+        if (Test-Path -LiteralPath $globalAgent) {
+            Copy-Item -LiteralPath $globalAgent -Destination $destFile -Force
+            $managedAgents += $agentFileName
+            Write-Host ('  [MATERIALIZED AGENT] .agents/agents/' + $agentFileName + ' (Domain Specialist)') -ForegroundColor Green
         }
     }
 
@@ -1307,6 +1368,19 @@ function Invoke-AidevApply {
     $targetSkillsDir = Join-Path $agentsDir 'skills'
     if (-not (Test-Path -LiteralPath $targetSkillsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetSkillsDir -Force
+    }
+    foreach ($existingSkillItem in @(Get-ChildItem -LiteralPath $targetSkillsDir -Force -ErrorAction SilentlyContinue)) {
+        if (Test-IsJunction -Path $existingSkillItem.FullName) {
+            $junctionSkillId = $existingSkillItem.Name
+            cmd /c "rmdir `"$($existingSkillItem.FullName)`"" | Out-Null
+            $globalSrc = Join-Path $script:GlobalSkillsRoot $junctionSkillId
+            $localSrc = Join-Path $root ('skills\' + $junctionSkillId)
+            $fallbackSrc = if (Test-Path -LiteralPath $globalSrc) { $globalSrc } elseif (Test-Path -LiteralPath $localSrc) { $localSrc } else { $null }
+            if ($fallbackSrc -and ($resolved.Skills.Name -notcontains $junctionSkillId)) {
+                Copy-Item -LiteralPath $fallbackSrc -Destination $existingSkillItem.FullName -Recurse -Force
+                Write-Host ('  [CONVERTED JUNCTION] .agents/skills/' + $junctionSkillId + ' -> Physical Copy') -ForegroundColor Green
+            }
+        }
     }
     $managedSkills = @()
     foreach ($sObj in $resolved.Skills) {
@@ -1343,9 +1417,22 @@ function Invoke-AidevApply {
     $safetyScriptSrc = Join-Path $root 'templates\scripts\safety-check.ps1'
     if (Test-Path -LiteralPath $safetyScriptSrc) {
         Copy-Item -LiteralPath $safetyScriptSrc -Destination (Join-Path $scriptsDir 'safety-check.ps1') -Force
+        # Ensure nested .agents/scripts has it in case hook runs from .agents with legacy relative path
+        $nestedScripts = Join-Path $agentsDir '.agents\scripts'
+        if (-not (Test-Path -LiteralPath $nestedScripts -PathType Container)) {
+            $null = New-Item -ItemType Directory -Path $nestedScripts -Force
+        }
+        Copy-Item -LiteralPath $safetyScriptSrc -Destination (Join-Path $nestedScripts 'safety-check.ps1') -Force
     }
     $hooksDest = Join-Path $agentsDir 'hooks.json'
-    if (-not (Test-Path -LiteralPath $hooksDest) -or $Force) {
+    $needsHookUpdate = (-not (Test-Path -LiteralPath $hooksDest)) -or $Force
+    if (Test-Path -LiteralPath $hooksDest) {
+        $existingHooks = Get-Content -LiteralPath $hooksDest -Raw -Encoding utf8
+        if ($existingHooks -match '-File \.agents/scripts/safety-check\.ps1' -or $existingHooks -match '\[Console\]::Out\.WriteLine') {
+            $needsHookUpdate = $true
+        }
+    }
+    if ($needsHookUpdate) {
         Copy-Item -LiteralPath (Join-Path $root 'templates\hooks.template.json') -Destination $hooksDest -Force
         Write-Host '  [CREATED HOOKS] .agents/hooks.json' -ForegroundColor Green
     }
@@ -1390,10 +1477,13 @@ function Invoke-AidevApply {
     }
     $metaObj | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $metaDest -Encoding utf8
 
-    # 8. Instantiate Root AGENTS.md & GEMINI.md
+    # 8. Instantiate or Self-Heal Root AGENTS.md & GEMINI.md
     $projectName = Split-Path -Leaf $ws
     $agentsMdDest = Join-Path $ws 'AGENTS.md'
-    if (-not (Test-Path -LiteralPath $agentsMdDest) -or $Force) {
+    $existingAgentsMd = if (Test-Path -LiteralPath $agentsMdDest) { Get-Content -LiteralPath $agentsMdDest -Raw -Encoding utf8 } else { $null }
+    $hasStructuredInvariants = ($null -ne $existingAgentsMd) -and ($existingAgentsMd -match '##\s+1\.\s+Immutable Invariants')
+
+    if ((-not $existingAgentsMd) -or ($Force -and -not $hasStructuredInvariants)) {
         $tmpl = Get-Content -LiteralPath (Join-Path $root 'templates\AGENTS.template.md') -Raw -Encoding utf8
         $cmdInstall = if ($resolved.Commands.ContainsKey('install')) { $resolved.Commands['install'] } else { 'npm install' }
         $cmdDev = if ($resolved.Commands.ContainsKey('dev')) { $resolved.Commands['dev'] } else { 'npm run dev' }
@@ -1414,10 +1504,32 @@ function Invoke-AidevApply {
                       -replace '\[CMD_BUILD\]', $cmdBuild
         Set-Content -LiteralPath $agentsMdDest -Value $inst -Encoding utf8
         Write-Host '  [CREATED CONSTITUTION] AGENTS.md' -ForegroundColor Green
+    } elseif ($existingAgentsMd -notmatch 'skill-routing\.md') {
+        $updatedAgentsMd = $existingAgentsMd
+        $routingInvariantLine = '- **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
+        if ($updatedAgentsMd -match '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$') {
+            $updatedAgentsMd = [regex]::Replace(
+                $updatedAgentsMd,
+                '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$',
+                '5. **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
+            )
+        } elseif ($updatedAgentsMd -match '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)') {
+            $updatedAgentsMd = [regex]::Replace(
+                $updatedAgentsMd,
+                '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)',
+                ('$1' + "`r`n" + $routingInvariantLine + '$2'),
+                1
+            )
+        } else {
+            $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n`r`n## Skill Routing Protocol (`always_on`)`r`n`r`n" + $routingInvariantLine + "`r`n"
+        }
+        Set-Content -LiteralPath $agentsMdDest -Value $updatedAgentsMd -Encoding utf8
+        Write-Host '  [UPDATED CONSTITUTION] AGENTS.md (injected skill-routing.md protocol while preserving custom rules)' -ForegroundColor Green
     }
 
     $geminiMdDest = Join-Path $ws 'GEMINI.md'
-    if (-not (Test-Path -LiteralPath $geminiMdDest) -or $Force) {
+    $existingGeminiMd = if (Test-Path -LiteralPath $geminiMdDest) { Get-Content -LiteralPath $geminiMdDest -Raw -Encoding utf8 } else { $null }
+    if ((-not $existingGeminiMd) -or $Force -or ($existingGeminiMd -notmatch 'skill-routing\.md')) {
         $tmplG = Get-Content -LiteralPath (Join-Path $root 'templates\GEMINI.template.md') -Raw -Encoding utf8
         $instG = $tmplG -replace '\[PROJECT_NAME\]', $projectName
         Set-Content -LiteralPath $geminiMdDest -Value $instG -Encoding utf8
@@ -1427,6 +1539,7 @@ function Invoke-AidevApply {
     # 9. Granular .gitignore updates
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/skills/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/cache/'
+    Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/.agents/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.aidev_backup_*/'
 
     Write-Host ''

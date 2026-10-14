@@ -1,7 +1,7 @@
 ﻿{
     "schemaVersion":  1,
     "version":  "2.1.0",
-    "timestamp":  "2026-10-09T08:16:51Z",
+    "timestamp":  "2026-10-14T08:37:26Z",
     "preset":  "base",
     "resolvedCapabilities":  [
                                  "core"
@@ -15,12 +15,49 @@
     "managedAgents":  [
                           "researcher.md",
                           "reviewer.md",
-                          "security-reviewer.md"
+                          "security-reviewer.md",
+                          "software-architect.md",
+                          "backend-architect.md",
+                          "frontend-developer.md",
+                          "database-optimizer.md",
+                          "security-architect.md",
+                          "test-automation-engineer.md",
+                          "devops-automator.md"
                       ],
     "managedSkills":  [
                           "systematic-debugging",
+                          "diagnosing-bugs",
                           "verification-before-completion",
-                          "ponytail"
+                          "ponytail",
+                          "graphify",
+                          "calm",
+                          "understand-anything",
+                          "codebase-design",
+                          "improve-codebase-architecture",
+                          "domain-modeling",
+                          "code-review",
+                          "devils-advocate",
+                          "cybersecurity-review",
+                          "security-best-practices",
+                          "security-threat-model",
+                          "security-review",
+                          "skill-security-review",
+                          "strix",
+                          "ui-ux-pro-max",
+                          "frontend-design",
+                          "impeccable",
+                          "web-design-guidelines",
+                          "supabase",
+                          "supabase-postgres-best-practices",
+                          "winapp",
+                          "playwright",
+                          "context-engineering",
+                          "prompt-master",
+                          "finding-google-skills",
+                          "resolving-merge-conflicts",
+                          "review-skills",
+                          "caveman",
+                          "vercel-react-best-practices"
                       ],
     "managedHooks":  true,
     "managedMcp":  true

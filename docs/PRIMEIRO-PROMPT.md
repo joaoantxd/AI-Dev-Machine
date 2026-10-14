@@ -30,8 +30,9 @@ Esta é uma etapa preliminar de **reconhecimento e diagnóstico**.
 
 3. **Descoberta do AI-Dev-Machine & Governança**:
    - Localize onde o repositório central do AI-Dev-Machine está instalado na máquina (ex: `$env:USERPROFILE\Documents\AI-Dev-Machine` ou caminhos equivalentes).
-   - Verifique se este workspace já possui manifesto `.aidev.json` ou pasta `.agents/` (e se é uma junction legada ou pasta física).
-   - Identifique a disponibilidade da Biblioteca Canônica Global (`%USERPROFILE%\.agents`).
+   - Verifique se este workspace já possui manifesto `.aidev.json` ou pasta `.agents/` (e se `.agents` ou qualquer skill dentro de `.agents/skills/*` é uma junction legada `l----` em vez de pasta física `d----`).
+   - Verifique se `.agents/rules/skill-routing.md` (`trigger: always_on`) está presente, se `.agents/hooks.json` usa `-File scripts/safety-check.ps1`, e se `AGENTS.md` e `GEMINI.md` possuem a cláusula de roteamento autônomo de skills (`skill-routing.md`).
+   - Identifique a disponibilidade da Biblioteca Canônica Global (`%USERPROFILE%\.agents` e `%USERPROFILE%\.gemini\config`).
    - Identifique quais Rules, Skills, Especialistas, MCPs e Hooks estão ativos, inativos ou potencialmente duplicados.
 
 4. **Classificação Epistemológica da Informação**:
@@ -43,10 +44,10 @@ Esta é uma etapa preliminar de **reconhecimento e diagnóstico**.
 5. **Proposta de Organização e Próximos Passos**:
    - Apresente um resumo claro e estruturado do estado do ambiente.
    - Indique se o workspace está pronto para:
-     - **Opção A (Greenfield)**: Início de um projeto novo do zero;
-     - **Opção B (Brownfield)**: Adoção formal de governança em código existente (`aidev detect` / `aidev migrate`);
+     - **Opção A (Greenfield)**: Início de um projeto novo do zero (`aidev init`);
+     - **Opção B (Brownfield)**: Adoção ou reparo formal de governança em código existente (`aidev detect` → `aidev migrate` / `aidev apply` → `aidev audit` & `aidev doctor`);
      - **Opção C (Continuidade)**: Retomada de sprint/tarefa específica já estruturada.
-   - Se identificar necessidade de pequenas limpezas ou reorganizações documentais, descreva-as explicitamente e solicite aprovação antes de executar qualquer alteração.
+   - Se identificar necessidade de atualização de governança ou pequenas reorganizações documentais, descreva-as explicitamente e solicite aprovação antes de executar qualquer alteração.
 
 ---
 
@@ -54,6 +55,7 @@ Esta é uma etapa preliminar de **reconhecimento e diagnóstico**.
 Entregue no chat um resumo estruturado com:
 1. **Identidade do Workspace**: Localização, tipo aparente e estado da working tree;
 2. **Inventário Estrutural**: Principais pastas, configs e documentações encontradas;
-3. **Diagnóstico de Governança de IA**: Presença de AI-Dev-Machine, `.aidev.json`, `.agents/`, Rules e MCPs;
+3. **Diagnóstico de Governança de IA**: Presença de AI-Dev-Machine, `.aidev.json`, `.agents/` (skills físicas vs junctions), `skill-routing.md`, `hooks.json`, `AGENTS.md`/`GEMINI.md` e MCPs;
 4. **Mapa de Conhecimento**: Decisões, handoffs ou regras pré-existentes identificadas;
-5. **Recomendação de Próxima Fase**: Sugestão fundamentada entre Opção A (Novo), Opção B (Adoção) ou Opção C (Continuidade).
+5. **Recomendação de Próxima Fase**: Sugestão fundamentada entre Opção A (Novo), Opção B (Adoção/Organização) ou Opção C (Continuidade).
+

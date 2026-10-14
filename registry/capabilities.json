@@ -18,13 +18,49 @@
       ],
       "skills": [
         "systematic-debugging",
+        "diagnosing-bugs",
         "verification-before-completion",
-        "ponytail"
+        "ponytail",
+        "graphify",
+        "calm",
+        "understand-anything",
+        "codebase-design",
+        "improve-codebase-architecture",
+        "domain-modeling",
+        "code-review",
+        "devils-advocate",
+        "cybersecurity-review",
+        "security-best-practices",
+        "security-threat-model",
+        "security-review",
+        "skill-security-review",
+        "strix",
+        "ui-ux-pro-max",
+        "frontend-design",
+        "impeccable",
+        "web-design-guidelines",
+        "supabase",
+        "supabase-postgres-best-practices",
+        "winapp",
+        "playwright",
+        "context-engineering",
+        "prompt-master",
+        "finding-google-skills",
+        "resolving-merge-conflicts",
+        "review-skills",
+        "caveman"
       ],
       "agents": [
         "researcher",
         "reviewer",
-        "security-reviewer"
+        "security-reviewer",
+        "software-architect",
+        "backend-architect",
+        "frontend-developer",
+        "database-optimizer",
+        "security-architect",
+        "test-automation-engineer",
+        "devops-automator"
       ],
       "mcps": [
         "context7"
@@ -45,7 +81,8 @@
       ],
       "skills": [],
       "agents": [
-        "software-architect"
+        "software-architect",
+        "devops-automator"
       ],
       "mcps": [],
       "validationDefaults": {},
@@ -366,7 +403,8 @@
         "strix"
       ],
       "agents": [
-        "security-reviewer"
+        "security-reviewer",
+        "security-architect"
       ],
       "mcps": [
         "semgrep"
@@ -398,6 +436,9 @@
     }
   ]
 }
+
+
+
 
 
 

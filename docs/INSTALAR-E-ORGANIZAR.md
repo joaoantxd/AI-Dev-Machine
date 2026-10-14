@@ -67,14 +67,21 @@ Após o "Sim" ou aprovação do usuário, execute de ponta a ponta:
      ```
    - Garanta que todas as 33 Skills estejam fisicamente expostas em `%USERPROFILE%\.gemini\config\skills` e a regra `skill-routing.md` esteja ativa em `%USERPROFILE%\.gemini\config\rules`.
 2. **Organização do Projeto Alvo (se aplicável)**:
+   - Execute `.\aidev.ps1 detect "<caminho>"` para identificar todas as capacidades reais do projeto (`core`, `typescript`, `react`, `nextjs`, `supabase`, `postgres`, `sqlite`, `python`, `electron`, `desktop-win`, `browser-testing`, `monorepo`, `security-high`, etc.).
    - Se for um projeto novo (Greenfield): execute `.\aidev.ps1 init "<caminho>" [-Preset <preset>]`.
-   - Se for um projeto existente (Brownfield): execute `.\aidev.ps1 migrate "<caminho>"`.
-   - Configure os comandos canônicos e validation gates adequados.
+   - Se for um projeto existente (Brownfield): crie ou atualize `.aidev.json` com todas as capacidades detectadas e execute `.\aidev.ps1 apply "<caminho>"` (ou `.\aidev.ps1 migrate "<caminho>" -AutoApprove`).
+   - **Verificação dos 4 Invariantes de Self-Healing**:
+     1. Todas as skills em `.agents/skills/*` devem ser **pastas físicas** (`d----`, 0 junctions NTFS) para indexação nativa pela IDE.
+     2. A regra `.agents/rules/skill-routing.md` (`trigger: always_on`) deve estar presente.
+     3. `.agents/hooks.json` deve apontar para `-File scripts/safety-check.ps1` com `.agents/scripts/safety-check.ps1` presente.
+     4. `AGENTS.md` e `GEMINI.md` devem conter a cláusula `Automatic & Dynamic Skill Routing (always_on)` (leitura obrigatória de `SKILL.md` no Turno 1 via `view_file`) preservando todas as regras de domínio e comandos canônicos customizados do projeto.
 3. **Validação Automática**:
-   - Execute o diagnóstico de conformidade:
+   - Execute a auditoria e o diagnóstico de conformidade:
      ```powershell
+     powershell -ExecutionPolicy Bypass -File .\aidev.ps1 audit "<caminho>"
      powershell -ExecutionPolicy Bypass -File .\aidev.ps1 doctor "<caminho>"
      ```
+   - Confirme que `Migration/Sync Needed : False`.
 
 ---
 

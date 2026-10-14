@@ -930,6 +930,79 @@ try {
         }
     }
 
+    Assert-Test "Self-healing project organization repairs legacy skill junctions, missing skill-routing.md, legacy hooks.json, and updates AGENTS.md/GEMINI.md while preserving custom domain invariants" {
+        $healWs = Join-Path $tempBase 'SelfHealProject'
+        $null = New-Item -ItemType Directory -Path $healWs -Force
+        Set-Content -LiteralPath (Join-Path $healWs '.aidev.json') -Value (@'
+{
+  "schemaVersion": 1,
+  "preset": "base",
+  "capabilities": ["core"]
+}
+'@) -Encoding utf8
+
+        # Create pre-existing AGENTS.md with custom domain invariant 6, but missing skill-routing.md
+        $customAgentsContent = @'
+# AGENTS.md — SelfHealProject
+
+## 1. Immutable Invariants
+
+1. **Security & Secrets**: Never expose secrets.
+6. **Custom Domain Rule**: Preserve offline resilience and local SQLite queue.
+
+---
+
+## 2. Project Metadata & Stack
+- **Project Name**: SelfHealProject
+'@
+        Set-Content -LiteralPath (Join-Path $healWs 'AGENTS.md') -Value $customAgentsContent -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $healWs 'GEMINI.md') -Value '# Legacy GEMINI.md without routing' -Encoding utf8
+
+        # Create .agents with a legacy skill junction and legacy hooks.json, without skill-routing.md
+        $healAgentsDir = Join-Path $healWs '.agents'
+        $healSkillsDir = Join-Path $healAgentsDir 'skills'
+        $healRulesDir = Join-Path $healAgentsDir 'rules'
+        $null = New-Item -ItemType Directory -Path $healSkillsDir -Force
+        $null = New-Item -ItemType Directory -Path $healRulesDir -Force
+
+        $junctionSkillTarget = Join-Path $aidevRoot 'skills\ponytail'
+        $junctionSkillPath = Join-Path $healSkillsDir 'ponytail'
+        $null = cmd /c "mklink /J `"$junctionSkillPath`" `"$junctionSkillTarget`"" 2>&1
+
+        Set-Content -LiteralPath (Join-Path $healAgentsDir 'hooks.json') -Value '{"hooks":{"PreToolUse":[{"matcher":"run_command","hooks":[{"type":"command","command":"powershell -NoProfile -ExecutionPolicy Bypass -File .agents/scripts/safety-check.ps1"}]}]}}' -Encoding utf8
+
+        # 1. Pre-apply audit must flag migration needed, skill junctions, and missing skill-routing.md
+        $preAudit = Invoke-AidevAudit -WorkspacePath $healWs
+        if (-not $preAudit.MigrationNeeded) { throw "Pre-apply audit should require migration/sync" }
+        if ($preAudit.SkillJunctionCount -eq 0) { throw "Pre-apply audit failed to detect legacy skill junction" }
+        if ($preAudit.HasSkillRoutingRule) { throw "Pre-apply audit falsely reported skill-routing.md present" }
+
+        # 2. Run Invoke-AidevApply (without -Force) to test automatic self-healing
+        Invoke-AidevApply -WorkspacePath $healWs
+
+        # 3. Verify all 4 self-healing invariants and custom rule preservation
+        if (Test-IsJunction -Path $junctionSkillPath) { throw "Skill junction was not converted to physical directory" }
+        if (-not (Test-Path -LiteralPath (Join-Path $junctionSkillPath 'SKILL.md'))) { throw "Physical skill SKILL.md missing after conversion" }
+        if (-not (Test-Path -LiteralPath (Join-Path $healRulesDir 'skill-routing.md'))) { throw "skill-routing.md not materialized" }
+
+        $healedHooks = Get-Content -LiteralPath (Join-Path $healAgentsDir 'hooks.json') -Raw -Encoding utf8
+        if ($healedHooks -match '-File \.agents/scripts/safety-check\.ps1') { throw "Legacy hooks.json path was not repaired" }
+        if ($healedHooks -notmatch '-File scripts/safety-check\.ps1') { throw "Resilient hooks.json path missing" }
+
+        $healedAgentsMd = Get-Content -LiteralPath (Join-Path $healWs 'AGENTS.md') -Raw -Encoding utf8
+        if (-not $healedAgentsMd.Contains('Custom Domain Rule')) { throw "Self-healing destroyed custom domain rule in AGENTS.md!" }
+        if ($healedAgentsMd -notmatch 'skill-routing\.md') { throw "Self-healing did not inject skill-routing.md into AGENTS.md" }
+
+        $healedGeminiMd = Get-Content -LiteralPath (Join-Path $healWs 'GEMINI.md') -Raw -Encoding utf8
+        if ($healedGeminiMd -notmatch 'skill-routing\.md') { throw "Self-healing did not update GEMINI.md with skill-routing.md" }
+
+        # 4. Post-apply audit must report 0 junctions and MigrationNeeded = False
+        $postAudit = Invoke-AidevAudit -WorkspacePath $healWs
+        if ($postAudit.MigrationNeeded) { throw "Post-apply audit still reports MigrationNeeded = True" }
+        if ($postAudit.SkillJunctionCount -ne 0) { throw "Post-apply audit still reports skill junctions" }
+        if (-not $postAudit.HasSkillRoutingRule) { throw "Post-apply audit missing skill-routing.md" }
+    }
+
 } finally {
     if (Test-Path -LiteralPath $tempBase) {
         Get-ChildItem -LiteralPath $tempBase -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' } | ForEach-Object {

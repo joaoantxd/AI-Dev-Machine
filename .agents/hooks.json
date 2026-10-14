@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .agents/scripts/safety-check.ps1",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/safety-check.ps1",
             "timeout": 15
           }
         ]

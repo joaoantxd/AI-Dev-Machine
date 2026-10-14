@@ -11,7 +11,9 @@
 2. **Safety & Working Tree**: Never execute destructive operations (`DROP`, `TRUNCATE`, `git push --force`, `rm -rf`) without explicit authorization. Preserve the user's uncommitted working tree.
 3. **Evidence-Based Completion**: Never declare a task complete, fixed, or passing without fresh validation evidence (tests, build, typecheck, or command output).
 4. **Deep Modules & YAGNI**: Prefer the standard library, reuse existing utilities, and keep interfaces small and cohesive. Avoid speculative abstractions.
-5. **Automatic & Dynamic Skill Routing**: Identify and load relevant domain skills (`view_file` on `SKILL.md`) dynamically throughout the task lifecycle (task start, stack discovery, domain shifts, unexpected bugs, review/verification). Never bulk-load unrelated skills.
+5. **Automatic & Dynamic Skill Routing — "Right Tool, Right Time" (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md). Never use the same skill blindly on every task — select the specific skill(s) from the **33 downloaded skills** in `.agents/skills/<skill>/SKILL.md` that match the current job (e.g., `diagnosing-bugs` for bugs, `frontend-design` for UI, `supabase-postgres-best-practices` for SQL, `codebase-design` for architecture) and load their `SKILL.md` via `view_file` on Turn 1.
+6. **Smart Subagent Delegation (`invoke_subagent`)**: Prioritize the **10 specialized subagents** in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`, `Software Architect`, `Backend Architect`, `Frontend Developer`, `Database Optimizer`, `Security Architect`, `Test Automation Engineer`, `DevOps Automator`) over generic `self` / `research` subagents whenever task complexity or domain specialization justifies a specialist; for localized tasks (like a direct bug fix), the current agent resolves it directly with the matching skill.
+7. **`graphify` como Skill Principal e Ótima para Usar em Compreensão e Arquitetura (`.agents/skills/graphify/SKILL.md`)**: A skill **`graphify` é uma skill excelente e altamente recomendada para se usar em primeiro lugar sempre que a tarefa exigir compreender o projeto, mapear arquitetura, descobrir relações entre arquivos, identificar *god nodes* ou medir impacto**. Quando necessário, carregue `.agents/skills/graphify/SKILL.md` via `view_file` no Turno 1 e consulte `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` antes de buscas manuais amplas.
 
 ---
 
@@ -49,16 +51,46 @@
 
 ---
 
-## 4. Workflows & Progressive Disclosure
+## 4. Workflows, 33 Downloaded Skills & 10 Specialized Subagents
 
-- **Architecture Discovery, Comprehension & Cross-Module Impact**: Use Graphify (`graphify query`) as primary navigation protocol when `graphify-out/` is present before manual file searches; use CALM for symbol-level call graph analysis.
-- **Bugs & Regressions**: Activate `systematic-debugging` or `diagnosing-bugs`.
-- **UI & Web Craft**: Consult `ui-ux-pro-max`, `frontend-design`, or `impeccable`.
-- **Database & Supabase**: Consult `supabase-postgres-best-practices`.
-- **Cognitive Delegation**:
-  - Delegate deep read-only codebase mapping to `researcher`.
-  - Delegate independent code & spec review to `reviewer`.
-  - Delegate security audits to `security-reviewer`.
+```text
+Pedido do usuário
+       ↓
+AGENTS.md + Roteamento (skill-routing.md)
+       ↓
+Graphify + CALM (se necessário para entender arquitetura/impacto — ou `researcher`)
+       ↓
+Avaliação da tarefa: "Precisa de especialista?"
+   │             │
+  NÃO           SIM (quando a complexidade/domínio justificar — `invoke_subagent`)
+(Agente atual)   ├── Software Architect / Backend Architect / Frontend Developer
+   │             └── Database Optimizer / Security Architect / Test Automation Engineer / DevOps Automator
+   └─────────────┬────────────────
+                 ↓
+   Skills necessárias conforme o trabalho (`view_file` em `.agents/skills/<skill>/SKILL.md`)
+   • Corrigir bug       → Agente atual        + `diagnosing-bugs` / `systematic-debugging`
+   • Criar interface    → Frontend Developer  + `frontend-design` / `ui-ux-pro-max`
+   • Otimizar SQL       → Database Optimizer  + `supabase-postgres-best-practices`
+   • Projetar arquit.   → Software Architect  + `codebase-design` / `graphify`
+                 ↓
+            implementação
+                 ↓
+              testes
+                 ↓
+              review (`reviewer` / `security-reviewer` + `code-review`)
+                 ↓
+ verification-before-completion
+```
+
+- **Skill & Subagent Routing (`always_on`)**: Governed by [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md). Choose the right skill and specialist for the specific job on Turn 1.
+- **Architecture Discovery, Comprehension & Cross-Module Impact**: Activate `graphify` (`view_file` on `SKILL.md`) and consult `graphify-out/` first before broad manual file searches; use `calm`, `understand-anything`, `codebase-design`, `improve-codebase-architecture`, and `domain-modeling`. Delegate to `researcher` or `Software Architect`.
+- **Bugs, Failures & Regressions**: Activate `systematic-debugging` and `diagnosing-bugs` before attempting fixes.
+- **UI, Frontend & Web Craft**: Activate `ui-ux-pro-max`, `frontend-design`, `impeccable`, `web-design-guidelines`, or `vercel-react-best-practices`. Delegate to `Frontend Developer`.
+- **Backend & Distributed Systems**: Delegate API, service, IPC, and concurrency architecture to `Backend Architect`.
+- **Database, SQL & Supabase**: Activate `supabase` and `supabase-postgres-best-practices`. Delegate to `Database Optimizer`.
+- **Desktop & Browser E2E Automation**: Activate `winapp` (Windows UIA) or `playwright` (browser E2E). Delegate to `Test Automation Engineer`.
+- **CI/CD, Packaging & Release**: Delegate build pipelines, installers, and release automation to `DevOps Automator`.
+- **Security, Threat Modeling & Completion Gate**: Activate `cybersecurity-review`, `security-best-practices`, `security-threat-model`, `security-review`, `skill-security-review`, and `strix` for security audits (delegate to `Security Architect` and `security-reviewer`), `ponytail` / `devils-advocate` / `code-review` for quality (delegate to `reviewer`), and `verification-before-completion` before declaring any task finished.
 
 ---
 
