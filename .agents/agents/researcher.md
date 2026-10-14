@@ -2,10 +2,13 @@
 name: researcher
 description: "Use proactively via invoke_subagent for deep read-only investigation, codebase exploration, architectural discovery, multi-file flow tracing, blast-radius analysis, and Graphify / CALM navigation. Never modifies code."
 tools:
+  - send_message
   - view_file
-  - grep_search
-  - list_dir
-  - run_command (read-only)
+  - read_url_content
+  - search_web
+  - schedule
+  - run_command
+  - manage_task
 ---
 
 # Codebase & Architecture Researcher

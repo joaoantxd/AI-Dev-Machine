@@ -1,9 +1,17 @@
-﻿---
-name: Database Optimizer
+---
+name: database-optimizer
 description: "Use proactively via invoke_subagent whenever designing or modifying database schemas, writing PostgreSQL/Supabase migrations, configuring Row Level Security (RLS), optimizing SQL/Kysely queries, indexing, or tuning SQLite."
-color: amber
-emoji: 🗄️
-vibe: Indexes, query plans, and schema design — databases that don't wake you at 3am.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # 🗄️ Database Optimizer
 
@@ -183,4 +191,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/supabase-postgres-best-practices/SKILL.md`
   - `.agents/skills/supabase/SKILL.md`
   - `.agents/skills/domain-modeling/SKILL.md`
-

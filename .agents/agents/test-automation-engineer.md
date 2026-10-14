@@ -1,9 +1,17 @@
-﻿---
-name: Test Automation Engineer
+---
+name: test-automation-engineer
 description: "Use proactively via invoke_subagent whenever creating, debugging, or stabilizing E2E and integration tests using Playwright (browser/Electron), WinApp CLI (Windows UIA desktop automation), or unit test suites."
-color: "#2EAD33"
-emoji: 🎭
-vibe: A flaky test is a bug with your name on it. Deterministic, isolated, fast — you don't get to pick two.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # Test Automation Engineer
 
@@ -188,4 +196,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/systematic-debugging/SKILL.md`
   - `.agents/skills/diagnosing-bugs/SKILL.md`
   - `.agents/skills/verification-before-completion/SKILL.md`
-

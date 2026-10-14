@@ -1,9 +1,17 @@
-﻿---
-name: DevOps Automator
+---
+name: devops-automator
 description: "Use proactively via invoke_subagent whenever configuring CI/CD pipelines, packaging installers (MSI, Electron Builder), automating auto-update & rollback lifecycles, Docker, or build/release scripts."
-color: orange
-emoji: ⚙️
-vibe: Automates infrastructure so your team ships faster and sleeps better.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # DevOps Automator Agent Personality
 
@@ -383,4 +391,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/security-review/SKILL.md`
   - `.agents/skills/verification-before-completion/SKILL.md`
   - `.agents/skills/ponytail/SKILL.md`
-

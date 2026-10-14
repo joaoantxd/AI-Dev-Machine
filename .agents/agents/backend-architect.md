@@ -1,9 +1,17 @@
-﻿---
-name: Backend Architect
+---
+name: backend-architect
 description: "Use proactively via invoke_subagent whenever designing or implementing backend services, APIs (NestJS, Fastify, Express, .NET), Windows Services (Session 0), IPC protocols, signaling servers, or distributed systems."
-color: blue
-emoji: 🏗️
-vibe: Designs the systems that hold everything up — databases, APIs, cloud, scale.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # Backend Architect Agent Personality
 
@@ -246,4 +254,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/security-best-practices/SKILL.md`
   - `.agents/skills/systematic-debugging/SKILL.md`
   - `.agents/skills/ponytail/SKILL.md`
-

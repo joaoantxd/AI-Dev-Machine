@@ -29,6 +29,22 @@ $ManagedAgents = @($agentsJson.agents | Where-Object { $_.source -eq 'upstream' 
     }
 })
 
+function Write-Utf8NoBom {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Content
+    )
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
+function Test-HasUtf8Bom {
+    param([Parameter(Mandatory)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    return ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+}
+
 function Test-AgentFile {
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -37,7 +53,7 @@ function Test-AgentFile {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
     if ((Get-Item -LiteralPath $Path).Length -le 0) { return $false }
     $lines = @(Get-Content -LiteralPath $Path -Encoding utf8 -ErrorAction Stop)
-    if ($lines.Count -eq 0 -or $lines[0].Trim() -ne '---') { return $false }
+    if ($lines.Count -eq 0 -or $lines[0].TrimStart([char]0xFEFF).Trim() -ne '---') { return $false }
     $closing = @($lines | Select-Object -Skip 1 | Where-Object { $_.Trim() -eq '---' })
     if ($closing.Count -eq 0) { return $false }
     $nameLine = $lines | Where-Object { $_ -match '^name:\s*(.+)$' } | Select-Object -First 1
@@ -45,7 +61,8 @@ function Test-AgentFile {
     $nameMatch = [regex]::Match([string]$nameLine, '^name:\s*(.+)$')
     if (-not $nameMatch.Success) { return $false }
     $declaredName = $nameMatch.Groups[1].Value.Trim().Trim('"', "'")
-    if ($declaredName -ne $ExpectedName) { return $false }
+    $kebabExpected = ($ExpectedName.ToLowerInvariant() -replace '\s+', '-')
+    if ($declaredName -ne $ExpectedName -and $declaredName -ne $kebabExpected) { return $false }
     return $true
 }
 
@@ -196,32 +213,33 @@ function Optimize-AgentDefinition {
         'devops-automator'         = @('graphify', 'security-review', 'verification-before-completion', 'ponytail')
     }
 
+    $hasBom = Test-HasUtf8Bom -Path $AgentFilePath
     $raw = Get-Content -LiteralPath $AgentFilePath -Raw -Encoding utf8
-    if ($raw -notmatch '(?s)^---\r?\n(.*?)\r?\n---(.*)$') { return }
+    $rawClean = $raw.TrimStart([char]0xFEFF)
+    if ($rawClean -notmatch '(?s)^---\r?\n(.*?)\r?\n---(.*)$') { return }
     $fm = $Matches[1]
     $body = $Matches[2]
     $changed = $false
 
     if ($proactiveDescriptions.ContainsKey($Slug)) {
         $newDesc = $proactiveDescriptions[$Slug]
-        $fmLines = $fm -split "\r?\n"
-        $newFmLines = [System.Collections.Generic.List[string]]::new()
-        $replacedDesc = $false
-        foreach ($line in $fmLines) {
-            if ($line -match '^description:\s*(.*)$') {
-                $curVal = $Matches[1].Trim().Trim('"', "'")
-                if ($curVal -ne $newDesc) {
-                    $newFmLines.Add("description: `"$newDesc`"")
-                    $replacedDesc = $true
-                } else {
-                    $newFmLines.Add($line)
-                }
-            } else {
-                $newFmLines.Add($line)
-            }
-        }
-        if ($replacedDesc) {
-            $fm = ($newFmLines -join "`r`n")
+        $canonicalFm = @(
+            "name: $Slug"
+            "description: `"$newDesc`""
+            "tools:"
+            "  - send_message"
+            "  - view_file"
+            "  - read_url_content"
+            "  - search_web"
+            "  - schedule"
+            "  - multi_replace_file_content"
+            "  - replace_file_content"
+            "  - write_to_file"
+            "  - run_command"
+            "  - manage_task"
+        ) -join "`r`n"
+        if ($fm.Trim() -ne $canonicalFm.Trim()) {
+            $fm = $canonicalFm
             $changed = $true
         }
     }
@@ -242,9 +260,9 @@ function Optimize-AgentDefinition {
         }
     }
 
-    if ($changed) {
+    if ($changed -or $hasBom) {
         $updated = "---`r`n" + $fm.TrimEnd() + "`r`n---`r`n" + $body.TrimStart("`r", "`n")
-        Set-Content -LiteralPath $AgentFilePath -Value $updated -Encoding utf8
+        Write-Utf8NoBom -Path $AgentFilePath -Content $updated
     }
 }
 

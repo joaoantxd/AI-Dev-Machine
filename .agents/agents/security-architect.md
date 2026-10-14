@@ -1,9 +1,17 @@
-﻿---
-name: Security Architect
+---
+name: security-architect
 description: "Use proactively via invoke_subagent whenever performing threat modeling, analyzing trust boundaries, designing multi-tenant isolation, hardening Windows Service DACLs/IPC, or architecting authentication and cryptography."
-color: red
-emoji: 🛡️
-vibe: Designs the security architecture and threat models that hold under adversarial pressure — the blueprint, not the bug-fix.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # Security Architect Agent
 
@@ -312,4 +320,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/cybersecurity-review/SKILL.md`
   - `.agents/skills/security-best-practices/SKILL.md`
   - `.agents/skills/strix/SKILL.md`
-

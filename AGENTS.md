@@ -12,7 +12,7 @@
 3. **Evidence-Based Completion**: Never declare a task complete, fixed, or passing without fresh validation evidence (tests, build, typecheck, or command output).
 4. **Deep Modules & YAGNI**: Prefer the standard library, reuse existing utilities, and keep interfaces small and cohesive. Avoid speculative abstractions.
 5. **Automatic & Dynamic Skill Routing — "Right Tool, Right Time" (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md). Never use the same skill blindly on every task — select the specific skill(s) from the **33 downloaded skills** in `.agents/skills/<skill>/SKILL.md` that match the current job (e.g., `diagnosing-bugs` for bugs, `frontend-design` for UI, `supabase-postgres-best-practices` for SQL, `codebase-design` for architecture) and load their `SKILL.md` via `view_file` on Turn 1.
-6. **Smart Subagent Delegation (`invoke_subagent`)**: Prioritize the **10 specialized subagents** in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`, `Software Architect`, `Backend Architect`, `Frontend Developer`, `Database Optimizer`, `Security Architect`, `Test Automation Engineer`, `DevOps Automator`) over generic `self` / `research` subagents whenever task complexity or domain specialization justifies a specialist; for localized tasks (like a direct bug fix), the current agent resolves it directly with the matching skill.
+6. **Smart Subagent Delegation (`invoke_subagent`)**: Prioritize the **10 specialized subagents** in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) over generic `self` / `research` subagents whenever task complexity or domain specialization justifies a specialist; for localized tasks (like a direct bug fix), the current agent resolves it directly with the matching skill.
 7. **`graphify` como Skill Principal e Ótima para Usar em Compreensão e Arquitetura (`.agents/skills/graphify/SKILL.md`)**: A skill **`graphify` é uma skill excelente e altamente recomendada para se usar em primeiro lugar sempre que a tarefa exigir compreender o projeto, mapear arquitetura, descobrir relações entre arquivos, identificar *god nodes* ou medir impacto**. Quando necessário, carregue `.agents/skills/graphify/SKILL.md` via `view_file` no Turno 1 e consulte `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` antes de buscas manuais amplas.
 
 ---
@@ -62,15 +62,15 @@ Graphify + CALM (se necessário para entender arquitetura/impacto — ou `resear
 Avaliação da tarefa: "Precisa de especialista?"
    │             │
   NÃO           SIM (quando a complexidade/domínio justificar — `invoke_subagent`)
-(Agente atual)   ├── Software Architect / Backend Architect / Frontend Developer
-   │             └── Database Optimizer / Security Architect / Test Automation Engineer / DevOps Automator
+(Agente atual)   ├── software-architect / backend-architect / frontend-developer
+   │             └── database-optimizer / security-architect / test-automation-engineer / devops-automator
    └─────────────┬────────────────
                  ↓
    Skills necessárias conforme o trabalho (`view_file` em `.agents/skills/<skill>/SKILL.md`)
    • Corrigir bug       → Agente atual        + `diagnosing-bugs` / `systematic-debugging`
-   • Criar interface    → Frontend Developer  + `frontend-design` / `ui-ux-pro-max`
-   • Otimizar SQL       → Database Optimizer  + `supabase-postgres-best-practices`
-   • Projetar arquit.   → Software Architect  + `codebase-design` / `graphify`
+   • Criar interface    → frontend-developer  + `frontend-design` / `ui-ux-pro-max`
+   • Otimizar SQL       → database-optimizer  + `supabase-postgres-best-practices`
+   • Projetar arquit.   → software-architect  + `codebase-design` / `graphify`
                  ↓
             implementação
                  ↓
@@ -90,14 +90,14 @@ Avaliação da tarefa: "Precisa de especialista?"
 - **Security & Completion Gate**: Activate `cybersecurity-review`, `security-best-practices`, `security-threat-model`, `security-review`, `skill-security-review`, and `strix` for security audits, `ponytail` / `devils-advocate` / `code-review` for quality, and `verification-before-completion` before declaring any task finished.
 - **Proactive Subagent Delegation (`invoke_subagent` — 10 Specialized Subagents)**:
   - `researcher` (`.agents/agents/researcher.md`): Deep read-only codebase mapping, Graphify/CALM tracing, blast radius.
-  - `Software Architect` (`.agents/agents/software-architect.md`): Macro architecture, DDD bounded contexts, deep modules, ADRs.
-  - `Backend Architect` (`.agents/agents/backend-architect.md`): Backend services, APIs, Windows Services, IPC/signaling.
-  - `Frontend Developer` (`.agents/agents/frontend-developer.md`): React, Next.js 16, Electron UI, WCAG accessibility, CWV.
-  - `Database Optimizer` (`.agents/agents/database-optimizer.md`): PostgreSQL 17, Supabase RLS, Kysely/SQL tuning, indexes, SQLite.
-  - `Security Architect` (`.agents/agents/security-architect.md`): Threat modeling, trust boundaries, multi-tenant isolation, DACLs.
+  - `software-architect` (`.agents/agents/software-architect.md`): Macro architecture, DDD bounded contexts, deep modules, ADRs.
+  - `backend-architect` (`.agents/agents/backend-architect.md`): Backend services, APIs, Windows Services, IPC/signaling.
+  - `frontend-developer` (`.agents/agents/frontend-developer.md`): React, Next.js 16, Electron UI, WCAG accessibility, CWV.
+  - `database-optimizer` (`.agents/agents/database-optimizer.md`): PostgreSQL 17, Supabase RLS, Kysely/SQL tuning, indexes, SQLite.
+  - `security-architect` (`.agents/agents/security-architect.md`): Threat modeling, trust boundaries, multi-tenant isolation, DACLs.
   - `security-reviewer` (`.agents/agents/security-reviewer.md`): Code-level SAST/vulnerability audit, secrets check, OWASP Top 10, PoCs.
-  - `Test Automation Engineer` (`.agents/agents/test-automation-engineer.md`): Playwright E2E, WinApp Windows UIA automation, test suites.
-  - `DevOps Automator` (`.agents/agents/devops-automator.md`): CI/CD pipelines, MSI/Electron packaging, auto-update & release scripts.
+  - `test-automation-engineer` (`.agents/agents/test-automation-engineer.md`): Playwright E2E, WinApp Windows UIA automation, test suites.
+  - `devops-automator` (`.agents/agents/devops-automator.md`): CI/CD pipelines, MSI/Electron packaging, auto-update & release scripts.
   - `reviewer` (`.agents/agents/reviewer.md`): Independent two-axis review (Standards + Spec fidelity) before completion.
 
 ---

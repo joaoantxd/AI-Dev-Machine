@@ -1003,6 +1003,50 @@ try {
         if (-not $postAudit.HasSkillRoutingRule) { throw "Post-apply audit missing skill-routing.md" }
     }
 
+    Assert-Test "All 10 specialized subagents have zero UTF-8 BOM, valid kebab-case name identifiers, and valid Antigravity tool registry entries" {
+        $validAntigravityTools = @(
+            'send_message',
+            'view_file',
+            'read_url_content',
+            'search_web',
+            'schedule',
+            'multi_replace_file_content',
+            'replace_file_content',
+            'write_to_file',
+            'run_command',
+            'manage_task'
+        )
+        $agentsDirToCheck = Join-Path $aidevRoot '.agents\agents'
+        $agentFiles = @(Get-ChildItem -LiteralPath $agentsDirToCheck -Filter '*.md' -File)
+        if ($agentFiles.Count -lt 10) {
+            throw ("Expected 10 subagents in .agents/agents/, found " + $agentFiles.Count)
+        }
+        foreach ($af in $agentFiles) {
+            $bytes = [System.IO.File]::ReadAllBytes($af.FullName)
+            if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+                throw ("Subagent file has UTF-8 BOM which breaks frontmatter discovery: " + $af.Name)
+            }
+            $rawText = [System.IO.File]::ReadAllText($af.FullName, [System.Text.Encoding]::UTF8)
+            if ($rawText -notmatch '(?s)^---\r?\n(.*?)\r?\n---') {
+                throw ("Subagent file missing valid YAML frontmatter: " + $af.Name)
+            }
+            $fm = $Matches[1]
+            if ($fm -notmatch '(?m)^name:\s*([a-zA-Z0-9][a-zA-Z0-9_.-]*)\s*$') {
+                throw ("Subagent file has invalid or space-containing name identifier in frontmatter: " + $af.Name)
+            }
+            $toolMatches = [regex]::Matches($fm, '(?m)^\s*-\s*(.+?)\s*$')
+            if ($toolMatches.Count -eq 0) {
+                throw ("Subagent file missing tools list in frontmatter: " + $af.Name)
+            }
+            foreach ($tm in $toolMatches) {
+                $tName = $tm.Groups[1].Value.Trim()
+                if ($validAntigravityTools -notcontains $tName) {
+                    throw ("Subagent " + $af.Name + " declares unknown Antigravity tool '" + $tName + "' which crashes executor construction!")
+                }
+            }
+        }
+    }
+
 } finally {
     if (Test-Path -LiteralPath $tempBase) {
         Get-ChildItem -LiteralPath $tempBase -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' } | ForEach-Object {

@@ -67,7 +67,7 @@ function Test-AgentFile {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
     if ((Get-Item -LiteralPath $Path).Length -le 0) { return $false }
     $lines = @(Get-Content -LiteralPath $Path -Encoding utf8 -ErrorAction Stop)
-    if ($lines.Count -eq 0 -or $lines[0].Trim() -ne '---') { return $false }
+    if ($lines.Count -eq 0 -or $lines[0].TrimStart([char]0xFEFF).Trim() -ne '---') { return $false }
     $closing = @($lines | Select-Object -Skip 1 | Where-Object { $_.Trim() -eq '---' })
     if ($closing.Count -eq 0) { return $false }
     $nameLine = $lines | Where-Object { $_ -match '^name:\s*(.+)$' } | Select-Object -First 1
@@ -75,7 +75,8 @@ function Test-AgentFile {
     $nameMatch = [regex]::Match([string]$nameLine, '^name:\s*(.+)$')
     if ($nameMatch.Success) {
         $declaredName = $nameMatch.Groups[1].Value.Trim().Trim('"', "'")
-        if ($declaredName -ne $ExpectedName) { return $false }
+        $kebabExpected = ($ExpectedName.ToLowerInvariant() -replace '\s+', '-')
+        if ($declaredName -ne $ExpectedName -and $declaredName -ne $kebabExpected) { return $false }
     }
     return $true
 }

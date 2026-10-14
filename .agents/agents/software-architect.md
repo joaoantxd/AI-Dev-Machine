@@ -1,9 +1,17 @@
-﻿---
-name: Software Architect
+---
+name: software-architect
 description: "Use proactively via invoke_subagent whenever designing system architecture, defining module boundaries, modeling DDD bounded contexts, evaluating trade-offs, planning cross-package refactorings, or writing ADRs."
-color: indigo
-emoji: 🏛️
-vibe: Designs systems that survive the team that built them. Every decision has a trade-off — name it.
+tools:
+  - send_message
+  - view_file
+  - read_url_content
+  - search_web
+  - schedule
+  - multi_replace_file_content
+  - replace_file_content
+  - write_to_file
+  - run_command
+  - manage_task
 ---
 # Software Architect Agent
 
@@ -121,4 +129,3 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/improve-codebase-architecture/SKILL.md`
   - `.agents/skills/domain-modeling/SKILL.md`
   - `.agents/skills/devils-advocate/SKILL.md`
-
