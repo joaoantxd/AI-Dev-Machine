@@ -992,9 +992,11 @@ try {
         $healedAgentsMd = Get-Content -LiteralPath (Join-Path $healWs 'AGENTS.md') -Raw -Encoding utf8
         if (-not $healedAgentsMd.Contains('Custom Domain Rule')) { throw "Self-healing destroyed custom domain rule in AGENTS.md!" }
         if ($healedAgentsMd -notmatch 'skill-routing\.md') { throw "Self-healing did not inject skill-routing.md into AGENTS.md" }
+        if ($healedAgentsMd -notmatch '/compact') { throw "Self-healing did not inject /compact gate into AGENTS.md" }
 
         $healedGeminiMd = Get-Content -LiteralPath (Join-Path $healWs 'GEMINI.md') -Raw -Encoding utf8
         if ($healedGeminiMd -notmatch 'skill-routing\.md') { throw "Self-healing did not update GEMINI.md with skill-routing.md" }
+        if ($healedGeminiMd -notmatch '/compact') { throw "Self-healing did not update GEMINI.md with /compact gate" }
 
         # 4. Post-apply audit must report 0 junctions and MigrationNeeded = False
         $postAudit = Invoke-AidevAudit -WorkspacePath $healWs

@@ -1228,8 +1228,10 @@ function Invoke-AidevAudit {
     $hasLegacyHooks = (Test-Path -LiteralPath $hooksFile) -and ((Get-Content -LiteralPath $hooksFile -Raw -Encoding utf8) -match '-File \.agents/scripts/safety-check\.ps1|\[Console\]::Out\.WriteLine')
     $agentsMdFile = Join-Path $ws 'AGENTS.md'
     $geminiMdFile = Join-Path $ws 'GEMINI.md'
-    $hasUpdatedConstitution = (Test-Path -LiteralPath $agentsMdFile) -and ((Get-Content -LiteralPath $agentsMdFile -Raw -Encoding utf8) -match 'skill-routing\.md')
-    $hasUpdatedBridge = (Test-Path -LiteralPath $geminiMdFile) -and ((Get-Content -LiteralPath $geminiMdFile -Raw -Encoding utf8) -match 'skill-routing\.md')
+    $agentsRawAudit = if (Test-Path -LiteralPath $agentsMdFile) { Get-Content -LiteralPath $agentsMdFile -Raw -Encoding utf8 } else { '' }
+    $geminiRawAudit = if (Test-Path -LiteralPath $geminiMdFile) { Get-Content -LiteralPath $geminiMdFile -Raw -Encoding utf8 } else { '' }
+    $hasUpdatedConstitution = ($agentsRawAudit -match 'skill-routing\.md') -and ($agentsRawAudit -match '/compact')
+    $hasUpdatedBridge = ($geminiRawAudit -match 'skill-routing\.md') -and ($geminiRawAudit -match '/compact')
 
     if (-not $manifest) {
         Write-Host '  [AUDIT / NO MANIFEST] .aidev.json missing. Run "aidev init" or "aidev migrate".' -ForegroundColor Yellow
@@ -1729,32 +1731,53 @@ function Invoke-AidevApply {
                       -replace '\[CMD_BUILD\]', $cmdBuild
         Set-Content -LiteralPath $agentsMdDest -Value $inst -Encoding utf8
         Write-Host '  [CREATED CONSTITUTION] AGENTS.md' -ForegroundColor Green
-    } elseif ($existingAgentsMd -notmatch 'skill-routing\.md') {
+    } elseif (($existingAgentsMd -notmatch 'skill-routing\.md') -or ($existingAgentsMd -notmatch '/compact')) {
         $updatedAgentsMd = $existingAgentsMd
         $routingInvariantLine = '- **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
-        if ($updatedAgentsMd -match '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$') {
-            $updatedAgentsMd = [regex]::Replace(
-                $updatedAgentsMd,
-                '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$',
-                '5. **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
-            )
-        } elseif ($updatedAgentsMd -match '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)') {
-            $updatedAgentsMd = [regex]::Replace(
-                $updatedAgentsMd,
-                '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)',
-                ('$1' + "`r`n" + $routingInvariantLine + '$2'),
-                1
-            )
-        } else {
-            $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n`r`n## Skill Routing Protocol (`always_on`)`r`n`r`n" + $routingInvariantLine + "`r`n"
+        $compactInvariantLine = '- **Context Hygiene & Post-Task Compaction Gate (`/compact`)**: Offload multi-file exploration to subagents (`invoke_subagent` / `Task` / `Agent`) so raw logs stay out of the main context, and proactively recommend `/compact` at the end of the response whenever a large task, multi-file refactor, or parallel subagent workflow completes.'
+
+        if ($updatedAgentsMd -notmatch 'skill-routing\.md') {
+            if ($updatedAgentsMd -match '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$') {
+                $updatedAgentsMd = [regex]::Replace(
+                    $updatedAgentsMd,
+                    '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$',
+                    '5. **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
+                )
+            } elseif ($updatedAgentsMd -match '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)') {
+                $updatedAgentsMd = [regex]::Replace(
+                    $updatedAgentsMd,
+                    '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)',
+                    ('$1' + "`r`n" + $routingInvariantLine + '$2'),
+                    1
+                )
+            } else {
+                $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n`r`n## Skill Routing Protocol (`always_on`)`r`n`r`n" + $routingInvariantLine + "`r`n"
+            }
         }
+
+        if ($updatedAgentsMd -notmatch '/compact') {
+            if ($updatedAgentsMd -match '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)') {
+                $updatedAgentsMd = [regex]::Replace(
+                    $updatedAgentsMd,
+                    '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)',
+                    ('$1' + "`r`n" + $compactInvariantLine + '$2'),
+                    1
+                )
+            } else {
+                $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n" + $compactInvariantLine + "`r`n"
+            }
+            if ($updatedAgentsMd -match '##\s+5\.\s+Completion Checklist') {
+                $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n- [ ] Recommend `/compact` at the end of the response after completing any large, multi-file, or subagent-assisted task.`r`n"
+            }
+        }
+
         Set-Content -LiteralPath $agentsMdDest -Value $updatedAgentsMd -Encoding utf8
-        Write-Host '  [UPDATED CONSTITUTION] AGENTS.md (injected skill-routing.md protocol while preserving custom rules)' -ForegroundColor Green
+        Write-Host '  [UPDATED CONSTITUTION] AGENTS.md (injected skill-routing.md & /compact gate while preserving custom rules)' -ForegroundColor Green
     }
 
     $geminiMdDest = Join-Path $ws 'GEMINI.md'
     $existingGeminiMd = if (Test-Path -LiteralPath $geminiMdDest) { Get-Content -LiteralPath $geminiMdDest -Raw -Encoding utf8 } else { $null }
-    if ((-not $existingGeminiMd) -or $Force -or ($existingGeminiMd -notmatch 'skill-routing\.md')) {
+    if ((-not $existingGeminiMd) -or $Force -or ($existingGeminiMd -notmatch 'skill-routing\.md') -or ($existingGeminiMd -notmatch '/compact')) {
         $tmplG = Get-Content -LiteralPath (Join-Path $root 'templates\GEMINI.template.md') -Raw -Encoding utf8
         $instG = $tmplG -replace '\[PROJECT_NAME\]', $projectName
         if ($synthesizedAgentFiles.Count -gt 0) {

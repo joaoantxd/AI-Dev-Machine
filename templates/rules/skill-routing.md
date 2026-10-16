@@ -271,7 +271,13 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
 - **Load on Demand (1–2 Skills per Subtask)**: Read `graphify/SKILL.md` + the 1–2 `SKILL.md` files that directly apply to the current subtask via `view_file`.
 - **Context Reuse**: Skills loaded in earlier turns remain active in the conversation context. Do NOT call `view_file` redundantly on the same `SKILL.md` if its guidance is already present.
 - **No Indiscriminate Manual Wandering**: Do NOT perform blind recursive directory listings (`list_dir`) or mass grep sweeps across whole repositories when a knowledge graph (`graphify-out/`) is available or can be queried. Graph navigation must precede file-by-file inspection.
-- **Subagent Context Offloading & `/compact`**: Delegate multi-file research and isolated module work to subagents so raw exploration logs stay out of the main orchestrator conversation. Recommend `/compact` when main sessions exceed ~15 user requests.
+- **Post-Task Context Compaction Gate (`/compact` After Large Tasks) & Subagent Context Offloading**:
+  1. **Offload Heavy Exploration to Subagents**: Delegate multi-file research and isolated module work to subagents (`researcher`, domain specialists) so raw exploration logs and intermediate tool outputs stay inside the subagent's isolated context and never bloat the main orchestrator conversation.
+  2. **Mandatory `/compact` Recommendation After Large Tasks**: Because `/compact` is a host IDE/CLI slash command triggered by the user, the AI MUST proactively output a highlighted **Context Compaction Gate (`💡 Recomendação de Economia de Tokens: execute /compact agora`)** at the end of its final response whenever ANY of the following occurs:
+     - A multi-file feature, architectural refactoring, or cross-module bug fix is completed;
+     - Parallel subagents (`invoke_subagent` / `Task` / `Agent`) or large test/build/audit suites were executed;
+     - A phase transition occurs (e.g., finishing deep investigation/planning and moving to implementation, or finishing implementation and starting a new topic);
+     - The conversation has accumulated >6–8 turns or heavy command/diff outputs.
 - **Triviality Exemption**: For trivial 1-line typo fixes, pure conceptual questions, or when no catalog skill matches, proceed directly without loading skills or inserting artificial pauses.
 - **Zero Command-Level Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
 - **Deep Fidelity**: Rigorously apply the checklists, workflows, and domain rules defined in the loaded `SKILL.md`.
@@ -291,12 +297,13 @@ Whenever the user opens a project and asks to organize, standardize, migrate, or
      - New/empty project: run `aidev.ps1 init "<workspace>" -Preset <detected-preset>`
      - Existing codebase (Brownfield): create/update `.aidev.json` with all detected capabilities (`core`, `typescript`, `react`, `nextjs`, `supabase`, `postgres`, `sqlite`, `python`, `electron`, `windows-desktop`, `browser-testing`, `monorepo`, `security-audit`, etc.) and run `aidev.ps1 apply "<workspace>"` (or `aidev.ps1 migrate "<workspace>" -AutoApprove`).
    - If `.aidev.json` already exists: ensure its `capabilities` list matches the real project stack and run `aidev.ps1 apply "<workspace>"`.
-4. **Verify the 5 Critical Self-Healing Invariants**:
+4. **Verify the 6 Critical Self-Healing Invariants**:
    - **Physical Skills Only (33/33)**: Every skill in `.agents/skills/*` MUST be a physical directory (`d----`), never an NTFS junction (`l----`), so Antigravity IDE indexes `<skills>` natively.
-   - **Specialized Subagents Materialized (10/10)**: All 10 specialized subagents (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) MUST be physically present in `.agents/agents/*.md`.
+   - **Specialized Subagents Materialized (10/10 + Project Domain Specialists)**: All 10 specialized subagents (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) plus synthesized `<domain>-specialist.md` subagents MUST be physically present in `.agents/agents/*.md`.
    - **Active Routing Rule**: `.agents/rules/skill-routing.md` MUST exist with `trigger: always_on`.
    - **Resilient Safety Hook**: `.agents/hooks.json` MUST invoke `"powershell -NoProfile -ExecutionPolicy Bypass -File scripts/safety-check.ps1"` with `.agents/scripts/safety-check.ps1` present.
-   - **Root Constitution & Bridge Preservation**: `AGENTS.md` and `GEMINI.md` MUST contain the `Automatic & Dynamic Skill & Subagent Routing` invariant (referencing `.agents/rules/skill-routing.md`, Turn-1 `view_file` on `SKILL.md`, and `invoke_subagent` delegation to the 10 subagents) while preserving all project-specific domain invariants, architecture notes, and canonical commands.
+   - **Root Constitution & Bridge Preservation (with Surgical Token-Economy & `/compact` Gate)**: `AGENTS.md` and `GEMINI.md` MUST contain the `Automatic & Dynamic Skill & Subagent Routing` invariant, the `graphify` surgical token-economy protocol, and the **Post-Task Context Compaction Gate (`/compact`)** while preserving all project-specific domain invariants, architecture notes, and canonical commands.
+   - **Knowledge Graph Ready (`graphify-out/graph.json`)**: `aidev.ps1 apply` automatically initializes or updates `graphify-out/graph.json` (including in git worktrees).
 5. **Final Audit & Doctor Gate**:
    - Run `aidev.ps1 audit "<workspace>"` and `aidev.ps1 doctor "<workspace>"` and confirm `Migration/Sync Needed : False` before declaring the project organized.
 

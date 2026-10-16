@@ -14,6 +14,7 @@
 5. **Automatic & Dynamic Skill Routing — "Right Tool, Right Time" (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md). Never use the same skill blindly on every task — select the specific skill(s) from the **33 downloaded skills** in `.agents/skills/<skill>/SKILL.md` that match the current job (e.g., `diagnosing-bugs` for bugs, `frontend-design` for UI, `supabase-postgres-best-practices` for SQL, `codebase-design` for architecture) and load their `SKILL.md` on Turn 1.
 6. **Smart Subagent Delegation, Project Specialist Synthesis & Parallel Double-Verification (All AIs — Antigravity, Claude Code, Codex, Cursor, Windsurf, Copilot)**: Prioritize the **10 core subagents** and the **project-synthesized `<domain>-specialist.md` subagents** in `.agents/agents/*.md` over generic built-ins. For multi-area tasks, put multiple specialists to work in parallel on their respective areas (`invoke_subagent` / `Task` / `Agent` / multi-track), create new `.agents/agents/<domain>-specialist.md` specialists on the fly combining `graphify` + the 33 downloaded skills when new project domains arise, and enforce **Double-Layer Verification** (Layer 1: each subagent verifies its own area before returning; Layer 2: the main orchestrator audits `git diff`, runs `reviewer`/`security-reviewer`, and runs `verification-before-completion`).
 7. **`graphify` como Skill Principal + Protocolo Cirúrgico de Economia de Tokens (`.agents/skills/graphify/SKILL.md`)**: A skill **`graphify` é a skill principal e altamente recomendada para usar em primeiro lugar sempre que a tarefa exigir compreender o projeto, mapear arquitetura, descobrir relações entre arquivos ou medir impacto**. Carregue `.agents/skills/graphify/SKILL.md` no Turno 1, garanta que `graphify-out/graph.json` exista (inclusive em git worktrees), execute `graphify query "<tema>" --budget 1200` + `rg -n "<simbolo>" <arquivos>` via terminal, e **NUNCA abra múltiplos arquivos em blocos cegos de `#L1-800`** — leia apenas janelas cirúrgicas (`StartLine`–`EndLine` de `60-150 linhas`) nas linhas exatas encontradas.
+8. **Higiene de Contexto & Gate de Compactação Pós-Tarefa (`/compact`)**: Delegue explorações extensas a subagentes (`invoke_subagent` / `Task` / `Agent`) para isolar logs brutos fora do chat principal e, **ao concluir qualquer tarefa grande** (múltiplos arquivos, refatoração arquitetural, uso de subagentes ou bateria pesada de testes/auditoria), recomende proativamente no final da resposta que o usuário execute `/compact` antes de iniciar a próxima demanda.
 
 ---
 
@@ -78,7 +79,7 @@ Avaliação da tarefa: "Precisa de especialista?"
                  ↓
               review (`reviewer` / `security-reviewer` + `code-review`)
                  ↓
- verification-before-completion
+ verification-before-completion + recomendação de `/compact` (após tarefas grandes)
 ```
 
 - **Skill & Subagent Routing (`always_on`)**: Governed by [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md). Choose the right skill and specialist for the specific job on Turn 1.
@@ -108,4 +109,5 @@ Avaliação da tarefa: "Precisa de especialista?"
 - [ ] Relevant unit / integration tests pass.
 - [ ] No secrets or unwanted files in `git status`.
 - [ ] `TESTE MANUAL NECESSÁRIO` declared if human hardware/visual verification is required.
+- [ ] Recomendar `/compact` ao final da resposta quando uma tarefa grande, multi-arquivo ou com subagentes for concluída.
 
