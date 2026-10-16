@@ -12,6 +12,8 @@ trigger: always_on
 > - **Skills** are specialized methods and domain knowledge loaded on demand (`.agents/skills/<skill>/SKILL.md`).
 > - **Subagents** are domain specialists (`invoke_subagent`) called when task specialization or complexity justifies them.
 > - **Router (`AGENTS.md` + `skill-routing.md`)** is this built-in decision matrix itself — **no separate `agency-router` skill file is needed**. The goal is not to use *more* tools, but to choose the **right tool at the right time, automatically**.
+> - **STRICT EXECUTIVE BRIEFING & ZERO CHAT DUMPS**: **NEVER output long essays, comprehensive documentation, or multi-page status reports directly in the chat**. Whenever producing a deep architectural review, status diagnosis, or walkthrough, the AI **MUST write it to `Walkthrough.md` or a documentation file first**, and then reply in chat with **ONLY an Executive Briefing** (bullet summary + clickable link `file:///...`). Every massive text dump in chat permanently burns tokens across all future conversation turns.
+
 
 ```text
                         Pedido do usuário
