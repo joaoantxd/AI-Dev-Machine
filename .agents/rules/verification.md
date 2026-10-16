@@ -17,7 +17,9 @@ trigger: model_decision
 - **Cross-Cutting Change**: Run integration/E2E test suite and complete project build.
 - **Physical/UI/Hardware Changes**: When automated tests cannot fully verify behavior (e.g. video capture, desktop windowing), explicitly output `TESTE MANUAL NECESSÁRIO` with a clear, step-by-step reproduction checklist.
 
-## 3. Post-Task Context Compaction Gate (`/compact`)
-- After completing any large task (multi-file implementation, architectural refactoring, parallel subagent orchestration, or full test/audit suite execution), always append a clear recommendation at the end of the completion response:
-  > 💡 **Economia de Tokens**: Tarefa grande concluída. Digite `/compact` antes da próxima tarefa para comprimir o histórico intermediário e economizar tokens.
+## 3. Post-Task Context Compaction Gate (`/compact` — Milestone-Only, Anti-Spam)
+- Subagents MUST NEVER output `/compact` recommendations.
+- In the main conversation, do NOT recommend `/compact` on every turn or after small edits.
+- Only suggest `/compact` when a major multi-file milestone or heavy session is completely finished and the user is about to switch to an entirely new topic:
+  > 💡 **Economia de Tokens**: Marco concluído. Se for iniciar uma demanda diferente agora, você pode usar `/compact`.
 

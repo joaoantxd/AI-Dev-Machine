@@ -1,0 +1,9 @@
+Leia este projeto do AI-Dev-Machine e faça tudo o que for necessário para instalar, organizar e ativar toda a governança nos meus outros projetos que estou mexendo no momento:
+
+1. Entenda as regras do motor executando `.\aidev.ps1 sync` para sincronizar a biblioteca global de skills e subagentes na minha máquina.
+2. Identifique quais são os meus outros projetos (pergunte-me os caminhos ou pastas das aplicações caso não saiba).
+3. Para cada projeto meu:
+   - Rode `.\aidev.ps1 detect "<caminho-do-meu-projeto>"` para detectar a stack dele;
+   - Rode `.\aidev.ps1 apply "<caminho-do-meu-projeto>"` para instalar as 33 skills físicas, os subagentes especialistas, o Graphify e o AGENTS.md com a economia de tokens cirúrgica e o /compact;
+   - Rode `.\aidev.ps1 audit "<caminho-do-meu-projeto>"` para garantir que ficou 100% validado sem pendências.
+4. Conclua me mostrando um resumo de todos os meus projetos configurados e prontos para uso.

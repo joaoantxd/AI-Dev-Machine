@@ -271,13 +271,12 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
 - **Load on Demand (1–2 Skills per Subtask)**: Read `graphify/SKILL.md` + the 1–2 `SKILL.md` files that directly apply to the current subtask via `view_file`.
 - **Context Reuse**: Skills loaded in earlier turns remain active in the conversation context. Do NOT call `view_file` redundantly on the same `SKILL.md` if its guidance is already present.
 - **No Indiscriminate Manual Wandering**: Do NOT perform blind recursive directory listings (`list_dir`) or mass grep sweeps across whole repositories when a knowledge graph (`graphify-out/`) is available or can be queried. Graph navigation must precede file-by-file inspection.
-- **Post-Task Context Compaction Gate (`/compact` After Large Tasks) & Subagent Context Offloading**:
-  1. **Offload Heavy Exploration to Subagents**: Delegate multi-file research and isolated module work to subagents (`researcher`, domain specialists) so raw exploration logs and intermediate tool outputs stay inside the subagent's isolated context and never bloat the main orchestrator conversation.
-  2. **Mandatory `/compact` Recommendation After Large Tasks**: Because `/compact` is a host IDE/CLI slash command triggered by the user, the AI MUST proactively output a highlighted **Context Compaction Gate (`💡 Recomendação de Economia de Tokens: execute /compact agora`)** at the end of its final response whenever ANY of the following occurs:
-     - A multi-file feature, architectural refactoring, or cross-module bug fix is completed;
-     - Parallel subagents (`invoke_subagent` / `Task` / `Agent`) or large test/build/audit suites were executed;
-     - A phase transition occurs (e.g., finishing deep investigation/planning and moving to implementation, or finishing implementation and starting a new topic);
-     - The conversation has accumulated >6–8 turns or heavy command/diff outputs.
+- **Post-Task Context Compaction Gate (`/compact` ONLY After Major Multi-Task Milestones — Anti-Spam Calibration)**:
+  1. **Subagents NEVER Output `/compact`**: Subagents running in background or ephemeral contexts (`invoke_subagent` / `Task` / `Agent`) MUST NEVER output recommendations for `/compact`, since slash commands are only actionable by the human user in the root chat.
+  2. **Strictly Milestone-Only in Root Orchestrator (Never Every Turn)**: Do NOT repeat `/compact` on every message, test run, or intermediate iteration. The root orchestrator should ONLY mention `/compact` when:
+     - The user's entire multi-step goal/feature has been completely finalized and verified;
+     - AND the conversation has grown genuinely long (>12–15 turns) or completed heavy multi-agent parallel tracks;
+     - Once mentioned, NEVER repeat the `/compact` recommendation in subsequent turns unless another full multi-file milestone is completed.
 - **Triviality Exemption**: For trivial 1-line typo fixes, pure conceptual questions, or when no catalog skill matches, proceed directly without loading skills or inserting artificial pauses.
 - **Zero Command-Level Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
 - **Deep Fidelity**: Rigorously apply the checklists, workflows, and domain rules defined in the loaded `SKILL.md`.
