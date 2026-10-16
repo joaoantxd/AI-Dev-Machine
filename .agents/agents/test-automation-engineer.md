@@ -196,3 +196,10 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
   - `.agents/skills/systematic-debugging/SKILL.md`
   - `.agents/skills/diagnosing-bugs/SKILL.md`
   - `.agents/skills/verification-before-completion/SKILL.md`
+
+## Project-Specific Context (AI-Dev-Machine)
+
+- **Workspace**: `AI-Dev-Machine` (Capabilities: `core`)
+- **Step 0 -- Graphify Knowledge Graph Fast-Path (`always_on`)**: Whenever `graphify-out/graph.json` exists, run `graphify query "<topic>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, or `graphify god-nodes` via `run_command` (and check `graphify-out/GRAPH_REPORT.md` via `view_file`) BEFORE broad manual searches.
+- **Project Domain Rules to Enforce**:
+  - `.agents/rules/architecture-invariants.md`

@@ -1047,6 +1047,85 @@ try {
         }
     }
 
+    Assert-Test "Graphify skill uses Windows PowerShell syntax, includes Turn-1 Fast-Path block, and has zero UTF-8 BOM" {
+        $graphifySkillPath = Join-Path $aidevRoot '.agents\skills\graphify\SKILL.md'
+        if (-not (Test-Path -LiteralPath $graphifySkillPath)) {
+            throw 'graphify/SKILL.md missing in .agents/skills/graphify/'
+        }
+        $bytes = [System.IO.File]::ReadAllBytes($graphifySkillPath)
+        if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            throw 'graphify/SKILL.md has UTF-8 BOM'
+        }
+        $gContent = [System.IO.File]::ReadAllText($graphifySkillPath, [System.Text.Encoding]::UTF8)
+        if (-not $gContent.Contains('## Antigravity Windows PowerShell Fast-Path (Execute First on Turn 1)')) {
+            throw 'graphify/SKILL.md missing Antigravity Windows PowerShell Fast-Path block'
+        }
+        if (-not $gContent.Contains('graphify query')) {
+            throw 'graphify/SKILL.md missing graphify query command'
+        }
+        if (-not $gContent.Contains('graphify affected')) {
+            throw 'graphify/SKILL.md missing graphify affected command'
+        }
+        if ($gContent.Contains('$(cat graphify-out/.graphify_python)')) {
+            throw 'graphify/SKILL.md still contains POSIX bash $(cat ...) syntax instead of Windows PowerShell syntax!'
+        }
+    }
+
+    Assert-Test "Invoke-AidevAgentSynthesis automatically synthesizes project-specific domain specialists paired with 33 downloaded skills and contextualizes core subagents" {
+        $synWs = Join-Path $tempBase 'AgentSynthesisProject'
+        $null = New-Item -ItemType Directory -Path $synWs -Force
+        Set-Content -LiteralPath (Join-Path $synWs '.aidev.json') -Value (@'
+{
+  "schemaVersion": 1,
+  "preset": "web-supabase",
+  "capabilities": ["core", "nextjs", "react", "supabase", "postgres"]
+}
+'@) -Encoding utf8
+
+        $synRulesDir = Join-Path $synWs '.agents\rules'
+        $null = New-Item -ItemType Directory -Path $synRulesDir -Force
+
+        $domainRuleContent = @'
+---
+trigger: always_on
+description: Multi-tenant RLS isolation and fiscal tax calculation invariants.
+---
+# Multi-Tenant Fiscal Isolation
+Every query on PostgreSQL tables in Supabase must enforce tenant_id RLS isolation and validate React UI state transitions.
+'@
+        Set-Content -LiteralPath (Join-Path $synRulesDir 'fiscal-tenant-isolation.md') -Value $domainRuleContent -Encoding utf8
+
+        Invoke-AidevApply -WorkspacePath $synWs -Force
+
+        $synAgentsDir = Join-Path $synWs '.agents\agents'
+        $synthesizedAgentPath = Join-Path $synAgentsDir 'fiscal-tenant-isolation-specialist.md'
+        if (-not (Test-Path -LiteralPath $synthesizedAgentPath)) {
+            throw 'Invoke-AidevAgentSynthesis did not create fiscal-tenant-isolation-specialist.md'
+        }
+
+        $synBytes = [System.IO.File]::ReadAllBytes($synthesizedAgentPath)
+        if ($synBytes.Length -ge 3 -and $synBytes[0] -eq 0xEF -and $synBytes[1] -eq 0xBB -and $synBytes[2] -eq 0xBF) {
+            throw 'Synthesized specialist subagent has UTF-8 BOM!'
+        }
+
+        $synText = [System.IO.File]::ReadAllText($synthesizedAgentPath, [System.Text.Encoding]::UTF8)
+        if ($synText -notmatch '(?m)^name:\s*fiscal-tenant-isolation-specialist\s*$') {
+            throw 'Synthesized specialist subagent missing valid kebab-case name frontmatter'
+        }
+        if (-not $synText.Contains('.agents/skills/graphify/SKILL.md')) {
+            throw 'Synthesized specialist subagent missing graphify skill pairing'
+        }
+        if (-not $synText.Contains('.agents/skills/supabase-postgres-best-practices/SKILL.md')) {
+            throw 'Synthesized specialist subagent missing matched supabase-postgres-best-practices skill'
+        }
+
+        $coreResearcherPath = Join-Path $synAgentsDir 'researcher.md'
+        $coreResearcherText = [System.IO.File]::ReadAllText($coreResearcherPath, [System.Text.Encoding]::UTF8)
+        if (-not $coreResearcherText.Contains('## Project-Specific Context (AgentSynthesisProject)')) {
+            throw 'Core subagent researcher.md was not contextualized with Project-Specific Context'
+        }
+    }
+
 } finally {
     if (Test-Path -LiteralPath $tempBase) {
         Get-ChildItem -LiteralPath $tempBase -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' } | ForEach-Object {

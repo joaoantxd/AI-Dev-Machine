@@ -126,14 +126,14 @@ Re-evaluate the catalog of available `<skills>` and `<subagents>` continuously a
    - When entering the review, security audit, or completion phase, activate `verification-before-completion`, `cybersecurity-review`, or `code-review` (and delegate independent verification to `reviewer` / `security-reviewer` when appropriate) before declaring work finished.
 
 6. **Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol)**:
-   - For ANY task involving codebase comprehension, architecture discovery, module dependency mapping, cross-module flow tracing, or blast radius / impact analysis:
+   - For ANY task involving codebase comprehension, architecture discovery, locating files/symbols, fixing multi-file bugs, module dependency mapping, cross-module flow tracing, or blast radius / impact analysis:
      a) **Spontaneous Load**: Immediately activate `graphify` (`view_file` on `SKILL.md`) as the primary navigation skill on Turn 1 (or delegate deep multi-file mapping to `researcher`).
-     b) **Graph Consultation Precedence**: Discover if `graphify-out/graph.json` exists. If present, query the graph first (via `graphify query "<question>"`, reading `graphify-out/GRAPH_REPORT.md` / `graph.json`, or NetworkX traversal) to map topological clusters, god nodes, and dependency paths BEFORE performing broad `list_dir`, global `grep_search`, or opening dozens of source files.
+     b) **Graph Consultation Precedence (Windows PowerShell Fast-Path)**: Discover if `graphify-out/graph.json` exists. If present, query the graph first via `run_command` using the native `graphify` CLI (`graphify query "<question>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, `graphify path "<A>" "<B>"`, `graphify god-nodes --top 15`) or read `graphify-out/GRAPH_REPORT.md` / `graphify-out/CALM_MAP.md` via `view_file` to map topological clusters, god nodes, and exact file/line locations BEFORE performing broad `list_dir`, global `grep_search`, or opening dozens of source files.
      c) **Targeted Surgical Inspection**: Use the graph query output to pinpoint the exact target files and symbols, and only then open targeted files via `view_file`.
      d) **Lifecycle & Freshness Verification**:
-        - *Graph Present & Fresh*: Query immediately.
-        - *Graph Present but Outdated (code modified since graph generation)*: Run incremental update (`graphify <path> --update`) if safe and proportional, or query the existing graph while noting newly modified files.
-        - *Graph Absent*: If safe, non-destructive, and proportional (standard repository, no prohibited operations), generate the graph via `graphify .` following `SKILL.md`. If building the graph is unfeasible (e.g. read-only environment, single-file trivial query, or explicit constraint), explain the limitation and proceed with targeted conventional exploration.
+        - *Graph Present & Fresh*: Query immediately (`graphify query "<topic>"`).
+        - *Graph Present but Outdated (code modified since graph generation)*: Run incremental AST update (`graphify update .` or `graphify <path> --update`, ~2 seconds, zero API cost) if safe and proportional, or query the existing graph while noting newly modified files.
+        - *Graph Absent*: If safe, non-destructive, and proportional (standard repository, no prohibited operations), generate the graph locally in ~3 seconds via `graphify extract . --code-only` followed by `graphify cluster-only . --no-label --no-viz` (or `graphify .` following `SKILL.md`). If building the graph is unfeasible (e.g. read-only environment, single-file trivial query, or explicit constraint), explain the limitation and proceed with targeted conventional exploration.
 
 ---
 
@@ -226,16 +226,32 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
 | `devops-automator` | `.agents/agents/devops-automator.md` | CI/CD pipelines, MSI & Electron installer packaging, RSA-SHA256 auto-update & rollback lifecycle, Docker, release scripts. | `security-review`, `verification-before-completion`, `ponytail` |
 | `reviewer` | `.agents/agents/reviewer.md` | Independent two-axis code & specification review of diffs/implementations before declaring work complete. | `code-review`, `devils-advocate`, `ponytail`, `verification-before-completion` |
 
-### Subagent Orchestration & Multi-AI Compatibility Rules:
-1. **Parallel & Sequential Delegation**: Launch multiple specialized subagents concurrently in a single `invoke_subagent` call when tasks have independent tracks (e.g., `backend-architect` + `frontend-developer` + `database-optimizer`, or `researcher` + `security-architect`).
-2. **Skill-First Subagent Prompts**: Every `Prompt` passed to `invoke_subagent` MUST specify:
+### Automatic Project-Specific Subagent Synthesis, Parallel Area Orchestration & Double-Layer Verification (All AIs):
+1. **Automatic Synthesis per Project (`Invoke-AidevAgentSynthesis` in `aidev.ps1 apply`)**:
+   - Whenever `aidev.ps1 apply` runs on a project, it automatically:
+     - Tailors all 10 core subagents with a `## Project-Specific Context (<ProjectName>)` section containing the project's capabilities, `graphify` CLI Turn-1 protocol, and local domain rules.
+     - Synthesizes custom project-specific domain subagents (`.agents/agents/<domain-rule>-specialist.md`) for every project-owned domain rule in `.agents/rules/*.md`, automatically pairing each specialist with `graphify`, `calm`, and the matching skills from the 33 downloaded skills (e.g., `fiscal-engine-specialist`, `multi-tenant-isolation-specialist`, `screen-capture-pipeline-specialist`, `windows-session-architecture-specialist`, `input-arbitration-specialist`), and mirrors them to global multi-AI agent directories (`~/.claude/agents/`, `~/.gemini/agents/`, `~/.gemini/config/agents/`).
+2. **Autonomous On-the-Fly Subagent Creation by Any AI (`.agents/agents/<domain>-specialist.md`)**:
+   - Whenever ANY AI (Antigravity, Claude Code, OpenAI Codex, Cursor, Windsurf, GitHub Copilot, Gemini CLI) encounters a complex project subsystem or recurring domain not yet covered by an existing subagent, it is explicitly empowered to **create a custom project subagent autonomously**:
+     a) Author and persist `.agents/agents/<domain>-specialist.md` (UTF-8 without BOM, kebab-case `name:`, valid `tools:` list) combining `graphify` (`graphify query "<topic>"`), the matching downloaded skills from `.agents/skills/<skill>/SKILL.md`, and the project's domain rules in `.agents/rules/*.md`.
+     b) If running in Antigravity, also register it immediately for the current session via `define_subagent(name="<domain>-specialist", enable_write_tools=true)`. If running in Claude Code, also copy it to `~/.claude/agents/<domain>-specialist.md`.
+     c) Delegate the domain workstream to the newly created specialist.
+3. **Parallel Multi-Area Execution ("Put Every Specialist to Work in Its Own Area")**:
+   - When a task touches multiple areas (e.g., Database/RLS + Backend/Fiscal Engine + Frontend UI + Security/Tests):
+     - **Step 1 (Orchestrator Mapping)**: The main agent runs `graphify query` / `graphify affected` on Turn 1 to map exact module boundaries and assign non-overlapping file scopes per area.
+     - **Step 2 (Concurrent Dispatch)**: Put all relevant core and project-synthesized subagents to work in their respective areas simultaneously (`invoke_subagent` with multiple entries in `Subagents` for Antigravity; parallel `Task`/`Agent` calls for Claude Code; parallel sub-agents/tasks for Codex; or structured per-specialist execution tracks for Cursor/Windsurf/Copilot).
+4. **Mandatory Double-Layer Verification (Subagent Self-Verification + Orchestrator Integration Verification)**:
+   - **Layer 1 -- Inside Each Subagent (Area Verification)**: Every subagent MUST load its paired domain skills (`SKILL.md`) on Turn 1 AND run `verification-before-completion` (typecheck, unit tests, SQL/RLS validation, or lint for its specific module) before reporting its task as done.
+   - **Layer 2 -- Main Orchestrator + `reviewer` / `security-reviewer` (Global Verification)**: While subagents work and as they finish, the main agent NEVER trusts subagent reports blindly. It inspects the actual `git diff`, checks cross-module contracts, delegates independent audit to `reviewer` / `security-reviewer` when appropriate, and executes the full workspace verification gate (`test`, `typecheck`, `build`) before declaring the task complete.
+5. **Skill-First Subagent Prompts**: Every prompt passed to a subagent MUST specify:
    - Exact scope, target files, and project invariants from `AGENTS.md`.
-   - Which downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load via `view_file` on Turn 1.
-   - Expected deliverable and verification evidence required.
-3. **Universal Multi-AI Compatibility (Antigravity, Claude Code, Cursor, Windsurf, Copilot, Codex)**:
-   - **Google Antigravity / Gemini CLI**: Load skills via `view_file` on `.agents/skills/<skill>/SKILL.md` and delegate to specialists via `invoke_subagent`.
-   - **Claude Code**: Load skills via `Read` on `.agents/skills/<skill>/SKILL.md` (or `~/.claude/skills/`) and delegate to specialists via `Task` / `Agent` (or `~/.claude/agents/`).
-   - **Cursor / Windsurf / GitHub Copilot / OpenAI Codex**: Automatically read `AGENTS.md` and `.agents/rules/skill-routing.md`; read `.agents/skills/<skill>/SKILL.md` using the native file-reading tool (`read_file`, etc.), and either invoke subagents natively or read `.agents/agents/<specialist>.md` directly to adopt the specialist's persona, constraints, and checklist.
+   - Which downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (always starting with `graphify`).
+   - Required Layer-1 verification commands and evidence.
+6. **Universal Multi-AI Compatibility Matrix (Works Identically Across All AIs)**:
+   - **Google Antigravity & Gemini CLI**: Reads `AGENTS.md`, `GEMINI.md`, `.agents/rules/*.md`. Loads `.agents/skills/<skill>/SKILL.md` via `view_file`. Spawns multiple subagents in parallel via `invoke_subagent(Subagents=[...])` and creates new specialists on the fly via `define_subagent` + `.agents/agents/<domain>-specialist.md`.
+   - **Claude Code (`claude`)**: Reads `AGENTS.md` and `.agents/rules/skill-routing.md`. Loads `.agents/skills/<skill>/SKILL.md` via `Read`. Spawns multiple subagents in parallel via `Task` / `Agent` tool (discovered from `.agents/agents/*.md` and `~/.claude/agents/*.md`) and creates new specialists by writing `.agents/agents/<domain>-specialist.md` + `~/.claude/agents/<domain>-specialist.md`.
+   - **OpenAI Codex (`codex`)**: Reads `AGENTS.md` and `.agents/rules/skill-routing.md`. Runs `graphify query` via shell, reads `.agents/skills/<skill>/SKILL.md` (and `~/.codex/skills/`), creates new `.agents/agents/<domain>-specialist.md` specialists when needed, and executes parallel/multi-track specialist workflows with Layer-1 + Layer-2 verification.
+   - **Cursor, Windsurf & GitHub Copilot**: Reads `AGENTS.md` and `.agents/rules/*.md`. Loads `.agents/skills/<skill>/SKILL.md` via native file reader, creates `.agents/agents/<domain>-specialist.md` when new domain areas arise, and adopts each specialist's persona, skills, and Layer-1 verification per area before running the Layer-2 orchestrator gate.
 
 ---
 

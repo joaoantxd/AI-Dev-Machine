@@ -888,6 +888,7 @@ function Invoke-AidevDoctor {
         @{ Name = 'Semgrep'; Cmd = 'semgrep'; VersionArgs = @('--version') }
         @{ Name = 'Playwright'; Cmd = 'playwright'; VersionArgs = @('--version') }
         @{ Name = 'WinApp CLI'; Cmd = 'winapp'; VersionArgs = @('--version') }
+        @{ Name = 'Graphify CLI'; Cmd = 'graphify'; VersionArgs = @('--help') }
     )
 
     foreach ($t in $tools) {
@@ -1010,6 +1011,12 @@ function Invoke-AidevDoctor {
             } else {
                 Write-Host '  [OK] .agents/hooks.json configured with resilient safety-check path' -ForegroundColor Green
             }
+        }
+        $wsGraphJson = Join-Path $ws 'graphify-out\graph.json'
+        if (Test-Path -LiteralPath $wsGraphJson) {
+            Write-Host '  [OK] graphify knowledge graph ready (graphify-out/graph.json)' -ForegroundColor Green
+        } else {
+            Write-Host '  [NOTICE] graphify-out/graph.json not built yet (run "aidev apply" or "graphify extract . --code-only")' -ForegroundColor DarkGray
         }
     }
 
@@ -1274,8 +1281,211 @@ function Invoke-AidevAudit {
 }
 
 # ------------------------------------------------------------------------------
-# 8. APPLY COMMAND (Materializes .aidev.json into .agents/)
+# 8. APPLY COMMAND & AUTOMATIC PROJECT AGENT SYNTHESIS
 # ------------------------------------------------------------------------------
+function Select-SkillsForDomainRule {
+    param(
+        [Parameter(Mandatory)][string]$RuleName,
+        [Parameter(Mandatory)][string]$RuleContent
+    )
+    $selected = [System.Collections.Generic.List[string]]::new()
+    foreach ($baseSkill in @('graphify', 'calm')) {
+        $null = $selected.Add($baseSkill)
+    }
+
+    $combined = ($RuleName + ' ' + $RuleContent).ToLowerInvariant()
+
+    if ($combined -match 'capture|dxgi|wgc|gdi|h264|cursor|input|sendinput|session\s*0|service|win32|desktop|worker|uia') {
+        foreach ($s in @('winapp', 'diagnosing-bugs', 'systematic-debugging', 'codebase-design', 'improve-codebase-architecture')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($combined -match 'dacl|pipe|security|token|tenant|rls|isolation|auth|crypto|signature|sha256|redirect|returnto|sanitiz|owasp|secret|root') {
+        foreach ($s in @('security-threat-model', 'cybersecurity-review', 'security-best-practices', 'strix')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($combined -match 'fiscal|tribut|simples|ibs|cbs|pgdas|nf-e|nfe|ct-e|decimal|erp|conciliac|domain|entity|schema|business|regra') {
+        foreach ($s in @('domain-modeling', 'codebase-design', 'improve-codebase-architecture', 'diagnosing-bugs', 'systematic-debugging')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($combined -match 'postgres|supabase|sql|rls|migration|tenant_id|database|query|index|table') {
+        foreach ($s in @('supabase-postgres-best-practices', 'supabase', 'domain-modeling')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($combined -match 'spa|next|react|router|navigation|design|token|oklch|hsl|ui|ux|css|icon|emoji|mutation|component|web') {
+        foreach ($s in @('vercel-react-best-practices', 'ui-ux-pro-max', 'frontend-design', 'impeccable', 'web-design-guidelines')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($combined -match 'update|installer|msi|electron|rollback|release|ci|cd|deploy|package') {
+        foreach ($s in @('security-review', 'ponytail', 'diagnosing-bugs')) {
+            if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
+        }
+    }
+    if ($selected.Count -le 2) {
+        foreach ($fallback in @('codebase-design', 'diagnosing-bugs', 'systematic-debugging')) {
+            if (-not $selected.Contains($fallback)) { $null = $selected.Add($fallback) }
+        }
+    }
+    if (-not $selected.Contains('verification-before-completion')) {
+        $null = $selected.Add('verification-before-completion')
+    }
+    return @($selected)
+}
+
+function Invoke-AidevAgentSynthesis {
+    param(
+        [Parameter(Mandatory)][string]$WorkspacePath,
+        [Parameter(Mandatory)][string]$TargetAgentsDir,
+        [Parameter(Mandatory)][string]$TargetRulesDir,
+        [Parameter(Mandatory)]$Resolved
+    )
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $projectName = Split-Path -Leaf $WorkspacePath
+    $capsText = ($Resolved.ResolvedCapabilities -join ', ')
+
+    $standardTemplateRules = @(
+        'architecture-invariants.md',
+        'git-workflow.md',
+        'skill-routing.md',
+        'verification.md',
+        'database-postgres.md',
+        'web-guidelines.md',
+        'windows-desktop.md'
+    )
+
+    $projectDomainRules = @()
+    if (Test-Path -LiteralPath $TargetRulesDir -PathType Container) {
+        $projectDomainRules = @(Get-ChildItem -LiteralPath $TargetRulesDir -Filter '*.md' -File -ErrorAction SilentlyContinue |
+            Where-Object { $standardTemplateRules -notcontains $_.Name })
+    }
+
+    # 1. Contextualize all core materialized agents with project-specific context & Graphify CLI fast-path
+    $coreAgentFiles = @(Get-ChildItem -LiteralPath $TargetAgentsDir -Filter '*.md' -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notlike '*-specialist.md' })
+
+    $domainRuleLinks = if ($projectDomainRules.Count -gt 0) {
+        ($projectDomainRules | ForEach-Object { '  - `.agents/rules/' + $_.Name + '`' }) -join "`r`n"
+    } else {
+        '  - `.agents/rules/architecture-invariants.md`'
+    }
+
+    $projectContextSection = @(
+        ''
+        ''
+        ('## Project-Specific Context (' + $projectName + ')')
+        ''
+        ('- **Workspace**: `' + $projectName + '` (Capabilities: `' + $capsText + '`)')
+        '- **Step 0 -- Graphify Knowledge Graph Fast-Path (`always_on`)**: Whenever `graphify-out/graph.json` exists, run `graphify query "<topic>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, or `graphify god-nodes` via `run_command` (and check `graphify-out/GRAPH_REPORT.md` via `view_file`) BEFORE broad manual searches.'
+        '- **Project Domain Rules to Enforce**:'
+        $domainRuleLinks
+        ''
+    ) -join "`r`n"
+
+    foreach ($cf in $coreAgentFiles) {
+        $raw = (Get-Content -LiteralPath $cf.FullName -Raw -Encoding utf8).TrimStart([char]0xFEFF)
+        if ($raw -match '(?s)\r?\n\r?\n## Project-Specific Context \(.*$') {
+            $updated = [regex]::Replace($raw, '(?s)\r?\n\r?\n## Project-Specific Context \(.*$', $projectContextSection)
+        } else {
+            $updated = $raw.TrimEnd() + $projectContextSection
+        }
+        [System.IO.File]::WriteAllText($cf.FullName, $updated, $utf8NoBom)
+    }
+
+    # 2. Synthesize custom project-specific domain subagents from project-owned rules + 33 downloaded skills
+    $synthesizedFiles = [System.Collections.Generic.List[string]]::new()
+    foreach ($ruleFile in $projectDomainRules) {
+        $ruleRaw = (Get-Content -LiteralPath $ruleFile.FullName -Raw -Encoding utf8).TrimStart([char]0xFEFF)
+        $ruleBase = ($ruleFile.BaseName.ToLowerInvariant() -replace '[^a-z0-9-]+', '-').Trim('-')
+        if (-not $ruleBase) { continue }
+        $specialistSlug = ($ruleBase + '-specialist')
+        $specialistFileName = ($specialistSlug + '.md')
+        $specialistPath = Join-Path $TargetAgentsDir $specialistFileName
+
+        $titleLine = ($ruleRaw -split "\r?\n" | Where-Object { $_ -match '^#\s+(.+)$' } | Select-Object -First 1)
+        $ruleTitle = if ($titleLine -and ($titleLine -match '^#\s+(.+)$')) {
+            ($Matches[1].Trim() -replace '["\r\n]', '')
+        } else {
+            $ruleBase
+        }
+
+        $pairedSkills = @(Select-SkillsForDomainRule -RuleName $ruleFile.Name -RuleContent $ruleRaw)
+        $skillsBulletList = ($pairedSkills | ForEach-Object { '  - `.agents/skills/' + $_ + '/SKILL.md`' }) -join "`r`n"
+        $skillsInline = ($pairedSkills -join ', ')
+        $safeDesc = (('Use proactively via invoke_subagent / Task / Agent in ' + $projectName + ' for tasks involving ' + $ruleTitle + ' (.agents/rules/' + $ruleFile.Name + '). Combines Graphify knowledge-graph navigation with skills: ' + $skillsInline + '.') -replace '"', "'")
+
+        $synthesizedContent = @(
+            '---'
+            ('name: ' + $specialistSlug)
+            ('description: "' + $safeDesc + '"')
+            'tools:'
+            '  - send_message'
+            '  - view_file'
+            '  - read_url_content'
+            '  - search_web'
+            '  - schedule'
+            '  - multi_replace_file_content'
+            '  - replace_file_content'
+            '  - write_to_file'
+            '  - run_command'
+            '  - manage_task'
+            '---'
+            ('# Project Domain Specialist: ' + $ruleTitle + ' (' + $projectName + ')')
+            ''
+            ('> **Synthesized Multi-AI Project Subagent (`' + $specialistSlug + '`)** -- Automatically generated by AI-Dev-Machine for **' + $projectName + '** across all AIs (Antigravity, Claude Code, OpenAI Codex, Cursor, Windsurf, Copilot, Gemini CLI) by combining `.agents/rules/' + $ruleFile.Name + '` with the matching downloaded skills.')
+            ''
+            '## Step 0 -- Mandatory Graphify Knowledge Graph Navigation (`always_on`)'
+            ''
+            'Before performing broad file searches, check `graphify-out/graph.json` using the native `graphify` CLI in PowerShell/terminal:'
+            '```powershell'
+            'graphify query "<topic or symbol>"'
+            'graphify affected "<symbol>"'
+            'graphify explain "<symbol>"'
+            '```'
+            'And inspect `graphify-out/GRAPH_REPORT.md` via `view_file` / `Read` when mapping module boundaries.'
+            ''
+            '## Step 1 -- Mandatory Downloaded Skills (Load on Turn 1 across All AIs)'
+            ''
+            'On Turn 1, before modifying code or proposing solutions, load the relevant downloaded skills for this domain (`view_file` / `Read` / `read_file`):'
+            $skillsBulletList
+            ''
+            ('## Step 2 -- Authoritative Project Domain Rules (`.agents/rules/' + $ruleFile.Name + '`)')
+            ''
+            $ruleRaw.Trim()
+            ''
+            '## Step 3 -- Layer-1 Self-Verification Gate (`verification-before-completion`)'
+            ''
+            'Before returning results to the main orchestrator agent, run the module verification commands (tests, typecheck, lint, or SQL/RLS check) and report concrete command output.'
+            ''
+        ) -join "`r`n"
+
+        [System.IO.File]::WriteAllText($specialistPath, $synthesizedContent, $utf8NoBom)
+        $null = $synthesizedFiles.Add($specialistFileName)
+
+        # Mirror to global multi-AI agent directories (Claude Code, Gemini CLI, Antigravity) when not in TEMP test fixtures
+        $tempRoot = [IO.Path]::GetFullPath($env:TEMP)
+        if (-not $WorkspacePath.StartsWith($tempRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $multiAiAgentDirs = @(
+                (Join-Path $env:USERPROFILE '.claude\agents'),
+                (Join-Path $env:USERPROFILE '.gemini\agents'),
+                (Join-Path $env:USERPROFILE '.gemini\config\agents')
+            )
+            foreach ($gDir in $multiAiAgentDirs) {
+                if (Test-Path -LiteralPath $gDir -PathType Container) {
+                    [System.IO.File]::WriteAllText((Join-Path $gDir $specialistFileName), $synthesizedContent, $utf8NoBom)
+                }
+            }
+        }
+
+        Write-Host ('  [SYNTHESIZED PROJECT AGENT] .agents/agents/' + $specialistFileName + ' (Skills: ' + $skillsInline + ')') -ForegroundColor Cyan
+    }
+
+    return @($synthesizedFiles)
+}
+
 function Invoke-AidevApply {
     param(
         [string]$WorkspacePath = (Get-Location).Path,
@@ -1337,7 +1547,7 @@ function Invoke-AidevApply {
         }
     }
 
-    # 3. Materialize .agents/agents/
+    # 3. Materialize .agents/agents/ (10 Core Specialists + Automatic Project-Tailored Domain Subagents)
     $targetAgentsDir = Join-Path $agentsDir 'agents'
     if (-not (Test-Path -LiteralPath $targetAgentsDir -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $targetAgentsDir -Force
@@ -1362,6 +1572,12 @@ function Invoke-AidevApply {
             Copy-Item -LiteralPath $globalAgent -Destination $destFile -Force
             $managedAgents += $agentFileName
             Write-Host ('  [MATERIALIZED AGENT] .agents/agents/' + $agentFileName + ' (Domain Specialist)') -ForegroundColor Green
+        }
+    }
+    $synthesizedAgentFiles = @(Invoke-AidevAgentSynthesis -WorkspacePath $ws -TargetAgentsDir $targetAgentsDir -TargetRulesDir $targetRulesDir -Resolved $resolved)
+    foreach ($synFile in $synthesizedAgentFiles) {
+        if ($managedAgents -notcontains $synFile) {
+            $managedAgents += $synFile
         }
     }
 
@@ -1533,15 +1749,38 @@ function Invoke-AidevApply {
     if ((-not $existingGeminiMd) -or $Force -or ($existingGeminiMd -notmatch 'skill-routing\.md')) {
         $tmplG = Get-Content -LiteralPath (Join-Path $root 'templates\GEMINI.template.md') -Raw -Encoding utf8
         $instG = $tmplG -replace '\[PROJECT_NAME\]', $projectName
+        if ($synthesizedAgentFiles.Count -gt 0) {
+            $synBullets = ($synthesizedAgentFiles | ForEach-Object {
+                $slug = ($_ -replace '\.md$', '')
+                '  - `' + $slug + '` (`.agents/agents/' + $_ + '` -- Project Domain Specialist)'
+            }) -join "`r`n"
+            $instG = $instG.TrimEnd() + "`r`n- **Project-Synthesized Domain Specialists (Auto-Generated for " + $projectName + " across All AIs)**:`r`n" + $synBullets + "`r`n"
+        }
         Set-Content -LiteralPath $geminiMdDest -Value $instG -Encoding utf8
         Write-Host '  [CREATED BRIDGE] GEMINI.md' -ForegroundColor Green
     }
 
-    # 9. Granular .gitignore updates
+    # 9. Granular .gitignore updates & Graphify Knowledge Graph Initialization
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/skills/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/cache/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.agents/.agents/'
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern '.aidev_backup_*/'
+    Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern 'graphify-out/'
+
+    $graphJsonPath = Join-Path $ws 'graphify-out\graph.json'
+    if (Test-Path -LiteralPath $graphJsonPath) {
+        Write-Host '  [GRAPHIFY READY] graphify-out/graph.json & GRAPH_REPORT.md active' -ForegroundColor Green
+    } elseif ((Test-Path -LiteralPath (Join-Path $ws '.git')) -and (Get-Command graphify -ErrorAction SilentlyContinue)) {
+        try {
+            $null = & graphify extract $ws --code-only 2>&1
+            $null = & graphify cluster-only $ws --no-label --no-viz 2>&1
+            if (Test-Path -LiteralPath $graphJsonPath) {
+                Write-Host '  [GRAPHIFY BUILT] graphify-out/graph.json & GRAPH_REPORT.md initialized' -ForegroundColor Green
+            }
+        } catch {
+            Write-Host ('  [GRAPHIFY NOTICE] Could not auto-build graphify-out: ' + $_.Exception.Message) -ForegroundColor DarkYellow
+        }
+    }
 
     Write-Host ''
     Write-Host 'Apply completed successfully (Architecture v2.1)!' -ForegroundColor Cyan
@@ -1840,6 +2079,8 @@ Export-ModuleMember -Function @(
     'Invoke-AidevList',
     'Invoke-AidevCapability',
     'Invoke-AidevAudit',
+    'Select-SkillsForDomainRule',
+    'Invoke-AidevAgentSynthesis',
     'Invoke-AidevApply',
     'Invoke-AidevInit',
     'Invoke-AidevMigrate',

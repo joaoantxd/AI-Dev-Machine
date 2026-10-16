@@ -3,3 +3,4 @@
 .agents/cache/
 .aidev_backup_*/
 .agents/.agents/
+graphify-out/

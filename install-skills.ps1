@@ -85,12 +85,16 @@ function Resolve-SkillPath {
 
 function New-GraphifyStaging {
     param([Parameter(Mandatory)]$Skill, [Parameter(Mandatory)][string]$RepositoryPath, [Parameter(Mandatory)][string]$StagingPath)
-    $source = Join-Path $RepositoryPath 'graphify\skill-agents.md'
-    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Upstream structure changed: graphify - subpath esperado: graphify/skill-agents.md' }
+    $winSource = Join-Path $RepositoryPath 'graphify\skill-windows.md'
+    $posixSource = Join-Path $RepositoryPath 'graphify\skill-agents.md'
+    $source = if (Test-Path -LiteralPath $winSource -PathType Leaf) { $winSource } elseif (Test-Path -LiteralPath $posixSource -PathType Leaf) { $posixSource } else { $null }
+    if (-not $source) { throw 'Upstream structure changed: graphify - subpath esperado: graphify/skill-windows.md ou graphify/skill-agents.md' }
     $null = New-Item -ItemType Directory -Path $StagingPath -Force
     Copy-Item -LiteralPath $source -Destination (Join-Path $StagingPath 'SKILL.md') -Force
-    $references = Join-Path $RepositoryPath 'graphify\skills\agents\references'
-    if (Test-Path -LiteralPath $references -PathType Container) {
+    $winReferences = Join-Path $RepositoryPath 'graphify\skills\windows\references'
+    $posixReferences = Join-Path $RepositoryPath 'graphify\skills\agents\references'
+    $references = if (Test-Path -LiteralPath $winReferences -PathType Container) { $winReferences } elseif (Test-Path -LiteralPath $posixReferences -PathType Container) { $posixReferences } else { $null }
+    if ($references) {
         Copy-Item -LiteralPath $references -Destination (Join-Path $StagingPath 'references') -Recurse -Force
     }
     if (-not (Test-SkillDirectory -Path $StagingPath -ExpectedName $Skill.Name)) { throw 'Graphify: validacao da Skill em staging falhou' }
@@ -291,6 +295,7 @@ if (Test-Path -LiteralPath $SkillsRoot) {
     }
 
     $proactiveDescriptions = @{
+        'graphify'                      = 'Use proactively FIRST on Turn 1 before broad grep or file searches whenever exploring a codebase, locating files or symbols, fixing multi-file bugs, designing features, refactoring, or mapping blast radius. When graphify-out/graph.json exists, immediately run graphify query "<topic>", graphify explain "<symbol>", graphify affected "<symbol>", graphify path "<A>" "<B>", or graphify god-nodes (and view graphify-out/GRAPH_REPORT.md) to pinpoint exact files and line numbers.'
         'improve-codebase-architecture' = 'Use proactively whenever refactoring, restructuring modules, reducing coupling, fixing shallow modules, or improving codebase architecture and testability. Scans codebases for module-deepening opportunities and architectural friction.'
         'security-best-practices'       = 'Use proactively whenever writing, reviewing, or hardening Python, JavaScript/TypeScript, or Go code that touches auth, input validation, IPC, network, crypto, file I/O, or database queries to enforce secure-by-default patterns.'
         'security-threat-model'         = 'Use proactively when designing or reviewing architecture, authentication, IPC bridges, multi-tenant boundaries, remote control protocols, or APIs to enumerate trust boundaries, assets, attacker capabilities, abuse paths, and mitigations.'
@@ -308,7 +313,29 @@ if (Test-Path -LiteralPath $SkillsRoot) {
     function Optimize-SkillFrontmatter {
         param([string]$SkillMdPath, [string]$SkillName)
         if (-not (Test-Path -LiteralPath $SkillMdPath -PathType Leaf)) { return }
-        $raw = Get-Content -LiteralPath $SkillMdPath -Raw -Encoding utf8
+
+        # Auto-upgrade graphify from POSIX bash skill-agents.md to Windows PowerShell skill-windows.md if local uv package exists
+        if ($SkillName -eq 'graphify') {
+            $localUvGraphifyPkg = Join-Path $env:APPDATA 'uv\tools\graphifyy\Lib\site-packages\graphify'
+            $localWinSkill = Join-Path $localUvGraphifyPkg 'skill-windows.md'
+            $localWinRefs = Join-Path $localUvGraphifyPkg 'skills\windows\references'
+            $currentText = Get-Content -LiteralPath $SkillMdPath -Raw -Encoding utf8
+            if ((Test-Path -LiteralPath $localWinSkill -PathType Leaf) -and ($currentText -match '\$\(cat graphify-out/\.graphify_python\)')) {
+                Copy-Item -LiteralPath $localWinSkill -Destination $SkillMdPath -Force
+                $skillParentDir = Split-Path -Parent $SkillMdPath
+                $destRefsDir = Join-Path $skillParentDir 'references'
+                if (Test-Path -LiteralPath $localWinRefs -PathType Container) {
+                    if (Test-Path -LiteralPath $destRefsDir) {
+                        Remove-Item -LiteralPath $destRefsDir -Recurse -Force -ErrorAction SilentlyContinue
+                    }
+                    Copy-Item -LiteralPath $localWinRefs -Destination $destRefsDir -Recurse -Force
+                }
+            }
+        }
+
+        $bytes = [System.IO.File]::ReadAllBytes($SkillMdPath)
+        $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+        $raw = (Get-Content -LiteralPath $SkillMdPath -Raw -Encoding utf8).TrimStart([char]0xFEFF)
         if ($raw -notmatch '(?s)^---\r?\n(.*?)\r?\n---(\r?\n.*)?$') { return }
         $fm = $matches[1]
         $body = $matches[2]
@@ -356,9 +383,47 @@ if (Test-Path -LiteralPath $SkillsRoot) {
             }
         }
 
-        if ($changed) {
-            $updated = "---`r`n" + $fm.TrimEnd() + "`r`n---" + $body
-            Set-Content -LiteralPath $SkillMdPath -Value $updated -Encoding utf8
+        # 3. Inject Windows PowerShell Fast-Path at the very top of graphify/SKILL.md so Antigravity executes native 1-line CLI queries immediately
+        if ($SkillName -eq 'graphify' -and ($body -notmatch 'Antigravity Windows PowerShell Fast-Path')) {
+            $fastPathBlock = @(
+                ''
+                '## Antigravity Windows PowerShell Fast-Path (Execute First on Turn 1)'
+                ''
+                '> **MANDATORY FAST-PATH ON WINDOWS (`pwsh`)**: Whenever `graphify-out/graph.json` exists in the workspace, **DO NOT** run the multi-step Python extraction scripts below! Instead, immediately execute these 1-line native `graphify` CLI commands via `run_command` (or inspect `graphify-out/GRAPH_REPORT.md` via `view_file`):'
+                ''
+                '```powershell'
+                '# 1. Search the knowledge graph for any feature, symbol, bug, or flow (returns exact file paths & line numbers):'
+                'graphify query "<topic or symbol>"'
+                ''
+                '# 2. Check blast radius / reverse impact (what depends on or is affected by X?):'
+                'graphify affected "<symbol>"'
+                ''
+                '# 3. Explain a specific class, function, or module and its immediate neighbors:'
+                'graphify explain "<symbol>"'
+                ''
+                '# 4. Find the shortest dependency path between two components:'
+                'graphify path "<SourceNode>" "<TargetNode>"'
+                ''
+                '# 5. List the top architectural hubs (god nodes) in the repository:'
+                'graphify god-nodes --top 15'
+                ''
+                '# 6. Update the graph incrementally after modifying code (AST-only, ~2 seconds, zero API cost):'
+                'graphify update .'
+                ''
+                '# 7. If graphify-out/graph.json does NOT exist yet, build it locally in ~3 seconds (zero API key required):'
+                'graphify extract . --code-only'
+                'graphify cluster-only . --no-label --no-viz'
+                '```'
+                ''
+            ) -join "`r`n"
+            $body = "`r`n" + $fastPathBlock + "`r`n" + $body.TrimStart("`r", "`n")
+            $changed = $true
+        }
+
+        if ($changed -or $hasBom) {
+            $updated = "---`r`n" + $fm.TrimEnd() + "`r`n---`r`n" + $body.TrimStart("`r", "`n")
+            $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllText($SkillMdPath, $updated, $utf8NoBom)
         }
     }
 
