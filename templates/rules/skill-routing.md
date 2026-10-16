@@ -277,6 +277,14 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
      - The user's entire multi-step goal/feature has been completely finalized and verified;
      - AND the conversation has grown genuinely long (>12–15 turns) or completed heavy multi-agent parallel tracks;
      - Once mentioned, NEVER repeat the `/compact` recommendation in subsequent turns unless another full multi-file milestone is completed.
+- **Executive Briefing in Chat & Offload to `Walkthrough.md` / Docs (Token-Economy Priority)**:
+  - **Zero Huge Chat Dumps**: NEVER dump long essays, full code re-prints, extensive diff dumps, or multi-page documentation in the conversation reply. Every extra line in chat is retained in history and re-sent to the LLM on every subsequent turn, exponentially inflating token usage.
+  - **Concise Executive Summary in Chat**: Keep chat responses structured and brief:
+    1. Direct summary of what was completed;
+    2. Concrete evidence (test pass counts, build/lint status);
+    3. Clickable link to the documentation file for deep review;
+    4. Clear next action or question for the user.
+  - **Offload Depth to `Walkthrough.md` / `docs/`**: Write detailed implementation walkthroughs, screen/flow guides, architectural rationale, and before-and-after tables directly into a project file (such as `Walkthrough.md` or `docs/<topic>.md`) via `write_to_file`. The user can read the file at leisure without cluttering context memory.
 - **Triviality Exemption**: For trivial 1-line typo fixes, pure conceptual questions, or when no catalog skill matches, proceed directly without loading skills or inserting artificial pauses.
 - **Zero Command-Level Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
 - **Deep Fidelity**: Rigorously apply the checklists, workflows, and domain rules defined in the loaded `SKILL.md`.

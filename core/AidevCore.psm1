@@ -1731,10 +1731,11 @@ function Invoke-AidevApply {
                       -replace '\[CMD_BUILD\]', $cmdBuild
         Set-Content -LiteralPath $agentsMdDest -Value $inst -Encoding utf8
         Write-Host '  [CREATED CONSTITUTION] AGENTS.md' -ForegroundColor Green
-    } elseif (($existingAgentsMd -notmatch 'skill-routing\.md') -or ($existingAgentsMd -notmatch '/compact')) {
+    } elseif (($existingAgentsMd -notmatch 'skill-routing\.md') -or ($existingAgentsMd -notmatch '/compact') -or ($existingAgentsMd -notmatch 'Walkthrough\.md')) {
         $updatedAgentsMd = $existingAgentsMd
         $routingInvariantLine = '- **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
-        $compactInvariantLine = '- **Context Hygiene & Post-Task Compaction Gate (`/compact`)**: Offload multi-file exploration to subagents (`invoke_subagent` / `Task` / `Agent`) so raw logs stay out of the main context, and proactively recommend `/compact` at the end of the response whenever a large task, multi-file refactor, or parallel subagent workflow completes.'
+        $compactInvariantLine = '- **Context Hygiene & Post-Task Compaction Gate (`/compact`)**: Delegue exploracoes extensas a subagentes para isolar logs fora do chat e recomende pontualmente /compact ao concluir grandes marcos.'
+        $walkthroughInvariantLine = '- **Respostas Concisas no Chat & Offload para Walkthrough.md / Docs**: NUNCA envie respostas gigantescas ou logs extensos no chat (isso infla o historico e queima tokens a cada turno). Mantenha as mensagens no padrao Executive Briefing (resumo direto, evidencias de testes e proximos passos). Todo detalhamento tecnico, comparativos ou passo a passo de telas DEVE ser gravado diretamente em Walkthrough.md ou docs/ e apenas referenciado no chat por link markdown.'
 
         if ($updatedAgentsMd -notmatch 'skill-routing\.md') {
             if ($updatedAgentsMd -match '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$') {
@@ -1771,8 +1772,21 @@ function Invoke-AidevApply {
             }
         }
 
+        if ($updatedAgentsMd -notmatch 'Walkthrough\.md') {
+            if ($updatedAgentsMd -match '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)') {
+                $updatedAgentsMd = [regex]::Replace(
+                    $updatedAgentsMd,
+                    '(?s)(##\s+1\.\s+Immutable Invariants.*?)(\r?\n---\r?\n)',
+                    ('$1' + "`r`n" + $walkthroughInvariantLine + '$2'),
+                    1
+                )
+            } else {
+                $updatedAgentsMd = $updatedAgentsMd.TrimEnd() + "`r`n" + $walkthroughInvariantLine + "`r`n"
+            }
+        }
+
         Set-Content -LiteralPath $agentsMdDest -Value $updatedAgentsMd -Encoding utf8
-        Write-Host '  [UPDATED CONSTITUTION] AGENTS.md (injected skill-routing.md & /compact gate while preserving custom rules)' -ForegroundColor Green
+        Write-Host '  [UPDATED CONSTITUTION] AGENTS.md (injected skill-routing.md, /compact gate & Walkthrough offload while preserving custom rules)' -ForegroundColor Green
     }
 
     $geminiMdDest = Join-Path $ws 'GEMINI.md'

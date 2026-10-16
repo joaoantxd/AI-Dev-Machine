@@ -22,5 +22,6 @@
   - `reviewer` (`.agents/agents/reviewer.md` — Independent two-axis code & specification review before completion)
 - **MCP Servers**: Declared in `.agents/mcp_config.json`.
 - **Hooks**: Enforced via `.agents/hooks.json`.
-- **Token Economy & Post-Task Context Compaction Gate (`/compact`)**: Always use `graphify query "<topic>" --budget 1200` + `rg -n` + surgical `view_file` windows (`60-150 lines`), offload multi-file exploration to subagents, and proactively recommend `/compact` at the end of the response whenever a large task, multi-file refactor, or parallel subagent workflow finishes.
+- **Token Economy, Executive Briefing & Walkthrough Offload**: Always use `graphify query "<topic>" --budget 1200` + `rg -n` + surgical `view_file` windows (`60-150 lines`), offload multi-file exploration to subagents, keep chat messages concise (Executive Briefing), and offload detailed walkthroughs and architectural documentation to `Walkthrough.md` / `docs/` instead of dumping large text in the chat. Post-task `/compact` gate applies after major milestones.
+
 
