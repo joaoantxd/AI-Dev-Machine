@@ -204,8 +204,8 @@ function Optimize-AgentDefinition {
         'devops-automator'         = 'Use proactively via invoke_subagent whenever configuring CI/CD pipelines, packaging installers (MSI, Electron Builder), automating auto-update & rollback lifecycles, Docker, or build/release scripts.'
     }
     $agentSkillsMap = @{
-        'software-architect'       = @('graphify', 'calm', 'codebase-design', 'improve-codebase-architecture', 'domain-modeling', 'devils-advocate')
-        'backend-architect'        = @('graphify', 'calm', 'codebase-design', 'improve-codebase-architecture', 'security-best-practices', 'systematic-debugging', 'ponytail')
+        'software-architect'       = @('graphify', 'codebase-design', 'improve-codebase-architecture', 'domain-modeling', 'devils-advocate')
+        'backend-architect'        = @('graphify', 'codebase-design', 'improve-codebase-architecture', 'security-best-practices', 'systematic-debugging', 'ponytail')
         'frontend-developer'       = @('graphify', 'ui-ux-pro-max', 'frontend-design', 'impeccable', 'web-design-guidelines', 'vercel-react-best-practices')
         'database-optimizer'       = @('graphify', 'supabase-postgres-best-practices', 'supabase', 'domain-modeling')
         'security-architect'       = @('graphify', 'security-threat-model', 'cybersecurity-review', 'security-best-practices', 'strix')
@@ -246,8 +246,8 @@ function Optimize-AgentDefinition {
 
     if ($agentSkillsMap.ContainsKey($Slug)) {
         $skillsList = ($agentSkillsMap[$Slug] | ForEach-Object { '  - `.agents/skills/' + $_ + '/SKILL.md`' }) -join "`r`n"
-        $graphifyHighlight = '> **`graphify` (`.agents/skills/graphify/SKILL.md`) é uma skill excelente e indispensável**: Sempre carregue `graphify/SKILL.md` via `view_file` no Turno 1 e consulte `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` (`graphify query "<pergunta>"`) antes de vasculhar arquivos manualmente para entender a arquitetura, god nodes e dependências rapidamente.'
-        $skillSection = "`r`n`r`n" + '## Mandatory Downloaded Skill Routing (`always_on`)' + "`r`n`r`n" + $graphifyHighlight + "`r`n`r`n" + 'On Turn 1, before reading repository code or proposing changes, you MUST load the relevant downloaded skills for your domain via `view_file`:' + "`r`n" + $skillsList + "`r`n"
+        $graphifyHighlight = '> **Surgical Navigation & Token-Economy Protocol (`always_on`)**: On Turn 1, load `.agents/skills/graphify/SKILL.md` and run `if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz } ; graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <path>` via `run_command` BEFORE opening source files. **NEVER dump `#L1-800` across multiple files** -- use `rg -n` line numbers to call `view_file` only on surgical `StartLine`-`EndLine` windows (`60-150 lines`).'
+        $skillSection = "`r`n`r`n" + '## Mandatory Downloaded Skill Routing (`always_on`)' + "`r`n`r`n" + $graphifyHighlight + "`r`n`r`n" + 'On Turn 1, load `.agents/skills/graphify/SKILL.md` plus **only the 1-2 skills from the list below that directly match your specific subtask** (never load all skills at once):' + "`r`n" + $skillsList + "`r`n"
         if ($body -match '(?s)\r?\n\r?\n## Mandatory Downloaded Skill Routing.*$') {
             $newBody = [regex]::Replace($body, '(?s)\r?\n\r?\n## Mandatory Downloaded Skill Routing.*$', $skillSection)
             if ($newBody -ne $body) {

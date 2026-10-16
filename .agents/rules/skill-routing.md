@@ -127,13 +127,22 @@ Re-evaluate the catalog of available `<skills>` and `<subagents>` continuously a
 
 6. **Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol)**:
    - For ANY task involving codebase comprehension, architecture discovery, locating files/symbols, fixing multi-file bugs, module dependency mapping, cross-module flow tracing, or blast radius / impact analysis:
-     a) **Spontaneous Load**: Immediately activate `graphify` (`view_file` on `SKILL.md`) as the primary navigation skill on Turn 1 (or delegate deep multi-file mapping to `researcher`).
-     b) **Graph Consultation Precedence (Windows PowerShell Fast-Path)**: Discover if `graphify-out/graph.json` exists. If present, query the graph first via `run_command` using the native `graphify` CLI (`graphify query "<question>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, `graphify path "<A>" "<B>"`, `graphify god-nodes --top 15`) or read `graphify-out/GRAPH_REPORT.md` / `graphify-out/CALM_MAP.md` via `view_file` to map topological clusters, god nodes, and exact file/line locations BEFORE performing broad `list_dir`, global `grep_search`, or opening dozens of source files.
-     c) **Targeted Surgical Inspection**: Use the graph query output to pinpoint the exact target files and symbols, and only then open targeted files via `view_file`.
-     d) **Lifecycle & Freshness Verification**:
-        - *Graph Present & Fresh*: Query immediately (`graphify query "<topic>"`).
-        - *Graph Present but Outdated (code modified since graph generation)*: Run incremental AST update (`graphify update .` or `graphify <path> --update`, ~2 seconds, zero API cost) if safe and proportional, or query the existing graph while noting newly modified files.
-        - *Graph Absent*: If safe, non-destructive, and proportional (standard repository, no prohibited operations), generate the graph locally in ~3 seconds via `graphify extract . --code-only` followed by `graphify cluster-only . --no-label --no-viz` (or `graphify .` following `SKILL.md`). If building the graph is unfeasible (e.g. read-only environment, single-file trivial query, or explicit constraint), explain the limitation and proceed with targeted conventional exploration.
+     a) **Spontaneous Load**: Immediately activate `graphify` (`view_file` on `SKILL.md`, compact ~3 KB) as the primary navigation skill on Turn 1 (or delegate deep multi-file mapping to `researcher`).
+     b) **Graph Consultation Precedence (Windows PowerShell Fast-Path & Worktree Auto-Init)**: Run this `run_command` BEFORE opening source files (automatically handles git worktrees where `graphify-out/graph.json` is not yet built):
+        ```powershell
+        if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }
+        graphify query "<topic or symbol>" --budget 1200
+        graphify affected "<symbol>"
+        rg -n "<symbol_or_function>" <target_files_from_graph>
+        ```
+     c) **Targeted Surgical Inspection (Zero `#L1-800` Blind Dumps)**:
+        - **NEVER** call `view_file` / `Read` on `#L1-800` and `#L801-1600` across multiple files to hunt for code.
+        - **ALWAYS** use `StartLine` and `EndLine` (`60-150 lines` window) around the exact line numbers returned by `rg -n` and `graphify query`.
+     d) **Lifecycle & Freshness Verification & Selective Skill Loading**:
+        - *Graph Present & Fresh*: Query immediately (`graphify query "<topic>" --budget 1200`).
+        - *Graph Present but Outdated*: Run `graphify update .` (~2 seconds, zero API cost).
+        - *Graph Absent*: Build locally via `graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz`.
+        - *Right Skill, Zero Bloat*: Load `graphify/SKILL.md` plus only the specific domain skills directly matching the active subtask; do not load `calm/SKILL.md` or `understand-anything/SKILL.md` unless `calm` MCP tools or `.ua/knowledge-graph.json` are needed.
 
 ---
 
@@ -241,11 +250,12 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
      - **Step 1 (Orchestrator Mapping)**: The main agent runs `graphify query` / `graphify affected` on Turn 1 to map exact module boundaries and assign non-overlapping file scopes per area.
      - **Step 2 (Concurrent Dispatch)**: Put all relevant core and project-synthesized subagents to work in their respective areas simultaneously (`invoke_subagent` with multiple entries in `Subagents` for Antigravity; parallel `Task`/`Agent` calls for Claude Code; parallel sub-agents/tasks for Codex; or structured per-specialist execution tracks for Cursor/Windsurf/Copilot).
 4. **Mandatory Double-Layer Verification (Subagent Self-Verification + Orchestrator Integration Verification)**:
-   - **Layer 1 -- Inside Each Subagent (Area Verification)**: Every subagent MUST load its paired domain skills (`SKILL.md`) on Turn 1 AND run `verification-before-completion` (typecheck, unit tests, SQL/RLS validation, or lint for its specific module) before reporting its task as done.
+   - **Layer 1 -- Inside Each Subagent (Area Verification)**: Every subagent MUST load `graphify/SKILL.md` + the 1–2 relevant domain skills (`SKILL.md`) on Turn 1 AND run `verification-before-completion` (typecheck, unit tests, SQL/RLS validation, or lint for its specific module) before reporting its task as done.
    - **Layer 2 -- Main Orchestrator + `reviewer` / `security-reviewer` (Global Verification)**: While subagents work and as they finish, the main agent NEVER trusts subagent reports blindly. It inspects the actual `git diff`, checks cross-module contracts, delegates independent audit to `reviewer` / `security-reviewer` when appropriate, and executes the full workspace verification gate (`test`, `typecheck`, `build`) before declaring the task complete.
-5. **Skill-First Subagent Prompts**: Every prompt passed to a subagent MUST specify:
+5. **Skill-First & Token-Economic Subagent Prompts**: Every prompt passed to a subagent MUST specify:
    - Exact scope, target files, and project invariants from `AGENTS.md`.
-   - Which downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (always starting with `graphify`).
+   - Instruction to run `graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <files>` first and use surgical `view_file` windows (`StartLine`–`EndLine` of `60-150 lines`, NEVER `#L1-800` blind dumps).
+   - Which 1–2 downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (alongside `graphify`).
    - Required Layer-1 verification commands and evidence.
 6. **Universal Multi-AI Compatibility Matrix (Works Identically Across All AIs)**:
    - **Google Antigravity & Gemini CLI**: Reads `AGENTS.md`, `GEMINI.md`, `.agents/rules/*.md`. Loads `.agents/skills/<skill>/SKILL.md` via `view_file`. Spawns multiple subagents in parallel via `invoke_subagent(Subagents=[...])` and creates new specialists on the fly via `define_subagent` + `.agents/agents/<domain>-specialist.md`.
@@ -255,11 +265,13 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
 
 ---
 
-## 6. Operational Discipline & Execution Guidelines
+## 6. Operational Discipline & Token Economy Guidelines
 
-- **Load on Demand**: Read `SKILL.md` via `view_file` at the exact point where a new domain need arises.
+- **Surgical File Reading (`60-150 lines` vs `#L1-800`)**: Always pinpoint line numbers with `graphify query --budget 1200` and `rg -n` first, then read surgical `StartLine`–`EndLine` slices (`60-150 lines`). Never read `#L1-800` across multiple files.
+- **Load on Demand (1–2 Skills per Subtask)**: Read `graphify/SKILL.md` + the 1–2 `SKILL.md` files that directly apply to the current subtask via `view_file`.
 - **Context Reuse**: Skills loaded in earlier turns remain active in the conversation context. Do NOT call `view_file` redundantly on the same `SKILL.md` if its guidance is already present.
 - **No Indiscriminate Manual Wandering**: Do NOT perform blind recursive directory listings (`list_dir`) or mass grep sweeps across whole repositories when a knowledge graph (`graphify-out/`) is available or can be queried. Graph navigation must precede file-by-file inspection.
+- **Subagent Context Offloading & `/compact`**: Delegate multi-file research and isolated module work to subagents so raw exploration logs stay out of the main orchestrator conversation. Recommend `/compact` when main sessions exceed ~15 user requests.
 - **Triviality Exemption**: For trivial 1-line typo fixes, pure conceptual questions, or when no catalog skill matches, proceed directly without loading skills or inserting artificial pauses.
 - **Zero Command-Level Overhead**: Do NOT perform artificial skill checks or pause before every single trivial tool call.
 - **Deep Fidelity**: Rigorously apply the checklists, workflows, and domain rules defined in the loaded `SKILL.md`.

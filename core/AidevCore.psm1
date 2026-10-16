@@ -1289,51 +1289,57 @@ function Select-SkillsForDomainRule {
         [Parameter(Mandatory)][string]$RuleContent
     )
     $selected = [System.Collections.Generic.List[string]]::new()
-    foreach ($baseSkill in @('graphify', 'calm')) {
-        $null = $selected.Add($baseSkill)
-    }
+    $null = $selected.Add('graphify')
 
-    $combined = ($RuleName + ' ' + $RuleContent).ToLowerInvariant()
+    $titleLine = ($RuleContent -split "\r?\n" | Where-Object { $_ -match '^#\s+(.+)$' } | Select-Object -First 1)
+    $primarySignal = ($RuleName + ' ' + $titleLine).ToLowerInvariant()
+    $fullSignal = ($RuleName + ' ' + $RuleContent).ToLowerInvariant()
 
-    if ($combined -match 'capture|dxgi|wgc|gdi|h264|cursor|input|sendinput|session\s*0|service|win32|desktop|worker|uia') {
-        foreach ($s in @('winapp', 'diagnosing-bugs', 'systematic-debugging', 'codebase-design', 'improve-codebase-architecture')) {
+    if ($primarySignal -match '\b(capture|dxgi|wgc|gdi|h264|cursor|input|sendinput|session|win32|desktop|worker|uia|screen|monitor)\b') {
+        foreach ($s in @('winapp', 'diagnosing-bugs', 'systematic-debugging', 'codebase-design')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($combined -match 'dacl|pipe|security|token|tenant|rls|isolation|auth|crypto|signature|sha256|redirect|returnto|sanitiz|owasp|secret|root') {
-        foreach ($s in @('security-threat-model', 'cybersecurity-review', 'security-best-practices', 'strix')) {
+    if (($primarySignal -match '\b(postgres|supabase|sql|rls|migration|tenant|isolation|database|query)\b') -or ($fullSignal -match '\b(supabase|postgres|rls|tenant_id)\b' -and $primarySignal -match '\b(tenant|isolation|database|sql|fiscal)\b')) {
+        foreach ($s in @('supabase-postgres-best-practices', 'supabase', 'security-threat-model', 'cybersecurity-review')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($combined -match 'fiscal|tribut|simples|ibs|cbs|pgdas|nf-e|nfe|ct-e|decimal|erp|conciliac|domain|entity|schema|business|regra') {
-        foreach ($s in @('domain-modeling', 'codebase-design', 'improve-codebase-architecture', 'diagnosing-bugs', 'systematic-debugging')) {
+    if ($primarySignal -match '\b(dacl|dacls|pipe|security|auth|crypto|signature|sha256|redirect|redirects|returnto|sanitiz|owasp)\b') {
+        foreach ($s in @('security-threat-model', 'cybersecurity-review', 'security-best-practices')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($combined -match 'postgres|supabase|sql|rls|migration|tenant_id|database|query|index|table') {
-        foreach ($s in @('supabase-postgres-best-practices', 'supabase', 'domain-modeling')) {
+    if ($primarySignal -match '\b(fiscal|tribut|simples|ibs|cbs|pgdas|nfe|decimal|erp|conciliac|domain|entity|invariant|invariants|engine)\b') {
+        foreach ($s in @('domain-modeling', 'codebase-design', 'diagnosing-bugs', 'systematic-debugging')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($combined -match 'spa|next|react|router|navigation|design|token|oklch|hsl|ui|ux|css|icon|emoji|mutation|component|web') {
+    if ($primarySignal -match '\b(spa|next|react|router|navigation|design|tokens|oklch|hsl|ui|ux|css|mutation|component)\b') {
         foreach ($s in @('vercel-react-best-practices', 'ui-ux-pro-max', 'frontend-design', 'impeccable', 'web-design-guidelines')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($combined -match 'update|installer|msi|electron|rollback|release|ci|cd|deploy|package') {
-        foreach ($s in @('security-review', 'ponytail', 'diagnosing-bugs')) {
+    if ($primarySignal -match '\b(update|installer|msi|electron|rollback|release|deploy|package|lifecycle)\b') {
+        foreach ($s in @('security-review', 'security-best-practices', 'diagnosing-bugs', 'ponytail')) {
             if (-not $selected.Contains($s)) { $null = $selected.Add($s) }
         }
     }
-    if ($selected.Count -le 2) {
+    if ($selected.Count -le 1) {
         foreach ($fallback in @('codebase-design', 'diagnosing-bugs', 'systematic-debugging')) {
             if (-not $selected.Contains($fallback)) { $null = $selected.Add($fallback) }
         }
     }
-    if (-not $selected.Contains('verification-before-completion')) {
-        $null = $selected.Add('verification-before-completion')
+    $capped = [System.Collections.Generic.List[string]]::new()
+    foreach ($item in $selected) {
+        if ($capped.Count -lt 6) {
+            $null = $capped.Add($item)
+        }
     }
-    return @($selected)
+    if (-not $capped.Contains('verification-before-completion')) {
+        $null = $capped.Add('verification-before-completion')
+    }
+    return @($capped)
 }
 
 function Invoke-AidevAgentSynthesis {
@@ -1379,7 +1385,8 @@ function Invoke-AidevAgentSynthesis {
         ('## Project-Specific Context (' + $projectName + ')')
         ''
         ('- **Workspace**: `' + $projectName + '` (Capabilities: `' + $capsText + '`)')
-        '- **Step 0 -- Graphify Knowledge Graph Fast-Path (`always_on`)**: Whenever `graphify-out/graph.json` exists, run `graphify query "<topic>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, or `graphify god-nodes` via `run_command` (and check `graphify-out/GRAPH_REPORT.md` via `view_file`) BEFORE broad manual searches.'
+        '- **Step 0 -- Worktree-Safe Graphify Fast-Path (`always_on`)**: Ensure `graphify-out/graph.json` exists (`if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }`), then run `graphify query "<topic>" --budget 1200` and `rg -n "<symbol>" <file>` via `run_command` BEFORE opening source files.'
+        '- **Surgical Token Economy (Zero `#L1-800` Blind Dumps)**: NEVER call `view_file` / `Read` on 1-800 lines across multiple files. Always read surgical `StartLine`--`EndLine` windows (`60-150 lines`) around the exact line numbers returned by `graphify query` and `rg -n`. Load `graphify/SKILL.md` + ONLY the 1-2 skills matching your active subtask.'
         '- **Project Domain Rules to Enforce**:'
         $domainRuleLinks
         ''
@@ -1437,19 +1444,20 @@ function Invoke-AidevAgentSynthesis {
             ''
             ('> **Synthesized Multi-AI Project Subagent (`' + $specialistSlug + '`)** -- Automatically generated by AI-Dev-Machine for **' + $projectName + '** across all AIs (Antigravity, Claude Code, OpenAI Codex, Cursor, Windsurf, Copilot, Gemini CLI) by combining `.agents/rules/' + $ruleFile.Name + '` with the matching downloaded skills.')
             ''
-            '## Step 0 -- Mandatory Graphify Knowledge Graph Navigation (`always_on`)'
+            '## Step 0 -- Mandatory Graphify Knowledge Graph & Surgical Token-Economy Protocol (`always_on`)'
             ''
-            'Before performing broad file searches, check `graphify-out/graph.json` using the native `graphify` CLI in PowerShell/terminal:'
+            'Before opening source files, run this worktree-safe query + line-pinpointing command via `run_command`:'
             '```powershell'
-            'graphify query "<topic or symbol>"'
+            'if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }'
+            'graphify query "<topic or symbol>" --budget 1200'
             'graphify affected "<symbol>"'
-            'graphify explain "<symbol>"'
+            'rg -n "<symbol_or_function>" <target_files_from_graph>'
             '```'
-            'And inspect `graphify-out/GRAPH_REPORT.md` via `view_file` / `Read` when mapping module boundaries.'
+            '- **Surgical `view_file` Rule**: NEVER dump `#L1-800` across multiple files. Use `StartLine` and `EndLine` (`60-150 lines`) around the exact lines returned by `rg -n`.'
             ''
-            '## Step 1 -- Mandatory Downloaded Skills (Load on Turn 1 across All AIs)'
+            '## Step 1 -- Selective Downloaded Skills (Load on Turn 1 across All AIs)'
             ''
-            'On Turn 1, before modifying code or proposing solutions, load the relevant downloaded skills for this domain (`view_file` / `Read` / `read_file`):'
+            'On Turn 1, load `.agents/skills/graphify/SKILL.md` AND **only the 1-2 skills below that directly match your active subtask** (never load all skills at once):'
             $skillsBulletList
             ''
             ('## Step 2 -- Authoritative Project Domain Rules (`.agents/rules/' + $ruleFile.Name + '`)')
@@ -1768,10 +1776,13 @@ function Invoke-AidevApply {
     Ensure-GitIgnoreEntry -WorkspacePath $ws -Pattern 'graphify-out/'
 
     $graphJsonPath = Join-Path $ws 'graphify-out\graph.json'
+    $isTempFixture = $ws.StartsWith([IO.Path]::GetFullPath($env:TEMP), [System.StringComparison]::OrdinalIgnoreCase)
     if (Test-Path -LiteralPath $graphJsonPath) {
         Write-Host '  [GRAPHIFY READY] graphify-out/graph.json & GRAPH_REPORT.md active' -ForegroundColor Green
-    } elseif ((Test-Path -LiteralPath (Join-Path $ws '.git')) -and (Get-Command graphify -ErrorAction SilentlyContinue)) {
+    } elseif (((Test-Path -LiteralPath (Join-Path $ws '.git')) -or (-not $isTempFixture)) -and (Get-Command graphify -ErrorAction SilentlyContinue)) {
+        $prevEap = $ErrorActionPreference
         try {
+            $ErrorActionPreference = 'Continue'
             $null = & graphify extract $ws --code-only 2>&1
             $null = & graphify cluster-only $ws --no-label --no-viz 2>&1
             if (Test-Path -LiteralPath $graphJsonPath) {
@@ -1779,6 +1790,8 @@ function Invoke-AidevApply {
             }
         } catch {
             Write-Host ('  [GRAPHIFY NOTICE] Could not auto-build graphify-out: ' + $_.Exception.Message) -ForegroundColor DarkYellow
+        } finally {
+            $ErrorActionPreference = $prevEap
         }
     }
 

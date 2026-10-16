@@ -1047,7 +1047,7 @@ try {
         }
     }
 
-    Assert-Test "Graphify skill uses Windows PowerShell syntax, includes Turn-1 Fast-Path block, and has zero UTF-8 BOM" {
+    Assert-Test "Graphify skill is compact (< 6 KB), uses Windows PowerShell syntax, enforces Surgical Token-Economy Protocol, and has zero UTF-8 BOM" {
         $graphifySkillPath = Join-Path $aidevRoot '.agents\skills\graphify\SKILL.md'
         if (-not (Test-Path -LiteralPath $graphifySkillPath)) {
             throw 'graphify/SKILL.md missing in .agents/skills/graphify/'
@@ -1055,6 +1055,9 @@ try {
         $bytes = [System.IO.File]::ReadAllBytes($graphifySkillPath)
         if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
             throw 'graphify/SKILL.md has UTF-8 BOM'
+        }
+        if ($bytes.Length -gt 6144) {
+            throw ('graphify/SKILL.md is bloated (' + $bytes.Length + ' bytes > 6144 bytes limit)!')
         }
         $gContent = [System.IO.File]::ReadAllText($graphifySkillPath, [System.Text.Encoding]::UTF8)
         if (-not $gContent.Contains('## Antigravity Windows PowerShell Fast-Path (Execute First on Turn 1)')) {
@@ -1065,6 +1068,9 @@ try {
         }
         if (-not $gContent.Contains('graphify affected')) {
             throw 'graphify/SKILL.md missing graphify affected command'
+        }
+        if (-not $gContent.Contains('rg -n')) {
+            throw 'graphify/SKILL.md missing rg -n surgical line-pinpointing step'
         }
         if ($gContent.Contains('$(cat graphify-out/.graphify_python)')) {
             throw 'graphify/SKILL.md still contains POSIX bash $(cat ...) syntax instead of Windows PowerShell syntax!'

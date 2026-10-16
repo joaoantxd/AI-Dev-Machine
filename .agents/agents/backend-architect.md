@@ -244,11 +244,10 @@ You're successful when:
 
 ## Mandatory Downloaded Skill Routing (`always_on`)
 
-> **`graphify` (`.agents/skills/graphify/SKILL.md`) Ã© uma skill excelente e indispensÃ¡vel**: Sempre carregue `graphify/SKILL.md` via `view_file` no Turno 1 e consulte `graphify-out/GRAPH_REPORT.md` / `graphify-out/graph.json` (`graphify query "<pergunta>"`) antes de vasculhar arquivos manualmente para entender a arquitetura, god nodes e dependÃªncias rapidamente.
+> **Surgical Navigation & Token-Economy Protocol (`always_on`)**: On Turn 1, load `.agents/skills/graphify/SKILL.md` and run `if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz } ; graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <path>` via `run_command` BEFORE opening source files. **NEVER dump `#L1-800` across multiple files** -- use `rg -n` line numbers to call `view_file` only on surgical `StartLine`-`EndLine` windows (`60-150 lines`).
 
-On Turn 1, before reading repository code or proposing changes, you MUST load the relevant downloaded skills for your domain via `view_file`:
+On Turn 1, load `.agents/skills/graphify/SKILL.md` plus **only the 1-2 skills from the list below that directly match your specific subtask** (never load all skills at once):
   - `.agents/skills/graphify/SKILL.md`
-  - `.agents/skills/calm/SKILL.md`
   - `.agents/skills/codebase-design/SKILL.md`
   - `.agents/skills/improve-codebase-architecture/SKILL.md`
   - `.agents/skills/security-best-practices/SKILL.md`
@@ -258,6 +257,7 @@ On Turn 1, before reading repository code or proposing changes, you MUST load th
 ## Project-Specific Context (AI-Dev-Machine)
 
 - **Workspace**: `AI-Dev-Machine` (Capabilities: `core`)
-- **Step 0 -- Graphify Knowledge Graph Fast-Path (`always_on`)**: Whenever `graphify-out/graph.json` exists, run `graphify query "<topic>"`, `graphify affected "<symbol>"`, `graphify explain "<symbol>"`, or `graphify god-nodes` via `run_command` (and check `graphify-out/GRAPH_REPORT.md` via `view_file`) BEFORE broad manual searches.
+- **Step 0 -- Worktree-Safe Graphify Fast-Path (`always_on`)**: Ensure `graphify-out/graph.json` exists (`if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }`), then run `graphify query "<topic>" --budget 1200` and `rg -n "<symbol>" <file>` via `run_command` BEFORE opening source files.
+- **Surgical Token Economy (Zero `#L1-800` Blind Dumps)**: NEVER call `view_file` / `Read` on 1-800 lines across multiple files. Always read surgical `StartLine`--`EndLine` windows (`60-150 lines`) around the exact line numbers returned by `graphify query` and `rg -n`. Load `graphify/SKILL.md` + ONLY the 1-2 skills matching your active subtask.
 - **Project Domain Rules to Enforce**:
   - `.agents/rules/architecture-invariants.md`

@@ -383,41 +383,72 @@ if (Test-Path -LiteralPath $SkillsRoot) {
             }
         }
 
-        # 3. Inject Windows PowerShell Fast-Path at the very top of graphify/SKILL.md so Antigravity executes native 1-line CLI queries immediately
-        if ($SkillName -eq 'graphify' -and ($body -notmatch 'Antigravity Windows PowerShell Fast-Path')) {
-            $fastPathBlock = @(
-                ''
-                '## Antigravity Windows PowerShell Fast-Path (Execute First on Turn 1)'
-                ''
-                '> **MANDATORY FAST-PATH ON WINDOWS (`pwsh`)**: Whenever `graphify-out/graph.json` exists in the workspace, **DO NOT** run the multi-step Python extraction scripts below! Instead, immediately execute these 1-line native `graphify` CLI commands via `run_command` (or inspect `graphify-out/GRAPH_REPORT.md` via `view_file`):'
-                ''
-                '```powershell'
-                '# 1. Search the knowledge graph for any feature, symbol, bug, or flow (returns exact file paths & line numbers):'
-                'graphify query "<topic or symbol>"'
-                ''
-                '# 2. Check blast radius / reverse impact (what depends on or is affected by X?):'
-                'graphify affected "<symbol>"'
-                ''
-                '# 3. Explain a specific class, function, or module and its immediate neighbors:'
-                'graphify explain "<symbol>"'
-                ''
-                '# 4. Find the shortest dependency path between two components:'
-                'graphify path "<SourceNode>" "<TargetNode>"'
-                ''
-                '# 5. List the top architectural hubs (god nodes) in the repository:'
-                'graphify god-nodes --top 15'
-                ''
-                '# 6. Update the graph incrementally after modifying code (AST-only, ~2 seconds, zero API cost):'
-                'graphify update .'
-                ''
-                '# 7. If graphify-out/graph.json does NOT exist yet, build it locally in ~3 seconds (zero API key required):'
-                'graphify extract . --code-only'
-                'graphify cluster-only . --no-label --no-viz'
-                '```'
-                ''
-            ) -join "`r`n"
-            $body = "`r`n" + $fastPathBlock + "`r`n" + $body.TrimStart("`r", "`n")
-            $changed = $true
+        # 3. Compact graphify/SKILL.md to a high-signal ~75-line (~3.2 KB) Windows PowerShell Surgical Protocol (saving 93% tokens per load) and archive full 700-line manual pipeline in references/
+        if ($SkillName -eq 'graphify') {
+            $skillParentDir = Split-Path -Parent $SkillMdPath
+            $destRefsDir = Join-Path $skillParentDir 'references'
+            if (-not (Test-Path -LiteralPath $destRefsDir -PathType Container)) {
+                $null = New-Item -ItemType Directory -Path $destRefsDir -Force
+            }
+            $fullRefPath = Join-Path $destRefsDir 'full-pipeline-windows.md'
+            if (($body.Length -gt 8000) -and (-not (Test-Path -LiteralPath $fullRefPath))) {
+                $utf8NoBomRef = New-Object System.Text.UTF8Encoding($false)
+                [System.IO.File]::WriteAllText($fullRefPath, $body.TrimStart("`r", "`n"), $utf8NoBomRef)
+            }
+            if (($body -notmatch 'Surgical Token-Economy Protocol') -or ($body.Length -gt 6000)) {
+                $compactGraphifyBody = @(
+                    '## Antigravity Windows PowerShell Fast-Path (Execute First on Turn 1)'
+                    ''
+                    '> **MANDATORY ON WINDOWS (`pwsh`) -- DO NOT SKIP**: Never read 800-line files (`#L1-800`) one by one to explore a codebase! Always execute this 3-step surgical loop first to save ~90% of tokens and pinpoint exact files and line numbers in ~2 seconds.'
+                    ''
+                    '### Step 1 -- Auto-Ensure Graph (Worktree-Safe) & Query via `run_command`'
+                    ''
+                    'Run these 1-line commands in your current workspace or git worktree:'
+                    '```powershell'
+                    '# Auto-build graphify-out/graph.json in ~2s if missing in a git worktree, then query:'
+                    'if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }'
+                    ''
+                    '# 1. Search the knowledge graph for any feature, symbol, bug, or flow (capped at 1200 tokens):'
+                    'graphify query "<topic or symbol>" --budget 1200'
+                    ''
+                    '# 2. Check blast radius / reverse impact (what depends on or is affected by X?):'
+                    'graphify affected "<symbol>"'
+                    ''
+                    '# 3. Explain a specific class, function, or module and its immediate neighbors:'
+                    'graphify explain "<symbol>"'
+                    ''
+                    '# 4. Find the shortest dependency path between two components:'
+                    'graphify path "<SourceNode>" "<TargetNode>"'
+                    ''
+                    '# 5. List the top architectural hubs (god nodes) in the repository:'
+                    'graphify god-nodes --top 15'
+                    ''
+                    '# 6. Update the graph incrementally after modifying code (AST-only, ~2 seconds, zero API cost):'
+                    'graphify update .'
+                    '```'
+                    ''
+                    '### Step 2 -- Surgical Line-Number Pinpointing (`rg -n` via `run_command`)'
+                    ''
+                    'After `graphify query` identifies the relevant files (or when inspecting SQL migrations / large services), get exact line numbers in a single command BEFORE calling `view_file`:'
+                    '```powershell'
+                    '# Pinpoint exact function, route, component, or SQL table line numbers:'
+                    'rg -n "functionName|ClassName|CREATE TABLE|REFERENCES" <file_or_dir>'
+                    '```'
+                    ''
+                    '### Step 3 -- Surgical Token-Economy Protocol (`view_file` 60-150 Line Windows Only)'
+                    ''
+                    '1. **FORBIDDEN (`#L1-800` Blind Dumps)**: NEVER call `view_file` with `StartLine=1, EndLine=800` and `StartLine=801, EndLine=1600` across multiple files (>200 lines) just to locate a function, UI dialog, or SQL table.'
+                    '2. **REQUIRED (Surgical Windows)**: Use the line numbers from `graphify` and `rg -n` to call `view_file` on **only the exact 60-150 line window** (`StartLine` / `EndLine`) containing the target logic.'
+                    '3. **SQL Migrations & Multi-File Audits**: When auditing `supabase/migrations/*.sql` or multiple controllers/pages, always filter with `rg -n` in `run_command` first and only `view_file` the specific 30-80 lines that matter.'
+                    '4. **Architectural Summary**: Read `graphify-out/GRAPH_REPORT.md` via `view_file` (`StartLine=1, EndLine=120`) for a high-level summary of communities and god nodes.'
+                    ''
+                    '### Reference Files (Load ONLY when explicitly requested)'
+                    '- `references/full-pipeline-windows.md`: Full multimodal extraction pipeline (`--mode deep`, Whisper audio, PDF/OCR, `--obsidian`, `--neo4j`, `--falkordb`, `--wiki`). Do NOT load during normal coding or codebase navigation.'
+                    ''
+                ) -join "`r`n"
+                $body = "`r`n" + $compactGraphifyBody
+                $changed = $true
+            }
         }
 
         if ($changed -or $hasBom) {
