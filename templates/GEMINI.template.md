@@ -9,7 +9,7 @@
 
 - **Rules**: Discovered hierarchically in `.agents/rules/*.md`. `skill-routing.md` is `always_on` and commands autonomous routing of all 33 downloaded skills and 10 specialized subagents.
 - **Skills (33 Downloaded Skills)**: Physically materialized in `.agents/skills/<skill>/SKILL.md`. Antigravity MUST prioritize the 33 downloaded skills over generic IDE built-ins and read the relevant `SKILL.md` on Turn 1 via `view_file` before reading repository code, proposing fixes, or writing code.
-- **Subagents (10 Specialized Subagents — Principal Focus)**: Physically materialized in `.agents/agents/*.md`. Antigravity MUST prioritize delegating domain workstreams via `invoke_subagent` using these exact `TypeName` values (and instructing each subagent to load its domain's `SKILL.md` on Turn 1):
+- **Subagents (10 Specialized Subagents — Principal Focus)**: Physically materialized in `.agents/agents/*.md`. Antigravity MUST prioritize delegating domain workstreams with the available native `invoke_subagent` schema and the specialist identifiers below (and instruct each specialist to load its domain's `SKILL.md` on Turn 1). Do not assume a parameter named `TypeName` exists:
   - `researcher` (`.agents/agents/researcher.md` — Read-only architecture & Graphify/CALM investigation)
   - `software-architect` (`.agents/agents/software-architect.md` — System design, DDD bounded contexts, deep modules & ADRs)
   - `backend-architect` (`.agents/agents/backend-architect.md` — APIs, NestJS/Node/.NET services, Windows Service Session 0, IPC & signaling)
@@ -20,8 +20,9 @@
   - `test-automation-engineer` (`.agents/agents/test-automation-engineer.md` — Playwright browser/Electron E2E & WinApp Windows UIA automation)
   - `devops-automator` (`.agents/agents/devops-automator.md` — CI/CD pipelines, MSI/Electron packaging & auto-update lifecycle)
   - `reviewer` (`.agents/agents/reviewer.md` — Independent two-axis code & specification review before completion)
-- **MCP Servers**: Declared in `.agents/mcp_config.json`.
-- **Hooks**: Enforced via `.agents/hooks.json`.
+- **MCP Servers**: Portable declarations are in `.agents/mcp_config.json`; validate the installed client's supported configuration and server status before claiming they are active.
+- **Hooks**: `.agents/hooks.json` contains the portable safety policy. Enforcement depends on the installed client's hook support and native configuration; file presence alone does not prove execution.
+- **Other runtimes**: Claude Code loads `CLAUDE.md` and `.claude/agents/*.md`; Codex loads `AGENTS.md` and `.codex/agents/*.toml`. Use only tools actually exposed by the current runtime. Agent definitions inherit session permissions and never grant broader access.
 - **Token Economy, Executive Briefing & Walkthrough Offload**: Always use `graphify query "<topic>" --budget 1200` + `rg -n` + surgical `view_file` windows (`60-150 lines`), offload multi-file exploration to subagents, keep chat messages concise (Executive Briefing), and offload detailed walkthroughs and architectural documentation to `Walkthrough.md` / `docs/` instead of dumping large text in the chat. Post-task `/compact` gate applies after major milestones.
 
 

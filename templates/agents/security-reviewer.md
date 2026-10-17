@@ -2,13 +2,12 @@
 name: security-reviewer
 description: "Use proactively via invoke_subagent for cybersecurity code audits, attack surface analysis, auth/RLS/DACL verification, secrets & dependency scanning, and vulnerability PoC validation."
 tools:
-  - send_message
   - view_file
-  - read_url_content
-  - search_web
-  - schedule
+  - grep_search
   - run_command
-  - manage_task
+subagent: true
+mainAgent: false
+model: inherit
 ---
 
 # Cybersecurity & Vulnerability Reviewer

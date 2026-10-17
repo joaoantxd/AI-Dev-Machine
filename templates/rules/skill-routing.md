@@ -8,6 +8,8 @@ trigger: always_on
 
 ## 0. Canonical Execution Pipeline (Smart Routing: Right Tool, Right Time)
 
+**Coordinator-only project policy**: Follow `.agents/rules/orchestration.md`. The main agent assigns and coordinates work, evaluates evidence, and responds; specialists carry out implementation, substantive investigation, tests, and review. This policy takes precedence over the generic matrix's "Agente atual" execution suggestions. It does not grant unavailable tools or relax the client's permissions.
+
 > **Core Principle**: The AI must **NEVER** use the exact same skill or the exact same subagent blindly on every task.
 > - **Skills** are specialized methods and domain knowledge loaded on demand (`.agents/skills/<skill>/SKILL.md`).
 > - **Subagents** are domain specialists (`invoke_subagent`) called when task specialization or complexity justifies them.
@@ -101,8 +103,8 @@ trigger: always_on
 
 7. **Principal Focus on the 10 Specialized Subagents (`invoke_subagent`)**:
    - **Prioritize the 10 Specialized Subagents over Generic Built-ins**: Always prioritize the 10 specialized subagents materialized in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) over generic built-in `self` or `research` subagents.
-   - **Proactive Multi-Agent Delegation**: Whenever a task involves deep codebase investigation, architectural design, multi-file backend/frontend implementation, database/RLS optimization, threat modeling/security review, E2E test automation, CI/CD packaging, or pre-completion code review, proactively delegate bounded workstreams via `invoke_subagent` using the subagent's exact registered `TypeName`.
-   - **Mandatory Subagent + Skill Synergy**: Whenever invoking a subagent via `invoke_subagent`, explicitly instruct the subagent in its `Prompt` argument to load its domain's downloaded skills from `.agents/skills/<skill>/SKILL.md` via `view_file` on Turn 1.
+   - **Proactive Multi-Agent Delegation**: Whenever a task involves deep codebase investigation, architectural design, multi-file backend/frontend implementation, database/RLS optimization, threat modeling/security review, E2E test automation, CI/CD packaging, or pre-completion code review, proactively delegate bounded workstreams using the specialist identifier and the current runtime's native tool schema. Never assume a parameter named `TypeName` exists.
+   - **Mandatory Subagent + Skill Synergy**: Include task instructions using the runtime-supported schema: load the domain's downloaded skills from `.agents/skills/<skill>/SKILL.md` with the available file-reading tool on Turn 1.
 
 ---
 
@@ -222,9 +224,9 @@ Spontaneously map tasks and technical domains to all 33 downloaded skills in `.a
 
 ## 5. Complete Catalog of 10 Specialized Subagents & Proactive Delegation Matrix (`invoke_subagent`)
 
-All 10 specialized subagents are materialized in `.agents/agents/*.md` and registered in `<subagents>`. Always invoke them using their **exact `TypeName`** below:
+All 10 specialized subagents are materialized in `.agents/agents/*.md`. File presence does not prove runtime registration; invoke discovered specialists using their identifiers below and the native tool schema:
 
-| `TypeName` (for `invoke_subagent`) | Definition File | Proactive Delegation Trigger | Paired Downloaded Skills (`.agents/skills/`) |
+| Specialist identifier | Definition File | Proactive Delegation Trigger | Paired Downloaded Skills (`.agents/skills/`) |
 | :--- | :--- | :--- | :--- |
 | `researcher` | `.agents/agents/researcher.md` | Deep read-only codebase exploration, multi-file flow tracing, Graphify/CALM dependency mapping, blast-radius discovery. | `graphify`, `calm`, `understand-anything` |
 | `software-architect` | `.agents/agents/software-architect.md` | Macro architecture design, DDD bounded contexts, deep module boundaries, cross-package refactoring plans, ADR authoring. | `graphify`, `calm`, `codebase-design`, `improve-codebase-architecture`, `domain-modeling`, `devils-advocate` |
@@ -241,11 +243,11 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
 1. **Automatic Synthesis per Project (`Invoke-AidevAgentSynthesis` in `aidev.ps1 apply`)**:
    - Whenever `aidev.ps1 apply` runs on a project, it automatically:
      - Tailors all 10 core subagents with a `## Project-Specific Context (<ProjectName>)` section containing the project's capabilities, `graphify` CLI Turn-1 protocol, and local domain rules.
-     - Synthesizes custom project-specific domain subagents (`.agents/agents/<domain-rule>-specialist.md`) for every project-owned domain rule in `.agents/rules/*.md`, automatically pairing each specialist with `graphify`, `calm`, and the matching skills from the 33 downloaded skills (e.g., `fiscal-engine-specialist`, `multi-tenant-isolation-specialist`, `screen-capture-pipeline-specialist`, `windows-session-architecture-specialist`, `input-arbitration-specialist`), and mirrors them to global multi-AI agent directories (`~/.claude/agents/`, `~/.gemini/agents/`, `~/.gemini/config/agents/`).
+     - Synthesizes project-specific domain subagents (`.agents/agents/<domain-rule>-specialist.md`) for project-owned domain rules, pairing them with the matching skills. Materializes native project adapters in `.codex/agents/*.toml` and `.claude/agents/*.md`. Keep project-specific specialists local to prevent another project's rules from leaking into unrelated workspaces.
 2. **Autonomous On-the-Fly Subagent Creation by Any AI (`.agents/agents/<domain>-specialist.md`)**:
    - Whenever ANY AI (Antigravity, Claude Code, OpenAI Codex, Cursor, Windsurf, GitHub Copilot, Gemini CLI) encounters a complex project subsystem or recurring domain not yet covered by an existing subagent, it is explicitly empowered to **create a custom project subagent autonomously**:
      a) Author and persist `.agents/agents/<domain>-specialist.md` (UTF-8 without BOM, kebab-case `name:`, valid `tools:` list) combining `graphify` (`graphify query "<topic>"`), the matching downloaded skills from `.agents/skills/<skill>/SKILL.md`, and the project's domain rules in `.agents/rules/*.md`.
-     b) If running in Antigravity, also register it immediately for the current session via `define_subagent(name="<domain>-specialist", enable_write_tools=true)`. If running in Claude Code, also copy it to `~/.claude/agents/<domain>-specialist.md`.
+     b) Run `aidev.ps1 apply "<workspace>"` to materialize the native adapters. Antigravity may use `define_subagent` for immediate registration only when that tool is available; choose write access according to the delegated task. Claude uses project-local `.claude/agents/<domain>-specialist.md` with Claude-compatible frontmatter. Codex uses `.codex/agents/<domain>-specialist.toml` with `name`, `description`, and `developer_instructions`. Inherit the parent model and permissions. Never weaken permissions to enable delegation.
      c) Delegate the domain workstream to the newly created specialist.
 3. **Parallel Multi-Area Execution ("Put Every Specialist to Work in Its Own Area")**:
    - When a task touches multiple areas (e.g., Database/RLS + Backend/Fiscal Engine + Frontend UI + Security/Tests):
@@ -259,10 +261,11 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md` and regis
    - Instruction to run `graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <files>` first and use surgical `view_file` windows (`StartLine`–`EndLine` of `60-150 lines`, NEVER `#L1-800` blind dumps).
    - Which 1–2 downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (alongside `graphify`).
    - Required Layer-1 verification commands and evidence.
-6. **Universal Multi-AI Compatibility Matrix (Works Identically Across All AIs)**:
-   - **Google Antigravity & Gemini CLI**: Reads `AGENTS.md`, `GEMINI.md`, `.agents/rules/*.md`. Loads `.agents/skills/<skill>/SKILL.md` via `view_file`. Spawns multiple subagents in parallel via `invoke_subagent(Subagents=[...])` and creates new specialists on the fly via `define_subagent` + `.agents/agents/<domain>-specialist.md`.
-   - **Claude Code (`claude`)**: Reads `AGENTS.md` and `.agents/rules/skill-routing.md`. Loads `.agents/skills/<skill>/SKILL.md` via `Read`. Spawns multiple subagents in parallel via `Task` / `Agent` tool (discovered from `.agents/agents/*.md` and `~/.claude/agents/*.md`) and creates new specialists by writing `.agents/agents/<domain>-specialist.md` + `~/.claude/agents/<domain>-specialist.md`.
-   - **OpenAI Codex (`codex`)**: Reads `AGENTS.md` and `.agents/rules/skill-routing.md`. Runs `graphify query` via shell, reads `.agents/skills/<skill>/SKILL.md` (and `~/.codex/skills/`), creates new `.agents/agents/<domain>-specialist.md` specialists when needed, and executes parallel/multi-track specialist workflows with Layer-1 + Layer-2 verification.
+6. **Runtime-Specific Compatibility Matrix**:
+   - **Google Antigravity**: Uses `GEMINI.md`, `.agents/rules/*.md`, `.agents/skills/*/SKILL.md`, and native `.agents/agents/*.md`. Use `invoke_subagent` / `define_subagent` only when exposed by the installed client. Gemini CLI capabilities must be verified separately; do not assume identical tool names.
+   - **Claude Code (`claude`)**: Loads `CLAUDE.md` importing `@AGENTS.md`, skills on demand, and native project `.claude/agents/*.md`. Delegate through the available `Agent` / `Task` tool. Do not copy Antigravity tool names into Claude's frontmatter. Restart a session if a newly created agents directory is not detected.
+   - **OpenAI Codex (`codex`)**: Reads `AGENTS.md`, `.agents/skills/*/SKILL.md`, and native `.codex/agents/*.toml`. Delegate with the runtime's available subagent tools (for example `spawn_agent`, `send_message`, and `wait_agent`), not an invented `invoke_subagent`. When named-agent selection is unavailable, pass the canonical specialist's instructions explicitly in the delegated prompt. Reload the project/session to discover newly materialized native agents.
+   - **Runtime boundaries**: Agent files provide instructions and discovery; they do not grant tools or override sandbox/account restrictions. `.agents/hooks.json` and `.agents/mcp_config.json` are portable configuration artifacts, not proof that a particular client's hooks or MCP servers are active. Validate each client's native configuration separately. If delegation is unavailable, state the limitation and ask before changing the coordinator-only policy; never claim parallel execution without an actual subagent run.
    - **Cursor, Windsurf & GitHub Copilot**: Reads `AGENTS.md` and `.agents/rules/*.md`. Loads `.agents/skills/<skill>/SKILL.md` via native file reader, creates `.agents/agents/<domain>-specialist.md` when new domain areas arise, and adopts each specialist's persona, skills, and Layer-1 verification per area before running the Layer-2 orchestrator gate.
 
 ---

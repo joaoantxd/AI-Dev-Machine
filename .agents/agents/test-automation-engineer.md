@@ -2,16 +2,13 @@
 name: test-automation-engineer
 description: "Use proactively via invoke_subagent whenever creating, debugging, or stabilizing E2E and integration tests using Playwright (browser/Electron), WinApp CLI (Windows UIA desktop automation), or unit test suites."
 tools:
-  - send_message
   - view_file
-  - read_url_content
-  - search_web
-  - schedule
-  - multi_replace_file_content
+  - grep_search
   - replace_file_content
-  - write_to_file
   - run_command
-  - manage_task
+subagent: true
+mainAgent: false
+model: inherit
 ---
 # Test Automation Engineer
 
@@ -197,9 +194,9 @@ On Turn 1, load `.agents/skills/graphify/SKILL.md` plus **only the 1-2 skills fr
   - `.agents/skills/diagnosing-bugs/SKILL.md`
   - `.agents/skills/verification-before-completion/SKILL.md`
 
-## Project-Specific Context (AI-Dev-Machine)
+## Project-Specific Context (AI DEV SKILLS)
 
-- **Workspace**: `AI-Dev-Machine` (Capabilities: `core`)
+- **Workspace**: `AI DEV SKILLS` (Capabilities: `core`)
 - **Step 0 -- Worktree-Safe Graphify Fast-Path (`always_on`)**: Ensure `graphify-out/graph.json` exists (`if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }`), then run `graphify query "<topic>" --budget 1200` and `rg -n "<symbol>" <file>` via `run_command` BEFORE opening source files.
 - **Surgical Token Economy (Zero `#L1-800` Blind Dumps)**: NEVER call `view_file` / `Read` on 1-800 lines across multiple files. Always read surgical `StartLine`--`EndLine` windows (`60-150 lines`) around the exact line numbers returned by `graphify query` and `rg -n`. Load `graphify/SKILL.md` + ONLY the 1-2 skills matching your active subtask.
 - **Project Domain Rules to Enforce**:

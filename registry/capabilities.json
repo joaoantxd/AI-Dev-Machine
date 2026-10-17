@@ -14,7 +14,8 @@
         "architecture-invariants.md",
         "git-workflow.md",
         "verification.md",
-        "skill-routing.md"
+        "skill-routing.md",
+        "orchestration.md"
       ],
       "skills": [
         "systematic-debugging",
@@ -39,6 +40,7 @@
         "frontend-design",
         "impeccable",
         "web-design-guidelines",
+        "vercel-react-best-practices",
         "supabase",
         "supabase-postgres-best-practices",
         "winapp",
@@ -436,17 +438,3 @@
     }
   ]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

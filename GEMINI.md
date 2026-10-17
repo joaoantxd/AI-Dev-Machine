@@ -24,5 +24,13 @@
 - **Hooks**: Enforced via `.agents/hooks.json`.
 - **Token Economy, Executive Briefing & Walkthrough Offload**: Always use `graphify query "<topic>" --budget 1200` + `rg -n` + surgical `view_file` windows (`60-150 lines`), offload multi-file exploration to subagents, keep chat messages concise (Executive Briefing), and offload detailed walkthroughs and architectural documentation to `Walkthrough.md` / `docs/` instead of dumping large text in the chat. Post-task `/compact` gate applies after major milestones.
 
+## AI-Dev-Machine Native Governance Bridge
 
+@AGENTS.md
 
+Follow AGENTS.md and .agents/rules/skill-routing.md. Use graphify query with --budget 1200 and targeted reads; apply the /compact milestone gate. Use the native agent tools available in your session and load .agents/agents/*.md specialists on demand.
+Follow AGENTS.md, .agents/rules/skill-routing.md and .agents/rules/orchestration.md. The main agent coordinates and specialists execute. Use graphify query with --budget 1200 and targeted reads; apply the /compact milestone gate. Use the native agent tools available in your session and load .agents/agents/*.md specialists on demand.
+
+## Antigravity Runtime Boundaries
+
+This section supersedes older runtime claims above. Use the actual invoke_subagent schema; TypeName and Prompt are conceptual labels, not assumed parameter names. Discover .agents/agents/*.md specialists with subagent: true, mainAgent: false, model: inherit. The main agent coordinates; specialists execute under inherited permissions. Agent/rule files do not prove runtime registration. Portable hooks/MCP artifacts do not prove enforcement or active connections. If native delegation is unavailable, report it and ask before changing coordinator-only policy.

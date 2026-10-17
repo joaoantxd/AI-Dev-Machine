@@ -356,7 +356,7 @@ if (Test-Path -LiteralPath $SkillsRoot) {
             $replacedDesc = $false
             foreach ($line in $lines) {
                 if ($line -match '^description:\s*(.*)$') {
-                    $newLines.Add(('description: "' + $newDesc + '"'))
+                    $newLines.Add(('description: ' + (ConvertTo-Json -InputObject $newDesc -Compress)))
                     $replacedDesc = $true
                     $valPart = $matches[1].Trim()
                     if ($valPart -eq '>' -or $valPart -eq '>-' -or $valPart -eq '|' -or $valPart -eq '|-') {

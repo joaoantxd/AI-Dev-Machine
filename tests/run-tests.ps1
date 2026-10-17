@@ -73,6 +73,12 @@ Assert-Test "profiles.json acts as presets referencing only registered capabilit
     }
 }
 
+Assert-Test "Core baseline supplies all 33 physical skills and coordinator routing for every stack" {
+    $coreCapability = (Get-RegistryData -Type 'capabilities').capabilities | Where-Object { $_.id -eq 'core' }
+    if (@($coreCapability.skills | Select-Object -Unique).Count -ne 33) { throw 'Core baseline must include all 33 downloaded skills' }
+    if ($coreCapability.rules -notcontains 'orchestration.md') { throw 'Core baseline must include coordinator-only orchestration' }
+}
+
 Assert-Test "aidev-manifest.schema.json exists and is valid JSON Draft-07 schema" {
     $schemaPath = Join-Path $aidevRoot 'schemas\aidev-manifest.schema.json'
     if (-not (Test-Path -LiteralPath $schemaPath)) { throw "aidev-manifest.schema.json missing" }
@@ -459,6 +465,7 @@ try {
 
         # Backup capabilities.json
         $capRegistryPath = Join-Path $aidevRoot 'registry\capabilities.json'
+        $originalCapBytes = [IO.File]::ReadAllBytes($capRegistryPath)
         $origCapJson = Get-Content -LiteralPath $capRegistryPath -Raw -Encoding utf8
         $capObj = $origCapJson | ConvertFrom-Json
         $capList = [System.Collections.Generic.List[object]]::new([object[]]$capObj.capabilities)
@@ -490,7 +497,7 @@ try {
             }
         } finally {
             # Restore canonical capabilities.json
-            Set-Content -LiteralPath $capRegistryPath -Value $origCapJson -Encoding utf8
+            [IO.File]::WriteAllBytes($capRegistryPath, $originalCapBytes)
         }
     }
 
@@ -999,6 +1006,9 @@ try {
         if ($healedGeminiMd -notmatch '/compact') { throw "Self-healing did not update GEMINI.md with /compact gate" }
 
         # 4. Post-apply audit must report 0 junctions and MigrationNeeded = False
+        # Graph extraction is deliberately skipped for TEMP fixtures; provide a graph artifact for this audit test.
+        $null = New-Item -ItemType Directory -Path (Join-Path $healWs 'graphify-out') -Force
+        Set-Content -LiteralPath (Join-Path $healWs 'graphify-out/graph.json') -Value '{"nodes":[],"links":[]}' -Encoding utf8
         $postAudit = Invoke-AidevAudit -WorkspacePath $healWs
         if ($postAudit.MigrationNeeded) { throw "Post-apply audit still reports MigrationNeeded = True" }
         if ($postAudit.SkillJunctionCount -ne 0) { throw "Post-apply audit still reports skill junctions" }
@@ -1007,16 +1017,10 @@ try {
 
     Assert-Test "All 10 specialized subagents have zero UTF-8 BOM, valid kebab-case name identifiers, and valid Antigravity tool registry entries" {
         $validAntigravityTools = @(
-            'send_message',
             'view_file',
-            'read_url_content',
-            'search_web',
-            'schedule',
-            'multi_replace_file_content',
+            'grep_search',
             'replace_file_content',
-            'write_to_file',
-            'run_command',
-            'manage_task'
+            'run_command'
         )
         $agentsDirToCheck = Join-Path $aidevRoot '.agents\agents'
         $agentFiles = @(Get-ChildItem -LiteralPath $agentsDirToCheck -Filter '*.md' -File)
@@ -1132,6 +1136,153 @@ Every query on PostgreSQL tables in Supabase must enforce tenant_id RLS isolatio
         if (-not $coreResearcherText.Contains('## Project-Specific Context (AgentSynthesisProject)')) {
             throw 'Core subagent researcher.md was not contextualized with Project-Specific Context'
         }
+        if (-not (Test-Path -LiteralPath (Join-Path $synWs '.codex/agents/researcher.toml'))) {
+            throw 'Codex cannot discover researcher: project-scoped TOML agent missing'
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $synWs '.codex/agents/fiscal-tenant-isolation-specialist.toml'))) {
+            throw 'Synthesized domain specialist missing Codex adapter'
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $synWs '.claude/agents/fiscal-tenant-isolation-specialist.md'))) {
+            throw 'Synthesized domain specialist missing Claude adapter'
+        }
+    }
+
+    Assert-Test "Native strings are identical in installed Windows PowerShell and PowerShell 7 runtimes" {
+        $nativeRuntimeCommands = @('powershell.exe', 'pwsh.exe') | ForEach-Object { Get-Command $_ -ErrorAction SilentlyContinue }
+        $nativeRuntimeScript = @'
+Import-Module '__MODULE__' -Force
+& (Get-Module AidevCore) { ConvertTo-AidevNativeString "A&B <domain> 'quoted' `"value`" C:\source`nline`t" }
+'@
+        $nativeRuntimeScript = $nativeRuntimeScript.Replace('__MODULE__', (Join-Path $aidevRoot 'core/AidevCore.psm1').Replace("'", "''"))
+        $nativeEncodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($nativeRuntimeScript))
+        $nativeResults = @()
+        foreach ($nativeRuntime in $nativeRuntimeCommands) {
+            $nativeResults += (& $nativeRuntime.Source -NoProfile -EncodedCommand $nativeEncodedScript)
+            if ($LASTEXITCODE -ne 0) { throw ('Native serializer failed in ' + $nativeRuntime.Source) }
+        }
+        if ($nativeResults.Count -lt 1 -or @($nativeResults | Select-Object -Unique).Count -ne 1) { throw 'Cross-runtime native strings do not match' }
+        $roundTrip = $nativeResults[0] | ConvertFrom-Json
+        if ($roundTrip -cne "A&B <domain> 'quoted' `"value`" C:\source`nline`t") { throw 'Native escaping changed quotes, paths, or controls' }
+    }
+
+    Assert-Test "Native agents preserve external files, serialize instructions, self-heal and audit drift across Codex and Claude" {
+        $nativeWs = Join-Path $tempBase 'NativeAdaptersProject'
+        $null = New-Item -ItemType Directory -Path (Join-Path $nativeWs '.codex/agents') -Force
+        Set-Content -LiteralPath (Join-Path $nativeWs '.aidev.json') -Value '{"schemaVersion":1,"preset":"base","capabilities":["core"]}' -Encoding utf8
+        foreach ($doc in @('AGENTS.md', 'GEMINI.md', 'CLAUDE.md')) {
+            Set-Content -LiteralPath (Join-Path $nativeWs $doc) -Value ('# Existing project rules: ' + $doc) -Encoding utf8
+        }
+        $configPath = Join-Path $nativeWs '.codex/config.toml'
+        $configSentinel = "# User configuration`n[agents]`nenabled = true`n"
+        [IO.File]::WriteAllText($configPath, $configSentinel)
+        Invoke-AidevApply -WorkspacePath $nativeWs -Force
+        $antigravityBridge = [IO.File]::ReadAllText((Join-Path $nativeWs 'GEMINI.md'))
+        if ($antigravityBridge -notmatch '## Antigravity Runtime Boundaries' -or $antigravityBridge -notmatch 'supersedes older runtime claims') { throw 'Missing explicit Antigravity runtime boundaries' }
+        foreach ($specialist in @(Get-ChildItem -LiteralPath (Join-Path $nativeWs '.agents/agents') -Filter '*.md')) {
+            $specialistRaw = [IO.File]::ReadAllText($specialist.FullName)
+            $header = [regex]::Match($specialistRaw, '\A---\r?\n(.*?)\r?\n---', [Text.RegularExpressions.RegexOptions]::Singleline).Groups[1].Value
+            if ($header -notmatch '(?m)^subagent: true\r?$' -or $header -notmatch '(?m)^mainAgent: false\r?$' -or $header -notmatch '(?m)^model: inherit\r?$') { throw ('Antigravity specialist discovery flags missing: ' + $specialist.Name) }
+            foreach ($tool in @([regex]::Matches($header, '(?m)^  - ([a-z_]+)\r?$') | ForEach-Object { $_.Groups[1].Value })) {
+                if ($tool -notin @('view_file', 'grep_search', 'run_command', 'replace_file_content')) { throw ('Unverified Antigravity tool: ' + $tool) }
+            }
+        }
+        foreach ($doc in @('AGENTS.md', 'GEMINI.md', 'CLAUDE.md')) {
+            if ([IO.File]::ReadAllText((Join-Path $nativeWs $doc)) -notmatch '# Existing project rules:') { throw ('Custom governance was overwritten: ' + $doc) }
+            if (@(Get-ChildItem -LiteralPath $nativeWs -Filter ($doc + '.aidev-backup-*')).Count -eq 0) { throw ('Missing governance backup: ' + $doc) }
+        }
+        if ([IO.File]::ReadAllText($configPath) -cne $configSentinel) { throw 'Codex user config was modified' }
+        $codexPath = Join-Path $nativeWs '.codex/agents/researcher.toml'
+        $claudePath = Join-Path $nativeWs '.claude/agents/researcher.md'
+        $firstCodex = [IO.File]::ReadAllText($codexPath)
+        $serialized = & (Get-Module AidevCore) { ConvertTo-AidevNativeString "A&B <domain> 'quoted'" }
+        if ($serialized -cne '"A\u0026B \u003cdomain\u003e \u0027quoted\u0027"') { throw 'Native string serialization differs between PowerShell 5.1 and 7' }
+        $serializedDel = & (Get-Module AidevCore) { ConvertTo-AidevNativeString ([string][char]0x7f) }
+        if ($serializedDel -cne '"\u007f"') { throw 'Native TOML must escape the DEL control character' }
+        if ($firstCodex -match '(?m)^(model|sandbox_mode|approval_policy)\s*=') { throw 'Adapter changes inherited runtime settings' }
+        $instructionsLine = ($firstCodex -split "`n" | Where-Object { $_ -match '^developer_instructions = ' })
+        $instructions = ($instructionsLine -replace '^developer_instructions = ', '') | ConvertFrom-Json
+        if ($instructions -notmatch 'Project-Specific Context' -or $instructions -notmatch 'native tools') { throw 'Codex instructions lost specialist context' }
+        if ([IO.File]::ReadAllText($claudePath) -match '(?m)^tools:') { throw 'Claude adapter contains foreign tool restrictions' }
+        $metadata = Get-Content -LiteralPath (Join-Path $nativeWs '.agents/.aidev_metadata.json') -Raw | ConvertFrom-Json
+        if (@($metadata.managedCodexAgents).Count -lt 10 -or @($metadata.managedClaudeAgents).Count -lt 10) { throw 'Native agent metadata missing core specialists' }
+        Invoke-AidevApply -WorkspacePath $nativeWs
+        if ([IO.File]::ReadAllText($codexPath) -cne $firstCodex) { throw 'Codex adapter is not idempotent' }
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues).Count -ne 0) { throw 'Fresh native adapters fail audit' }
+        [IO.File]::AppendAllText($codexPath, 'invalid = [')
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues | Where-Object { $_ -like 'Outdated or corrupt:*' }).Count -eq 0) { throw 'Corrupt Codex agent was not detected' }
+        Invoke-AidevApply -WorkspacePath $nativeWs
+        if ([IO.File]::ReadAllText($codexPath) -cne $firstCodex) { throw 'Managed Codex corruption was not repaired' }
+        $sourceAgentPath = Join-Path $nativeWs '.agents/agents/researcher.md'
+        [IO.File]::AppendAllText($sourceAgentPath, "`nAdditional project instruction: check C:\\source and quote `"values`".`n")
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues | Where-Object { $_ -like 'Outdated or corrupt:*' }).Count -lt 2) { throw 'Source changes did not invalidate both native adapters' }
+        Invoke-AidevApply -WorkspacePath $nativeWs
+        Remove-Item -LiteralPath $sourceAgentPath -Force
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues | Where-Object { $_ -like 'Missing canonical agent:*' }).Count -eq 0) { throw 'Missing canonical specialist was not detected from metadata' }
+        Invoke-AidevApply -WorkspacePath $nativeWs
+        Remove-Item -LiteralPath $claudePath -Force
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues | Where-Object { $_ -like 'Missing:*claude*' }).Count -eq 0) { throw 'Missing Claude agent was not detected' }
+        $external = 'name = "researcher"' + "`n" + 'description = "User owned"' + "`n" + 'developer_instructions = "Preserve me"'
+        [IO.File]::WriteAllText($codexPath, $external)
+        Invoke-AidevApply -WorkspacePath $nativeWs -Force
+        if ([IO.File]::ReadAllText($codexPath) -cne $external) { throw 'External Codex agent was overwritten' }
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (-not $audit.MigrationNeeded -or @($audit.NativeAgentIssues | Where-Object { $_ -like 'External collision:*' }).Count -eq 0) { throw 'External name collision was not reported' }
+        $coordinatorRule = Join-Path $nativeWs '.agents/rules/orchestration.md'
+        Remove-Item -LiteralPath $coordinatorRule -Force
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.NativeAgentIssues | Where-Object { $_ -like 'Missing coordinator rule:*' }).Count -eq 0) { throw 'Missing coordinator policy was not reported' }
+        Remove-Item -LiteralPath (Join-Path $nativeWs '.agents/scripts/safety-check.ps1') -Force
+        $audit = Invoke-AidevAudit -WorkspacePath $nativeWs
+        if (@($audit.GovernanceIssues | Where-Object { $_ -like 'Missing or invalid safety hook*' }).Count -eq 0) { throw 'Missing hook script was not detected' }
+        if (@($audit.GovernanceIssues | Where-Object { $_ -like 'Missing or invalid graph:*' }).Count -eq 0) { throw 'Missing graph was not detected' }
+    }
+
+    Assert-Test "Apply repairs managed skill description YAML without replacing custom body or fields" {
+        $repairWs = Join-Path $tempBase 'SkillDescriptionRepairProject'
+        $repairSkillDir = Join-Path $repairWs '.agents/skills/graphify'
+        $null = New-Item -ItemType Directory -Path $repairSkillDir -Force
+        Set-Content -LiteralPath (Join-Path $repairWs '.aidev.json') -Value '{"schemaVersion":1,"preset":"base","capabilities":["core"]}' -Encoding utf8
+        $sourceGraphify = Join-Path $env:USERPROFILE '.agents/skills/graphify/SKILL.md'
+        $canonicalLine = & (Get-Module AidevCore) { param($p) Get-AidevCanonicalSkillDescription -SkillPath $p } $sourceGraphify
+        if (-not $canonicalLine) { throw 'Run aidev sync first: canonical Graphify JSON description missing' }
+        $canonicalDescription = ConvertFrom-Json -InputObject ($canonicalLine -replace '^description:\s*', '')
+        $badLine = 'description: "' + $canonicalDescription + '"'
+        $customContent = "---`nname: graphify`n" + $badLine + "`ncustom-field: preserve-me`n---`n# Custom project instructions`nKeep this body intact, including C:\\project and quotes `"exactly`".`n"
+        $destinationGraphify = Join-Path $repairSkillDir 'SKILL.md'
+        [IO.File]::WriteAllText($destinationGraphify, $customContent, (New-Object Text.UTF8Encoding($false)))
+        Invoke-AidevApply -WorkspacePath $repairWs
+        $expected = $customContent.Replace($badLine, $canonicalLine)
+        if ([IO.File]::ReadAllText($destinationGraphify) -cne $expected) { throw 'Description repair failed or modified custom body/fields' }
+        $backups = @(Get-ChildItem -LiteralPath $repairSkillDir -Filter 'SKILL.md.aidev-backup-*' -File)
+        if ($backups.Count -ne 1 -or [IO.File]::ReadAllText($backups[0].FullName) -cne $customContent) { throw 'Original skill was not backed up exactly' }
+        Invoke-AidevApply -WorkspacePath $repairWs
+        if ([IO.File]::ReadAllText($destinationGraphify) -cne $expected -or @(Get-ChildItem -LiteralPath $repairSkillDir -Filter 'SKILL.md.aidev-backup-*' -File).Count -ne 1) { throw 'Description repair is not idempotent' }
+        $blockContent = $customContent.Replace($badLine, "description: >-`n  Custom multiline description`n  must remain unchanged.")
+        [IO.File]::WriteAllText($destinationGraphify, $blockContent, (New-Object Text.UTF8Encoding($false)))
+        Invoke-AidevApply -WorkspacePath $repairWs
+        if ([IO.File]::ReadAllText($destinationGraphify) -cne $blockContent) { throw 'Repair corrupted a custom YAML block scalar' }
+    }
+
+    Assert-Test "Native adapters never follow linked agent directories outside the workspace" {
+        $linkedWs = Join-Path $tempBase 'NativeLinkedProject'
+        $externalAgents = Join-Path $tempBase 'ExternalNativeAgents'
+        $null = New-Item -ItemType Directory -Path (Join-Path $linkedWs '.claude'), $externalAgents -Force
+        $sentinel = Join-Path $externalAgents 'researcher.md'
+        $sentinelText = '# External canonical agent must survive'
+        [IO.File]::WriteAllText($sentinel, $sentinelText)
+        $claudeJunction = Join-Path $linkedWs '.claude/agents'
+        $null = cmd /c "mklink /J `"$claudeJunction`" `"$externalAgents`"" 2>&1
+        if ($LASTEXITCODE -ne 0) { throw 'Could not create linked native agent fixture' }
+        Set-Content -LiteralPath (Join-Path $linkedWs '.aidev.json') -Value '{"schemaVersion":1,"preset":"base","capabilities":["core"]}' -Encoding utf8
+        Invoke-AidevApply -WorkspacePath $linkedWs
+        if ([IO.File]::ReadAllText($sentinel) -cne $sentinelText -or @(Get-ChildItem -LiteralPath $externalAgents -File).Count -ne 1) { throw 'Native adapter wrote through a project junction' }
+        $audit = Invoke-AidevAudit -WorkspacePath $linkedWs
+        if (-not $audit.MigrationNeeded -or @($audit.NativeAgentIssues | Where-Object { $_ -like 'Linked native agent directory:*' }).Count -eq 0) { throw 'Linked native agents directory missing audit issue' }
     }
 
 } finally {

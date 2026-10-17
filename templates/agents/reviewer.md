@@ -2,13 +2,12 @@
 name: reviewer
 description: "Use proactively via invoke_subagent for independent code and specification review of diffs, PRs, and implementations. Challenges solutions, detects regressions, and audits repository standards adherence."
 tools:
-  - send_message
   - view_file
-  - read_url_content
-  - search_web
-  - schedule
+  - grep_search
   - run_command
-  - manage_task
+subagent: true
+mainAgent: false
+model: inherit
 ---
 
 # Independent Code & Spec Reviewer
