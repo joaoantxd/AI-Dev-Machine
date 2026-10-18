@@ -1021,6 +1021,8 @@ try {
             'grep_search',
             'replace_file_content',
             'run_command'
+            'send_message'
+            'manage_subagents'
         )
         $agentsDirToCheck = Join-Path $aidevRoot '.agents\agents'
         $agentFiles = @(Get-ChildItem -LiteralPath $agentsDirToCheck -Filter '*.md' -File)
@@ -1121,6 +1123,10 @@ Every query on PostgreSQL tables in Supabase must enforce tenant_id RLS isolatio
         }
 
         $synText = [System.IO.File]::ReadAllText($synthesizedAgentPath, [System.Text.Encoding]::UTF8)
+        foreach ($peerTool in @('send_message', 'manage_subagents')) {
+            if ($synText -notmatch ('(?m)^  - ' + $peerTool + '\r?$')) { throw ('Synthesized agent missing peer tool: ' + $peerTool) }
+        }
+        if ($synText -notmatch 'notify the coordinator' -or $synText -notmatch 'only to list' -or $synText -notmatch 'uncontrolled nested delegations') { throw 'Synthesized agent missing bounded peer assistance protocol' }
         if ($synText -notmatch '(?m)^name:\s*fiscal-tenant-isolation-specialist\s*$') {
             throw 'Synthesized specialist subagent missing valid kebab-case name frontmatter'
         }
@@ -1183,8 +1189,16 @@ Import-Module '__MODULE__' -Force
             $header = [regex]::Match($specialistRaw, '\A---\r?\n(.*?)\r?\n---', [Text.RegularExpressions.RegexOptions]::Singleline).Groups[1].Value
             if ($header -notmatch '(?m)^subagent: true\r?$' -or $header -notmatch '(?m)^mainAgent: false\r?$' -or $header -notmatch '(?m)^model: inherit\r?$') { throw ('Antigravity specialist discovery flags missing: ' + $specialist.Name) }
             foreach ($tool in @([regex]::Matches($header, '(?m)^  - ([a-z_]+)\r?$') | ForEach-Object { $_.Groups[1].Value })) {
-                if ($tool -notin @('view_file', 'grep_search', 'run_command', 'replace_file_content')) { throw ('Unverified Antigravity tool: ' + $tool) }
+                if ($tool -notin @('view_file', 'grep_search', 'run_command', 'replace_file_content', 'send_message', 'manage_subagents')) { throw ('Unverified Antigravity tool: ' + $tool) }
             }
+            foreach ($peerTool in @('send_message', 'manage_subagents')) {
+                if ($header -notmatch ('(?m)^  - ' + $peerTool + '\r?$')) { throw ('Missing peer collaboration tool: ' + $specialist.Name + ': ' + $peerTool) }
+            }
+            if ($specialistRaw -notmatch 'Peer Assistance' -or $specialistRaw -notmatch 'notify the coordinator' -or $specialistRaw -notmatch 'Action: list') { throw ('Missing bounded peer help instructions: ' + $specialist.Name) }
+        }
+        $peerRule = [IO.File]::ReadAllText((Join-Path $nativeWs '.agents/rules/orchestration.md'))
+        foreach ($peerRequirement in @('Recipient', 'Message', 'never invent IDs', 'coordinator approval', 'do not kill', 'return the request to the coordinator', 'maximum depth of 10')) {
+            if (-not $peerRule.Contains($peerRequirement)) { throw ('Missing peer protocol guard: ' + $peerRequirement) }
         }
         foreach ($doc in @('AGENTS.md', 'GEMINI.md', 'CLAUDE.md')) {
             if ([IO.File]::ReadAllText((Join-Path $nativeWs $doc)) -notmatch '# Existing project rules:') { throw ('Custom governance was overwritten: ' + $doc) }

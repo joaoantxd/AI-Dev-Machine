@@ -231,6 +231,8 @@ function Optimize-AgentDefinition {
             "  - grep_search"
             "  - replace_file_content"
             "  - run_command"
+            "  - send_message"
+            "  - manage_subagents"
             "subagent: true"
             "mainAgent: false"
             "model: inherit"

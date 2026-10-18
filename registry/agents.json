@@ -9,7 +9,7 @@
       "description": "Deep investigation, architecture discovery, evidence gathering, call graph tracing and Graphify navigation. Read-only: never modifies code.",
       "category": "investigation",
       "source": "builtin",
-      "toolsAllowed": ["view_file", "grep_search", "run_command"],
+      "toolsAllowed": ["view_file", "grep_search", "run_command", "send_message", "manage_subagents"],
       "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
     },
     {
@@ -19,7 +19,7 @@
       "description": "Examines diffs, evaluates regressions, verifies issue specification compliance, checks edge cases and challenges optimistic conclusions.",
       "category": "review",
       "source": "builtin",
-      "toolsAllowed": ["view_file", "grep_search", "run_command"],
+      "toolsAllowed": ["view_file", "grep_search", "run_command", "send_message", "manage_subagents"],
       "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
     },
     {
@@ -29,7 +29,7 @@
       "description": "Audits attack surfaces, auth boundaries, input validation, secrets leaks, cryptographic choices and SAST findings.",
       "category": "security",
       "source": "builtin",
-      "toolsAllowed": ["view_file", "grep_search", "run_command"],
+      "toolsAllowed": ["view_file", "grep_search", "run_command", "send_message", "manage_subagents"],
       "toolsForbidden": ["replace_file_content", "multi_replace_file_content", "write_to_file"]
     },
     {

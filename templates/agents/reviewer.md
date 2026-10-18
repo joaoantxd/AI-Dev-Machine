@@ -5,6 +5,8 @@ tools:
   - view_file
   - grep_search
   - run_command
+  - send_message
+  - manage_subagents
 subagent: true
 mainAgent: false
 model: inherit
