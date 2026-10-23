@@ -1,4 +1,4 @@
-﻿# GEMINI.md — [PROJECT_NAME]
+# GEMINI.md — [PROJECT_NAME]
 
 > **Google Antigravity & Gemini CLI Native Bridge**
 > Project invariants are defined in `AGENTS.md`. Workspace customizations are organized in `.agents/`.
@@ -23,6 +23,10 @@
 - **MCP Servers**: Portable declarations are in `.agents/mcp_config.json`; validate the installed client's supported configuration and server status before claiming they are active.
 - **Hooks**: `.agents/hooks.json` contains the portable safety policy. Enforcement depends on the installed client's hook support and native configuration; file presence alone does not prove execution.
 - **Other runtimes**: Claude Code loads `CLAUDE.md` and `.claude/agents/*.md`; Codex loads `AGENTS.md` and `.codex/agents/*.toml`. Use only tools actually exposed by the current runtime. Agent definitions inherit session permissions and never grant broader access.
-- **Token Economy, Executive Briefing & Walkthrough Offload**: Always use `graphify query "<topic>" --budget 1200` + `rg -n` + surgical `view_file` windows (`60-150 lines`), offload multi-file exploration to subagents, keep chat messages concise (Executive Briefing), and offload detailed walkthroughs and architectural documentation to `Walkthrough.md` / `docs/` instead of dumping large text in the chat. Post-task `/compact` gate applies after major milestones.
+- **Token Economy, Executive Briefing & Mandatory Walkthrough Offload (STRICT CHAT CAP: 25-30 LINES)**:
+  - **MANDATORY CHAT LIMIT**: Chat responses MUST be strictly concise Executive Briefings (maximum 25-30 lines) containing: 1-2 paragraph executive summary, bulleted test/command verification evidence, and next steps.
+  - **ZERO CHAT DUMPS**: NEVER print diagnostic reports, security audits, inventory tables, architectural proposals, multi-step plans, or code dumps directly into the chat!
+  - **OFFLOAD TO DISK FIRST**: You MUST write any extensive report, diagnosis, or plan to `Walkthrough.md` (or `docs/<topic>.md`) via `write_file` BEFORE answering the user, and provide ONLY the markdown file link (`file:///...`) in the chat response.
+  - **MANDATORY SUBAGENT DELEGATION**: Whenever a task touches 2+ distinct domains or layers (e.g. security audits touching CVEs + Cloud/Vercel + Database/Supabase + Code), you MUST dispatch parallel specialists (`security-reviewer`, `security-architect`, `database-optimizer`) via `invoke_subagent` on Turn 1. Conversational prompt phrases like "evitar subagentes desnecessários" apply ONLY to trivial 1-line tasks; they NEVER authorize executing multi-domain audits or multi-subsystem investigations monolithically in the coordinator. Post-task `/compact` gate applies after major milestones.
 
 

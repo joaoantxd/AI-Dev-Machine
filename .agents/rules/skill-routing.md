@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-routing
 description: Autonomous, continuous, and unconstrained skill routing across all conversation turns, phases, and engineering domains.
 trigger: always_on
@@ -14,7 +14,8 @@ trigger: always_on
 > - **Skills** are specialized methods and domain knowledge loaded on demand (`.agents/skills/<skill>/SKILL.md`).
 > - **Subagents** are domain specialists (`invoke_subagent`) called when task specialization or complexity justifies them.
 > - **Router (`AGENTS.md` + `skill-routing.md`)** is this built-in decision matrix itself — **no separate `agency-router` skill file is needed**. The goal is not to use *more* tools, but to choose the **right tool at the right time, automatically**.
-> - **STRICT EXECUTIVE BRIEFING & ZERO CHAT DUMPS**: **NEVER output long essays, comprehensive documentation, or multi-page status reports directly in the chat**. Whenever producing a deep architectural review, status diagnosis, or walkthrough, the AI **MUST write it to `Walkthrough.md` or a documentation file first**, and then reply in chat with **ONLY an Executive Briefing** (bullet summary + clickable link `file:///...`). Every massive text dump in chat permanently burns tokens across all future conversation turns.
+> - **STRICT EXECUTIVE BRIEFING & ZERO CHAT DUMPS (MANDATORY CHAT LIMIT: 25-30 LINES)**: **NEVER output long essays, comprehensive documentation, diagnostic tables, audit inventories, or multi-page status reports directly in the chat**. Whenever producing a deep architectural review, status diagnosis, security audit, or walkthrough, the AI **MUST write it to `Walkthrough.md` or a documentation file first via `write_file`**, and then reply in chat with **ONLY an Executive Briefing** (1-2 paragraph summary + bulleted test evidence + clickable file link `file:///...`). Every massive text dump in chat permanently burns tokens across all future conversation turns.
+> - **MANDATORY MULTI-DOMAIN SUBAGENT DELEGATION (ANTI-MONOLITH)**: Whenever a task or investigation spans 2+ distinct domains, layers, or subsystems (e.g. security audits covering CVEs + Cloud/Vercel + Database/Supabase + Code), the coordinator **MUST dispatch parallel specialists via `invoke_subagent` on Turn 1** (`security-reviewer`, `security-architect`, `database-optimizer`). Conversational user phrases like *"evitar subagentes desnecessários"* apply strictly to trivial 1-line tasks; they **NEVER** authorize executing multi-domain audits or multi-subsystem investigations monolithically in the coordinator.
 
 
 ```text

@@ -1914,7 +1914,7 @@ function Invoke-AidevApply {
         $updatedAgentsMd = $existingAgentsMd
         $routingInvariantLine = '- **Automatic & Dynamic Skill Routing (`always_on`)**: Follow [`.agents/rules/skill-routing.md`](.agents/rules/skill-routing.md) on every turn. Before reading repository code, proposing fixes, or writing code in any domain covered by a skill, you MUST load its `SKILL.md` via `view_file` on Turn 1. Combine multiple complementary skills whenever tasks span multiple domains.'
         $compactInvariantLine = '- **Context Hygiene & Post-Task Compaction Gate (`/compact`)**: Delegue exploracoes extensas a subagentes para isolar logs fora do chat e recomende pontualmente /compact ao concluir grandes marcos.'
-        $walkthroughInvariantLine = '- **Respostas Concisas no Chat & Offload para Walkthrough.md / Docs**: NUNCA envie respostas gigantescas ou logs extensos no chat (isso infla o historico e queima tokens a cada turno). Mantenha as mensagens no padrao Executive Briefing (resumo direto, evidencias de testes e proximos passos). Todo detalhamento tecnico, comparativos ou passo a passo de telas DEVE ser gravado diretamente em Walkthrough.md ou docs/ e apenas referenciado no chat por link markdown.'
+        $walkthroughInvariantLine = '- **Respostas Concisas no Chat & Offload para Walkthrough.md / Docs (Teto Rigido: 25-30 Linhas)**: NUNCA envie respostas gigantescas, relatorios de auditoria, tabelas de inventario ou logs extensos no chat (isso infla o historico e queima tokens a cada turno). Mantenha as mensagens no padrao Executive Briefing (resumo direto, evidencias de testes e proximos passos, em no maximo 25-30 linhas). Todo detalhamento tecnico, relatorio diagnostico, comparativos ou passo a passo DEVE ser gravado diretamente em Walkthrough.md ou docs/ via write_file ANTES de responder, e apenas referenciado no chat por link markdown.'
 
         if ($updatedAgentsMd -notmatch 'skill-routing\.md') {
             if ($updatedAgentsMd -match '(?m)^5\.\s+\*\*Automatic\s+&\s+Dynamic\s+Skill\s+Routing\*\*.*$') {
@@ -1983,6 +1983,18 @@ function Invoke-AidevApply {
         }
         Set-Content -LiteralPath $geminiMdDest -Value $instG -Encoding utf8
         Write-Host '  [CREATED BRIDGE] GEMINI.md' -ForegroundColor Green
+    } else {
+        $walkthroughSection = "- **Token Economy, Executive Briefing & Mandatory Walkthrough Offload (STRICT CHAT CAP: 25-30 LINES)**:`r`n  - **MANDATORY CHAT LIMIT**: Chat responses MUST be strictly concise Executive Briefings (maximum 25-30 lines) containing: 1-2 paragraph executive summary, bulleted test/command verification evidence, and next steps.`r`n  - **ZERO CHAT DUMPS**: NEVER print diagnostic reports, security audits, inventory tables, architectural proposals, multi-step plans, or code dumps directly into the chat!`r`n  - **OFFLOAD TO DISK FIRST**: You MUST write any extensive report, diagnosis, or plan to ``Walkthrough.md`` (or ``docs/<topic>.md``) via ``write_file`` BEFORE answering the user, and provide ONLY the markdown file link (``file:///...``) in the chat response.`r`n  - **MANDATORY SUBAGENT DELEGATION**: Whenever a task touches 2+ distinct domains or layers (e.g. security audits touching CVEs + Cloud/Vercel + Database/Supabase + Code), you MUST dispatch parallel specialists (``security-reviewer``, ``security-architect``, ``database-optimizer``) via ``invoke_subagent`` on Turn 1. Conversational prompt phrases like 'evitar subagentes desnecessarios' apply ONLY to trivial 1-line tasks; they NEVER authorize executing multi-domain audits or multi-subsystem investigations monolithically in the coordinator. Post-task /compact gate applies after major milestones."
+        if ($existingGeminiMd -notmatch 'STRICT CHAT CAP: 25-30 LINES') {
+            Backup-AidevGovernanceFile -Path $geminiMdDest
+            $updatedGemini = if ($existingGeminiMd -match '(?m)^- \*\*Token Economy.*$') {
+                [regex]::Replace($existingGeminiMd, '(?s)- \*\*Token Economy[^\r\n]*(\r?\n\s+-[^\r\n]*)*', $walkthroughSection)
+            } else {
+                $existingGeminiMd.TrimEnd() + "`r`n" + $walkthroughSection + "`r`n"
+            }
+            [IO.File]::WriteAllText($geminiMdDest, $updatedGemini, (New-Object Text.UTF8Encoding($false)))
+            Write-Host '  [UPDATED BRIDGE] GEMINI.md (reinforced Walkthrough offload & strict chat cap)' -ForegroundColor Green
+        }
     }
 
     $nativeRouting = '- **Native Multi-AI Subagents**: Follow `.agents/rules/orchestration.md`: the main agent coordinates, delegates, verifies integration, and responds; specialists investigate, implement, test, and review. Codex discovers `.codex/agents/*.toml`; Claude Code discovers `.claude/agents/*.md`; Antigravity uses `.agents/agents/*.md`. Use the native session agent tool (`spawn_agent` / `Task` / `Agent` / `invoke_subagent`) when available. If delegation is unavailable, report that limitation and ask before changing the coordinator-only policy. Creating an agent definition does not prove runtime registration. For new domains, persist `.agents/agents/<domain>-specialist.md`, run `aidev.ps1 apply` to refresh native adapters, and pass its instructions explicitly when delegating in an already-open session.'
@@ -1997,11 +2009,16 @@ function Invoke-AidevApply {
     foreach ($bridgeName in @('CLAUDE.md', 'GEMINI.md')) {
         $bridgePath = Join-Path $ws $bridgeName
         $bridgeRaw = if (Test-Path -LiteralPath $bridgePath) { [IO.File]::ReadAllText($bridgePath) } else { '' }
+        $bridgeText = "Follow AGENTS.md, .agents/rules/skill-routing.md and .agents/rules/orchestration.md. The main agent coordinates and specialists execute. Multi-domain tasks MUST dispatch parallel specialists via ``invoke_subagent`` on Turn 1. Chat responses MUST be concise Executive Briefings (<= 30 lines) with all detailed reports offloaded to ``Walkthrough.md``. Use graphify query with --budget 1200 and targeted reads; apply the /compact milestone gate. Use the native agent tools available in your session and load .agents/agents/*.md specialists on demand."
         if ($bridgeRaw -notmatch 'AI-Dev-Machine Native Governance Bridge' -or $bridgeRaw -notmatch 'rules/orchestration\.md') {
             Backup-AidevGovernanceFile -Path $bridgePath
             $bridge = if ($bridgeRaw -match 'AI-Dev-Machine Native Governance Bridge') { '' } else { "`n`n## AI-Dev-Machine Native Governance Bridge`n`n@AGENTS.md`n" }
-            $bridge += "`nFollow AGENTS.md, .agents/rules/skill-routing.md and .agents/rules/orchestration.md. The main agent coordinates and specialists execute. Use graphify query with --budget 1200 and targeted reads; apply the /compact milestone gate. Use the native agent tools available in your session and load .agents/agents/*.md specialists on demand.`n"
+            $bridge += "`n" + $bridgeText + "`n"
             [IO.File]::WriteAllText($bridgePath, ($bridgeRaw.TrimEnd() + $bridge), (New-Object Text.UTF8Encoding($false)))
+        } elseif ($bridgeRaw -notmatch 'Executive Briefings \(<= 30 lines\)') {
+            Backup-AidevGovernanceFile -Path $bridgePath
+            $updatedBridge = [regex]::Replace($bridgeRaw, '(?s)## AI-Dev-Machine Native Governance Bridge.*?(##|\Z)', "## AI-Dev-Machine Native Governance Bridge`n`n@AGENTS.md`n`n$bridgeText`n`n`$1")
+            [IO.File]::WriteAllText($bridgePath, $updatedBridge, (New-Object Text.UTF8Encoding($false)))
         }
     }
 
