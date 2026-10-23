@@ -365,6 +365,30 @@
       "localPath": "skills/understand-anything",
       "expectedName": "understand-anything",
       "toolsSupported": ["all"]
+    },
+    {
+      "id": "graft",
+      "name": "graft",
+      "description": "First-order structural codebase navigation, tree-sitter AST call graphs, API skeletons, diff blast radius, and linked markdown context graphs co-equal with Graphify.",
+      "category": "architecture",
+      "repo": "trailhq/Trail-Code",
+      "branch": "main",
+      "sourceType": "local",
+      "localPath": "skills/graft",
+      "expectedName": "graft",
+      "toolsSupported": ["all"]
+    },
+    {
+      "id": "harness",
+      "name": "harness",
+      "description": "Principal skill for recursive agent behavioral calibration, transcript forensics (transcript.jsonl), Propose-Probe-Compose methodology, multi-agent orchestration, and anti-tool-bypass enforcement.",
+      "category": "core",
+      "repo": "google-research/harness2",
+      "branch": "main",
+      "sourceType": "local",
+      "localPath": "skills/harness",
+      "expectedName": "harness",
+      "toolsSupported": ["all"]
     }
   ]
 }

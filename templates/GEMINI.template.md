@@ -1,4 +1,4 @@
-# GEMINI.md — [PROJECT_NAME]
+﻿# GEMINI.md — [PROJECT_NAME]
 
 > **Google Antigravity & Gemini CLI Native Bridge**
 > Project invariants are defined in `AGENTS.md`. Workspace customizations are organized in `.agents/`.
@@ -7,8 +7,8 @@
 
 ## Workspace Customization Discovery
 
-- **Rules**: Discovered hierarchically in `.agents/rules/*.md`. `skill-routing.md` is `always_on` and commands autonomous routing of all 33 downloaded skills and 10 specialized subagents.
-- **Skills (33 Downloaded Skills)**: Physically materialized in `.agents/skills/<skill>/SKILL.md`. Antigravity MUST prioritize the 33 downloaded skills over generic IDE built-ins and read the relevant `SKILL.md` on Turn 1 via `view_file` before reading repository code, proposing fixes, or writing code.
+- **Rules**: Discovered hierarchically in `.agents/rules/*.md`. `skill-routing.md` is `always_on` and commands autonomous routing of all 35 downloaded skills and 10 specialized subagents.
+- **Skills (35 Downloaded Skills)**: Physically materialized in `.agents/skills/<skill>/SKILL.md`. Antigravity MUST prioritize the 33 downloaded skills over generic IDE built-ins and read the relevant `SKILL.md` on Turn 1 via `view_file` before reading repository code, proposing fixes, or writing code.
 - **Subagents (10 Specialized Subagents — Principal Focus)**: Physically materialized in `.agents/agents/*.md`. Antigravity MUST prioritize delegating domain workstreams with the available native `invoke_subagent` schema and the specialist identifiers below (and instruct each specialist to load its domain's `SKILL.md` on Turn 1). Do not assume a parameter named `TypeName` exists:
   - `researcher` (`.agents/agents/researcher.md` — Read-only architecture & Graphify/CALM investigation)
   - `software-architect` (`.agents/agents/software-architect.md` — System design, DDD bounded contexts, deep modules & ADRs)

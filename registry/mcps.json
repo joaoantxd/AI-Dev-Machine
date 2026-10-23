@@ -10,7 +10,10 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
       "env": {},
       "enabledByDefault": true,
       "requiresAuth": false,
@@ -24,10 +27,16 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
       "env": {},
       "enabledByDefault": false,
-      "profileRecommended": ["web-supabase", "monorepo"],
+      "profileRecommended": [
+        "web-supabase",
+        "monorepo"
+      ],
       "requiresAuth": false,
       "authEnvVar": ""
     },
@@ -39,7 +48,9 @@
       "scope": "project",
       "transport": "stdio",
       "command": "semgrep",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
       "env": {},
       "enabledByDefault": false,
       "profileRecommended": [],
@@ -54,12 +65,18 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest"
+      ],
       "env": {
         "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
       },
       "enabledByDefault": false,
-      "profileRecommended": ["web-supabase", "monorepo"],
+      "profileRecommended": [
+        "web-supabase",
+        "monorepo"
+      ],
       "requiresAuth": true,
       "authEnvVar": "SUPABASE_ACCESS_TOKEN"
     },
@@ -71,7 +88,10 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       },
@@ -99,7 +119,10 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@anthropic/mcp-playwright"],
+      "args": [
+        "-y",
+        "@anthropic/mcp-playwright"
+      ],
       "env": {},
       "enabledByDefault": false,
       "requiresAuth": false,
@@ -113,7 +136,9 @@
       "scope": "project",
       "transport": "stdio",
       "command": "graphify",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
       "env": {},
       "enabledByDefault": false,
       "requiresAuth": false,
@@ -127,7 +152,11 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@eilodon/calm-mcp", "serve"],
+      "args": [
+        "-y",
+        "@eilodon/calm-mcp",
+        "serve"
+      ],
       "env": {},
       "enabledByDefault": false,
       "requiresAuth": false,
@@ -141,9 +170,33 @@
       "scope": "project",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@next/dev-tools-mcp"],
+      "args": [
+        "-y",
+        "@next/dev-tools-mcp"
+      ],
       "env": {},
       "enabledByDefault": false,
+      "requiresAuth": false,
+      "authEnvVar": ""
+    },
+    {
+      "id": "graft",
+      "name": "Graft Code Graph MCP",
+      "description": "Exposes graft_find_code, graft_trace_calls, graft_find_all, graft_file_api, graft_repo_map and graft_check_freshness over stdio.",
+      "category": "architecture",
+      "scope": "project",
+      "transport": "stdio",
+      "command": "graft",
+      "args": [
+        "mcp"
+      ],
+      "env": {},
+      "enabledByDefault": false,
+      "profileRecommended": [
+        "base",
+        "web-supabase",
+        "monorepo"
+      ],
       "requiresAuth": false,
       "authEnvVar": ""
     }

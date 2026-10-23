@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-routing
 description: Autonomous, continuous, and unconstrained skill routing across all conversation turns, phases, and engineering domains.
 trigger: always_on
@@ -13,60 +13,61 @@ trigger: always_on
 > **Core Principle**: The AI must **NEVER** use the exact same skill or the exact same subagent blindly on every task.
 > - **Skills** are specialized methods and domain knowledge loaded on demand (`.agents/skills/<skill>/SKILL.md`).
 > - **Subagents** are domain specialists (`invoke_subagent`) called when task specialization or complexity justifies them.
-> - **Router (`AGENTS.md` + `skill-routing.md`)** is this built-in decision matrix itself — **no separate `agency-router` skill file is needed**. The goal is not to use *more* tools, but to choose the **right tool at the right time, automatically**.
+> - **Router (`AGENTS.md` + `skill-routing.md`)** is this built-in decision matrix itself â€” **no separate `agency-router` skill file is needed**. The goal is not to use *more* tools, but to choose the **right tool at the right time, automatically**.
 > - **STRICT EXECUTIVE BRIEFING & ZERO CHAT DUMPS**: **NEVER output long essays, comprehensive documentation, or multi-page status reports directly in the chat**. Whenever producing a deep architectural review, status diagnosis, or walkthrough, the AI **MUST write it to `Walkthrough.md` or a documentation file first**, and then reply in chat with **ONLY an Executive Briefing** (bullet summary + clickable link `file:///...`). Every massive text dump in chat permanently burns tokens across all future conversation turns.
 
 
 ```text
-                        Pedido do usuário
-                                ↓
+                        Pedido do usuÃ¡rio
+                                â†“
              AGENTS.md + Roteamento (skill-routing.md)
-                                ↓
+                                â†“
                          Graphify + CALM
-     (SE NECESSÁRIO: quando precisar mapear arquitetura/impacto
-                  — ou delegar ao `researcher`)
-                                ↓
-             Avaliação do Trabalho ("Precisa de especialista?")
-                     │                      │
-                    NÃO                    SIM (quando a complexidade/domínio justificar)
-          (Agente atual resolve)            │
-                     │             Qual especialista? (`invoke_subagent`)
-                     │                      │
-                     │        ┌─────────────┼─────────────────┐
-                     │        ↓             ↓                 ↓
-                     │    Software       Backend           Frontend
-                     │   Architect      Architect          Developer
-                     │
-                     │     Database Optimizer / Security Architect /
-                     │     Test Automation Engineer / DevOps Automator
-                     │                      │
-                     └──────────┬───────────┘
-                                ↓
-          Skills necessárias conforme o trabalho (`.agents/skills/*/SKILL.md`)
+     (SE NECESSÃRIO: quando precisar mapear arquitetura/impacto
+                  â€” ou delegar ao `researcher`)
+                                â†“
+             AvaliaÃ§Ã£o do Trabalho ("Precisa de especialista?")
+                     â”‚                      â”‚
+                    NÃƒO                    SIM (quando a complexidade/domÃ­nio justificar)
+          (Agente atual resolve)            â”‚
+                     â”‚             Qual especialista? (`invoke_subagent`)
+                     â”‚                      â”‚
+                     â”‚        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                     â”‚        â†“             â†“                 â†“
+                     â”‚    Software       Backend           Frontend
+                     â”‚   Architect      Architect          Developer
+                     â”‚
+                     â”‚     Database Optimizer / Security Architect /
+                     â”‚     Test Automation Engineer / DevOps Automator
+                     â”‚                      â”‚
+                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                â†“
+          Skills necessÃ¡rias conforme o trabalho (`.agents/skills/*/SKILL.md`)
                (carregadas via `view_file` sob demanda no Turno 1)
-                                ↓
-                          implementação
-                                ↓
+                                â†“
+                          implementaÃ§Ã£o
+                                â†“
                              testes
-                                ↓
+                                â†“
               review (`reviewer` / `security-reviewer` +
                   `code-review` / `devils-advocate`)
-                                ↓
+                                â†“
                  verification-before-completion
 ```
 
-### Complete Routing Matrix ("The Right Tool for Each Job" — All 33 Skills & 10 Subagents)
+### Complete Routing Matrix ("The Right Tool for Each Job" â€” All 35 Skills & 10 Subagents)
 
-| Tipo de Tarefa Pedida pelo Usuário | Quem Executa (Especialista) | Skills Escolhidas Sob Demanda (`.agents/skills/<skill>/SKILL.md`) |
+| Tipo de Tarefa Pedida pelo UsuÃ¡rio | Quem Executa (Especialista) | Skills Escolhidas Sob Demanda (`.agents/skills/<skill>/SKILL.md`) |
 | :--- | :--- | :--- |
-| **Entender o projeto / mapear arquitetura, fluxo ou impacto** | `researcher` ou Agente atual | `graphify`, `calm`, `understand-anything` |
-| **Projetar arquitetura / refatorar módulos / modelar domínio** | `software-architect` (`invoke_subagent`) | `codebase-design`, `improve-codebase-architecture`, `domain-modeling`, `graphify`, `calm`, `devils-advocate` |
+| **Entender o projeto / mapear arquitetura, fluxo ou impacto** | esearcher ou Agente atual | graphify, graft, calm, understand-anything |
+| **Avaliar agente / forense de transcriÃ§Ã£o / autoaperfeiÃ§oamento / anti-tool-bypass** | **Agente atual** ou eviewer | harness, erification-before-completion, systematic-debugging |
+| **Projetar arquitetura / refatorar mÃ³dulos / modelar domÃ­nio** | `software-architect` (`invoke_subagent`) | `codebase-design`, `improve-codebase-architecture`, `domain-modeling`, `graphify`, `calm`, `devils-advocate` |
 | **Corrigir um bug / falha de teste / race condition** | **Agente atual** (ou especialista se complexo) | `diagnosing-bugs`, `systematic-debugging` |
 | **Criar, estilizar ou melhorar interface (UI/UX, React, Next.js, Electron)** | `frontend-developer` (`invoke_subagent`) | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `web-design-guidelines`, `vercel-react-best-practices` |
-| **Construir serviço Backend / API / Windows Service / IPC** | `backend-architect` (`invoke_subagent`) | `codebase-design`, `improve-codebase-architecture`, `security-best-practices`, `ponytail` |
+| **Construir serviÃ§o Backend / API / Windows Service / IPC** | `backend-architect` (`invoke_subagent`) | `codebase-design`, `improve-codebase-architecture`, `security-best-practices`, `ponytail` |
 | **Otimizar SQL / PostgreSQL / RLS / Supabase / Migrations** | `database-optimizer` (`invoke_subagent`) | `supabase-postgres-best-practices`, `supabase`, `domain-modeling` |
-| **Modelar ameaças / arquitetura de segurança / DACLs / Multi-tenant** | `security-architect` (`invoke_subagent`) | `security-threat-model`, `cybersecurity-review`, `security-best-practices`, `strix` |
-| **Auditar vulnerabilidades no código / Pentest / Lockfiles / Skills** | `security-reviewer` (`invoke_subagent`) | `cybersecurity-review`, `security-review`, `security-best-practices`, `strix`, `skill-security-review` |
+| **Modelar ameaÃ§as / arquitetura de seguranÃ§a / DACLs / Multi-tenant** | `security-architect` (`invoke_subagent`) | `security-threat-model`, `cybersecurity-review`, `security-best-practices`, `strix` |
+| **Auditar vulnerabilidades no cÃ³digo / Pentest / Lockfiles / Skills** | `security-reviewer` (`invoke_subagent`) | `cybersecurity-review`, `security-review`, `security-best-practices`, `strix`, `skill-security-review` |
 | **Automatizar testes E2E Web/Electron ou Desktop Windows (UIA)** | `test-automation-engineer` (`invoke_subagent`) | `playwright`, `winapp`, `systematic-debugging`, `diagnosing-bugs`, `verification-before-completion` |
 | **Empacotar instalador (MSI/Electron), Auto-Update ou CI/CD** | `devops-automator` (`invoke_subagent`) | `security-review`, `verification-before-completion`, `ponytail` |
 | **Revisar PR / diff / qualidade / desafiar plano antes de concluir** | `reviewer` (`invoke_subagent`) ou Agente atual | `code-review`, `devils-advocate`, `ponytail`, `verification-before-completion` |
@@ -77,7 +78,7 @@ trigger: always_on
 ## 1. Core Operating Invariants: Zero Artificial Limits & Full Autonomy
 
 1. **Zero Numerical or Frequency Ceilings**:
-   - There is NO quantitative limit (no 1–2 skill cap, no per-turn limit, no per-phase limit, and no lifetime session limit) on Skill selection.
+   - There is NO quantitative limit (no 1â€“2 skill cap, no per-turn limit, no per-phase limit, and no lifetime session limit) on Skill selection.
    - The model has complete autonomous authority to activate **none, one, or multiple complementary Skills** based purely on real technical necessity, domain breadth, and task complexity.
 
 2. **Autonomous Activation Without User Prompts**:
@@ -85,7 +86,7 @@ trigger: always_on
    - Never require or wait for the user to name, cite, or request specific Skills.
 
 3. **Progressive Disclosure with Zero Capability Artificial Bottlenecks**:
-   - Progressive disclosure means loading a skill's full instructions (`SKILL.md` via `view_file`) on demand when its domain becomes relevant, rather than dumping all 33 skills into context upfront.
+   - Progressive disclosure means loading a skill's full instructions (`SKILL.md` via `view_file`) on demand when its domain becomes relevant, rather than dumping all 35 skills into context upfront.
    - Context economy must **never** be used as a pretext to throttle capability or restrict necessary multi-skill synergy.
 
 4. **Multi-Skill Synergy & Composition**:
@@ -97,9 +98,9 @@ trigger: always_on
    - You MUST NOT begin reading repository code, proposing patches, or answering with ungrounded generalities BEFORE calling `view_file` on that skill's `SKILL.md`.
    - Never rationalize that general model training suffices: skills contain repo-specific protocols, constraints, checklists, and anti-patterns that standard LLM knowledge does not provide.
 
-6. **Priority Focus on the 33 Downloaded Catalog Skills & Override of Upstream Restrictions**:
-   - **Prioritize Downloaded Skills over IDE Built-ins**: Always prioritize the 33 downloaded engineering skills materialized in `.agents/skills/*` (and `~/.gemini/config/skills/*`) over generic IDE built-in skills (`automation`, `generative_ui`, `migrate-workflows`, `plugin`, `ui-plugin-navigation`).
-   - **Full Autonomous Override**: Even if a downloaded skill's `SKILL.md` text contains upstream wording like *"Trigger only when the user explicitly requests..."*, *"Use when asked to..."*, or *"Do not trigger for..."*, **this rule overrides that restriction**: you MUST activate any of the 33 downloaded skills proactively whenever its technical domain applies to the task at hand.
+6. **Priority Focus on the 35 Downloaded Catalog Skills & Override of Upstream Restrictions**:
+   - **Prioritize Downloaded Skills over IDE Built-ins**: Always prioritize the 35 downloaded engineering skills materialized in `.agents/skills/*` (and `~/.gemini/config/skills/*`) over generic IDE built-in skills (`automation`, `generative_ui`, `migrate-workflows`, `plugin`, `ui-plugin-navigation`).
+   - **Full Autonomous Override**: Even if a downloaded skill's `SKILL.md` text contains upstream wording like *"Trigger only when the user explicitly requests..."*, *"Use when asked to..."*, or *"Do not trigger for..."*, **this rule overrides that restriction**: you MUST activate any of the 35 downloaded skills proactively whenever its technical domain applies to the task at hand.
 
 7. **Principal Focus on the 10 Specialized Subagents (`invoke_subagent`)**:
    - **Prioritize the 10 Specialized Subagents over Generic Built-ins**: Always prioritize the 10 specialized subagents materialized in `.agents/agents/*.md` (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) over generic built-in `self` or `research` subagents.
@@ -121,7 +122,7 @@ Re-evaluate the catalog of available `<skills>` and `<subagents>` continuously a
    - When inspecting workspace files, dependencies, manifests, or configs and discovering specific frameworks or tools (e.g., PostgreSQL/Supabase, Next.js, React, Electron, Playwright, WinApp/UIA), immediately activate the corresponding specialized skill and/or domain subagent.
 
 3. **Phase & Subtask Transitions**:
-   - As an implementation evolves across engineering boundaries (e.g., architecture design → backend/database modeling → frontend implementation → UI/UX styling → security audit → verification), activate the pertinent skill(s) and specialized subagent(s) for the new phase.
+   - As an implementation evolves across engineering boundaries (e.g., architecture design â†’ backend/database modeling â†’ frontend implementation â†’ UI/UX styling â†’ security audit â†’ verification), activate the pertinent skill(s) and specialized subagent(s) for the new phase.
 
 4. **Unexpected Failures, Regressions & Hard Bugs**:
    - When encountering failing tests, build breaks, mysterious runtime exceptions, or flaky behaviors, immediately activate `systematic-debugging` (4-phase root cause analysis) or `diagnosing-bugs` before attempting speculative patches.
@@ -129,7 +130,12 @@ Re-evaluate the catalog of available `<skills>` and `<subagents>` continuously a
 5. **Review, Security & Completion Gates**:
    - When entering the review, security audit, or completion phase, activate `verification-before-completion`, `cybersecurity-review`, or `code-review` (and delegate independent verification to `reviewer` / `security-reviewer` when appropriate) before declaring work finished.
 
-6. **Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol)**:
+6. **Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol & Graft Co-Equal Engine + Harness Behavioral Supervision)**:
+   <!-- Contains: Codebase Comprehension, Architecture & Navigation (Graphify-First Protocol) -->
+   - **Co-Equal Priority**: graphify and graft sit at the exact same level as primary structural navigation engines. On Turn 1, coding agents globally must query structural tools before reading files or running manual grep:
+     - **Use Graft (graft)** for: AST symbol call hierarchy (graft callers "<symbol>"), API signatures without method bodies (graft skeleton <file>), diff blast radius (graft blast), directory orientation hotspots (graft map), symbol-scoped search (graft grep <pattern>), and markdown context queries (graft ask "<query>"). Output: graft/.
+     - **Use Graphify (graphify)** for: Macro community clusters and architectural hubs (graphify god-nodes --top 15), shortest path between distinct modules (graphify path "<A>" "<B>"), macro reverse dependency blast radius (graphify affected "<symbol>"), semantic explanations (graphify explain "<symbol>"), and token-budgeted knowledge graph queries (graphify query "<topic>" --budget 1200). Output: graphify-out/.
+     - **Harness Supervision (harness)**: Use harness as a Principal Skill to audit transcripts (	ranscript.jsonl), ensure neither Graphify nor Graft was bypassed, and calibrate agent multi-agent orchestration.
    - For ANY task involving codebase comprehension, architecture discovery, locating files/symbols, fixing multi-file bugs, module dependency mapping, cross-module flow tracing, or blast radius / impact analysis:
      a) **Spontaneous Load**: Immediately activate `graphify` (`view_file` on `SKILL.md`, compact ~3 KB) as the primary navigation skill on Turn 1 (or delegate deep multi-file mapping to `researcher`).
      b) **Graph Consultation Precedence (Windows PowerShell Fast-Path & Worktree Auto-Init)**: Run this `run_command` BEFORE opening source files (automatically handles git worktrees where `graphify-out/graph.json` is not yet built):
@@ -167,9 +173,9 @@ Complementary Skills should be actively combined when addressing multi-faceted t
 
 ---
 
-## 4. Complete Catalog of 33 Downloaded Skills & Proactive Trigger Matrix
+## 4. Complete Catalog of 35 Downloaded Skills & Proactive Trigger Matrix
 
-Spontaneously map tasks and technical domains to all 33 downloaded skills in `.agents/skills/`:
+Spontaneously map tasks and technical domains to all 35 downloaded skills in `.agents/skills/`:
 
 1. **Architecture, Codebase Navigation, Refactoring & Domain Modeling (6 downloaded skills)**:
    - `graphify`: Primary knowledge-graph navigation (`graphify-out/`), architectural topology, god nodes, and dependency paths. Load FIRST when exploring or understanding a codebase.
@@ -207,7 +213,7 @@ Spontaneously map tasks and technical domains to all 33 downloaded skills in `.a
    - `playwright`: Real browser E2E automation, snapshots, form filling, network verification, and UI-flow debugging via Playwright CLI.
 
 7. **Code Quality, Stress-Testing, Verification & Minimalism (4 downloaded skills)**:
-   - `ponytail`: Radical YAGNI and minimal code standard — simplest, shortest working diff using stdlib and native features.
+   - `ponytail`: Radical YAGNI and minimal code standard â€” simplest, shortest working diff using stdlib and native features.
    - `devils-advocate`: Adversarial pre-mortem, inversion, and blind-spot stress-testing of plans, architectures, and critical changes.
    - `code-review`: Two-axis review of diffs/branches/PRs (Repository Standards + Specification Fidelity).
    - `verification-before-completion`: Mandatory evidence gate requiring fresh test/build/typecheck command output before claiming any task is complete.
@@ -228,7 +234,7 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md`. File pre
 
 | Specialist identifier | Definition File | Proactive Delegation Trigger | Paired Downloaded Skills (`.agents/skills/`) |
 | :--- | :--- | :--- | :--- |
-| `researcher` | `.agents/agents/researcher.md` | Deep read-only codebase exploration, multi-file flow tracing, Graphify/CALM dependency mapping, blast-radius discovery. | `graphify`, `calm`, `understand-anything` |
+| `researcher` | `.agents/agents/researcher.md` | Deep read-only codebase exploration, multi-file flow tracing, Graphify/CALM dependency mapping, blast-radius discovery. | `graphify`, `graft`, `calm`, `understand-anything` |
 | `software-architect` | `.agents/agents/software-architect.md` | Macro architecture design, DDD bounded contexts, deep module boundaries, cross-package refactoring plans, ADR authoring. | `graphify`, `calm`, `codebase-design`, `improve-codebase-architecture`, `domain-modeling`, `devils-advocate` |
 | `backend-architect` | `.agents/agents/backend-architect.md` | Backend services & APIs (NestJS, Fastify, Express, .NET), Windows Services (Session 0), IPC/signaling protocols, concurrency. | `codebase-design`, `improve-codebase-architecture`, `security-best-practices`, `systematic-debugging`, `ponytail` |
 | `frontend-developer` | `.agents/agents/frontend-developer.md` | React, Next.js 16 App Router, Electron renderer UI, design systems, state management, accessibility (WCAG), Core Web Vitals. | `ui-ux-pro-max`, `frontend-design`, `impeccable`, `web-design-guidelines`, `vercel-react-best-practices` |
@@ -254,12 +260,12 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md`. File pre
      - **Step 1 (Orchestrator Mapping)**: The main agent runs `graphify query` / `graphify affected` on Turn 1 to map exact module boundaries and assign non-overlapping file scopes per area.
      - **Step 2 (Concurrent Dispatch)**: Put all relevant core and project-synthesized subagents to work in their respective areas simultaneously (`invoke_subagent` with multiple entries in `Subagents` for Antigravity; parallel `Task`/`Agent` calls for Claude Code; parallel sub-agents/tasks for Codex; or structured per-specialist execution tracks for Cursor/Windsurf/Copilot).
 4. **Mandatory Double-Layer Verification (Subagent Self-Verification + Orchestrator Integration Verification)**:
-   - **Layer 1 -- Inside Each Subagent (Area Verification)**: Every subagent MUST load `graphify/SKILL.md` + the 1–2 relevant domain skills (`SKILL.md`) on Turn 1 AND run `verification-before-completion` (typecheck, unit tests, SQL/RLS validation, or lint for its specific module) before reporting its task as done.
+   - **Layer 1 -- Inside Each Subagent (Area Verification)**: Every subagent MUST load `graphify/SKILL.md` + the 1â€“2 relevant domain skills (`SKILL.md`) on Turn 1 AND run `verification-before-completion` (typecheck, unit tests, SQL/RLS validation, or lint for its specific module) before reporting its task as done.
    - **Layer 2 -- Main Orchestrator + `reviewer` / `security-reviewer` (Global Verification)**: While subagents work and as they finish, the main agent NEVER trusts subagent reports blindly. It inspects the actual `git diff`, checks cross-module contracts, delegates independent audit to `reviewer` / `security-reviewer` when appropriate, and executes the full workspace verification gate (`test`, `typecheck`, `build`) before declaring the task complete.
 5. **Skill-First & Token-Economic Subagent Prompts**: Every prompt passed to a subagent MUST specify:
    - Exact scope, target files, and project invariants from `AGENTS.md`.
-   - Instruction to run `graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <files>` first and use surgical `view_file` windows (`StartLine`–`EndLine` of `60-150 lines`, NEVER `#L1-800` blind dumps).
-   - Which 1–2 downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (alongside `graphify`).
+   - Instruction to run `graphify query "<topic>" --budget 1200` + `rg -n "<symbol>" <files>` first and use surgical `view_file` windows (`StartLine`â€“`EndLine` of `60-150 lines`, NEVER `#L1-800` blind dumps).
+   - Which 1â€“2 downloaded `SKILL.md` file(s) in `.agents/skills/` the subagent must load on Turn 1 (alongside `graphify`).
    - Required Layer-1 verification commands and evidence.
 6. **Runtime-Specific Compatibility Matrix**:
    - **Google Antigravity**: Uses `GEMINI.md`, `.agents/rules/*.md`, `.agents/skills/*/SKILL.md`, and native `.agents/agents/*.md`. Use `invoke_subagent` / `define_subagent` only when exposed by the installed client. Specialists may request peer assistance through native `send_message` and discover real conversation IDs using `manage_subagents` (`Action: list`), following the ownership, coordinator-notification, and fallback protocol in `orchestration.md`. Gemini CLI capabilities must be verified separately; do not assume identical tool names.
@@ -272,15 +278,15 @@ All 10 specialized subagents are materialized in `.agents/agents/*.md`. File pre
 
 ## 6. Operational Discipline & Token Economy Guidelines
 
-- **Surgical File Reading (`60-150 lines` vs `#L1-800`)**: Always pinpoint line numbers with `graphify query --budget 1200` and `rg -n` first, then read surgical `StartLine`–`EndLine` slices (`60-150 lines`). Never read `#L1-800` across multiple files.
-- **Load on Demand (1–2 Skills per Subtask)**: Read `graphify/SKILL.md` + the 1–2 `SKILL.md` files that directly apply to the current subtask via `view_file`.
+- **Surgical File Reading (`60-150 lines` vs `#L1-800`)**: Always pinpoint line numbers with `graphify query --budget 1200` and `rg -n` first, then read surgical `StartLine`â€“`EndLine` slices (`60-150 lines`). Never read `#L1-800` across multiple files.
+- **Load on Demand (1â€“2 Skills per Subtask)**: Read `graphify/SKILL.md` + the 1â€“2 `SKILL.md` files that directly apply to the current subtask via `view_file`.
 - **Context Reuse**: Skills loaded in earlier turns remain active in the conversation context. Do NOT call `view_file` redundantly on the same `SKILL.md` if its guidance is already present.
 - **No Indiscriminate Manual Wandering**: Do NOT perform blind recursive directory listings (`list_dir`) or mass grep sweeps across whole repositories when a knowledge graph (`graphify-out/`) is available or can be queried. Graph navigation must precede file-by-file inspection.
-- **Post-Task Context Compaction Gate (`/compact` ONLY After Major Multi-Task Milestones — Anti-Spam Calibration)**:
+- **Post-Task Context Compaction Gate (`/compact` ONLY After Major Multi-Task Milestones â€” Anti-Spam Calibration)**:
   1. **Subagents NEVER Output `/compact`**: Subagents running in background or ephemeral contexts (`invoke_subagent` / `Task` / `Agent`) MUST NEVER output recommendations for `/compact`, since slash commands are only actionable by the human user in the root chat.
   2. **Strictly Milestone-Only in Root Orchestrator (Never Every Turn)**: Do NOT repeat `/compact` on every message, test run, or intermediate iteration. The root orchestrator should ONLY mention `/compact` when:
      - The user's entire multi-step goal/feature has been completely finalized and verified;
-     - AND the conversation has grown genuinely long (>12–15 turns) or completed heavy multi-agent parallel tracks;
+     - AND the conversation has grown genuinely long (>12â€“15 turns) or completed heavy multi-agent parallel tracks;
      - Once mentioned, NEVER repeat the `/compact` recommendation in subsequent turns unless another full multi-file milestone is completed.
 - **Executive Briefing in Chat & Offload to `Walkthrough.md` / Docs (Token-Economy Priority)**:
   - **Zero Huge Chat Dumps**: NEVER dump long essays, full code re-prints, extensive diff dumps, or multi-page documentation in the conversation reply. Every extra line in chat is retained in history and re-sent to the LLM on every subsequent turn, exponentially inflating token usage.
@@ -310,7 +316,7 @@ Whenever the user opens a project and asks to organize, standardize, migrate, or
      - Existing codebase (Brownfield): create/update `.aidev.json` with all detected capabilities (`core`, `typescript`, `react`, `nextjs`, `supabase`, `postgres`, `sqlite`, `python`, `electron`, `windows-desktop`, `browser-testing`, `monorepo`, `security-audit`, etc.) and run `aidev.ps1 apply "<workspace>"` (or `aidev.ps1 migrate "<workspace>" -AutoApprove`).
    - If `.aidev.json` already exists: ensure its `capabilities` list matches the real project stack and run `aidev.ps1 apply "<workspace>"`.
 4. **Verify the 6 Critical Self-Healing Invariants**:
-   - **Physical Skills Only (33/33)**: Every skill in `.agents/skills/*` MUST be a physical directory (`d----`), never an NTFS junction (`l----`), so Antigravity IDE indexes `<skills>` natively.
+   - **Physical Skills Only (35/35)**: Every skill in `.agents/skills/*` MUST be a physical directory (`d----`), never an NTFS junction (`l----`), so Antigravity IDE indexes `<skills>` natively.
    - **Specialized Subagents Materialized (10/10 + Project Domain Specialists)**: All 10 specialized subagents (`researcher`, `reviewer`, `security-reviewer`, `software-architect`, `backend-architect`, `frontend-developer`, `database-optimizer`, `security-architect`, `test-automation-engineer`, `devops-automator`) plus synthesized `<domain>-specialist.md` subagents MUST be physically present in `.agents/agents/*.md`.
    - **Active Routing Rule**: `.agents/rules/skill-routing.md` MUST exist with `trigger: always_on`.
    - **Resilient Safety Hook**: `.agents/hooks.json` MUST invoke `"powershell -NoProfile -ExecutionPolicy Bypass -File scripts/safety-check.ps1"` with `.agents/scripts/safety-check.ps1` present.

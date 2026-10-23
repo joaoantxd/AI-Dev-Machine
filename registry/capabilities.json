@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "../schemas/aidev-manifest.schema.json",
   "version": "2.1.0",
   "capabilities": [
@@ -50,7 +50,9 @@
         "finding-google-skills",
         "resolving-merge-conflicts",
         "review-skills",
-        "caveman"
+        "caveman",
+        "graft",
+        "harness"
       ],
       "agents": [
         "researcher",
@@ -75,7 +77,9 @@
       "name": "Monorepo Workspace Topology",
       "description": "Multi-package repository with shared libraries, package boundaries and workspace orchestration.",
       "category": "topology",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [
@@ -89,9 +93,22 @@
       "mcps": [],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "fileExists", "pattern": "pnpm-workspace.yaml", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "lerna.json", "confidence": "certain" },
-        { "type": "contentMatch", "file": "package.json", "pattern": "\"workspaces\"", "confidence": "certain" }
+        {
+          "type": "fileExists",
+          "pattern": "pnpm-workspace.yaml",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "lerna.json",
+          "confidence": "certain"
+        },
+        {
+          "type": "contentMatch",
+          "file": "package.json",
+          "pattern": "\"workspaces\"",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -99,7 +116,9 @@
       "name": "TypeScript Language Standards",
       "description": "Strict typechecking, modern ECMAScript, interface contracts and type ergonomics.",
       "category": "language",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],
@@ -110,9 +129,21 @@
         "typecheck": "npx tsc --noEmit"
       },
       "detectionHints": [
-        { "type": "fileExists", "pattern": "tsconfig.json", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "tsconfig.base.json", "confidence": "certain" },
-        { "type": "packageDependency", "package": "typescript", "confidence": "certain" }
+        {
+          "type": "fileExists",
+          "pattern": "tsconfig.json",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "tsconfig.base.json",
+          "confidence": "certain"
+        },
+        {
+          "type": "packageDependency",
+          "package": "typescript",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -120,7 +151,9 @@
       "name": ".NET & C# Platform",
       "description": "C# memory safety, async/await idioms, IDisposable/SafeHandle lifecycle and .NET CLI tooling.",
       "category": "language",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],
@@ -134,8 +167,16 @@
         "test": "dotnet test"
       },
       "detectionHints": [
-        { "type": "globExists", "pattern": "**/*.csproj", "confidence": "certain" },
-        { "type": "globExists", "pattern": "**/*.sln", "confidence": "certain" }
+        {
+          "type": "globExists",
+          "pattern": "**/*.csproj",
+          "confidence": "certain"
+        },
+        {
+          "type": "globExists",
+          "pattern": "**/*.sln",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -143,7 +184,9 @@
       "name": "Python Language & Ecosystem",
       "description": "Python virtual environments, type annotations, PEP standards and pytest.",
       "category": "language",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],
@@ -154,9 +197,21 @@
         "test": "pytest"
       },
       "detectionHints": [
-        { "type": "fileExists", "pattern": "pyproject.toml", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "requirements.txt", "confidence": "strong" },
-        { "type": "fileExists", "pattern": "Pipfile", "confidence": "certain" }
+        {
+          "type": "fileExists",
+          "pattern": "pyproject.toml",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "requirements.txt",
+          "confidence": "strong"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "Pipfile",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -164,8 +219,12 @@
       "name": "React Frontend Craft",
       "description": "Modern React patterns, component decomposition, custom hooks, accessible design and styling.",
       "category": "frontend",
-      "requires": ["core"],
-      "recommends": ["typescript"],
+      "requires": [
+        "core"
+      ],
+      "recommends": [
+        "typescript"
+      ],
       "conflicts": [],
       "rules": [
         "web-guidelines.md"
@@ -182,7 +241,11 @@
       "mcps": [],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "packageDependency", "package": "react", "confidence": "certain" }
+        {
+          "type": "packageDependency",
+          "package": "react",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -190,8 +253,13 @@
       "name": "Next.js Fullstack Framework",
       "description": "Next.js App Router, React Server Components, Server Actions and Core Web Vitals optimization.",
       "category": "frontend",
-      "requires": ["react"],
-      "recommends": ["typescript", "browser-testing"],
+      "requires": [
+        "react"
+      ],
+      "recommends": [
+        "typescript",
+        "browser-testing"
+      ],
       "conflicts": [],
       "rules": [
         "web-guidelines.md"
@@ -210,10 +278,26 @@
         "dev": "next dev"
       },
       "detectionHints": [
-        { "type": "packageDependency", "package": "next", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "next.config.js", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "next.config.mjs", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "next.config.ts", "confidence": "certain" }
+        {
+          "type": "packageDependency",
+          "package": "next",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "next.config.js",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "next.config.mjs",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "next.config.ts",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -221,8 +305,13 @@
       "name": "NestJS Backend Architecture",
       "description": "Modular enterprise backend, dependency injection, controllers, providers, guards and Fastify/Express.",
       "category": "backend",
-      "requires": ["core", "typescript"],
-      "recommends": ["postgres"],
+      "requires": [
+        "core",
+        "typescript"
+      ],
+      "recommends": [
+        "postgres"
+      ],
       "conflicts": [],
       "rules": [
         "architecture-invariants.md"
@@ -237,7 +326,11 @@
         "build": "nest build"
       },
       "detectionHints": [
-        { "type": "packageDependency", "package": "@nestjs/core", "confidence": "certain" }
+        {
+          "type": "packageDependency",
+          "package": "@nestjs/core",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -245,7 +338,9 @@
       "name": "PostgreSQL Relational Database",
       "description": "SQL schema design, migrations, relational integrity, indexing and query performance analysis.",
       "category": "database",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [
@@ -260,9 +355,21 @@
       "mcps": [],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "packageDependency", "package": "pg", "confidence": "strong" },
-        { "type": "packageDependency", "package": "kysely", "confidence": "strong" },
-        { "type": "packageDependency", "package": "prisma", "confidence": "strong" }
+        {
+          "type": "packageDependency",
+          "package": "pg",
+          "confidence": "strong"
+        },
+        {
+          "type": "packageDependency",
+          "package": "kysely",
+          "confidence": "strong"
+        },
+        {
+          "type": "packageDependency",
+          "package": "prisma",
+          "confidence": "strong"
+        }
       ]
     },
     {
@@ -270,7 +377,9 @@
       "name": "Supabase BaaS & Auth/RLS",
       "description": "Supabase managed Postgres, Row Level Security (RLS), auth policies, storage and migrations.",
       "category": "database",
-      "requires": ["postgres"],
+      "requires": [
+        "postgres"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [
@@ -288,8 +397,16 @@
       ],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "packageDependency", "package": "@supabase/supabase-js", "confidence": "certain" },
-        { "type": "globExists", "pattern": "supabase/migrations/*.sql", "confidence": "certain" }
+        {
+          "type": "packageDependency",
+          "package": "@supabase/supabase-js",
+          "confidence": "certain"
+        },
+        {
+          "type": "globExists",
+          "pattern": "supabase/migrations/*.sql",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -297,7 +414,9 @@
       "name": "SQLite Embedded Database",
       "description": "Embedded SQL storage, WAL mode, schema migrations and local data integrity.",
       "category": "database",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],
@@ -308,10 +427,26 @@
       "mcps": [],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "packageDependency", "package": "better-sqlite3", "confidence": "certain" },
-        { "type": "packageDependency", "package": "sqlite3", "confidence": "certain" },
-        { "type": "globExists", "pattern": "**/*.sqlite", "confidence": "strong" },
-        { "type": "globExists", "pattern": "**/*.db", "confidence": "strong" }
+        {
+          "type": "packageDependency",
+          "package": "better-sqlite3",
+          "confidence": "certain"
+        },
+        {
+          "type": "packageDependency",
+          "package": "sqlite3",
+          "confidence": "certain"
+        },
+        {
+          "type": "globExists",
+          "pattern": "**/*.sqlite",
+          "confidence": "strong"
+        },
+        {
+          "type": "globExists",
+          "pattern": "**/*.db",
+          "confidence": "strong"
+        }
       ]
     },
     {
@@ -319,8 +454,13 @@
       "name": "Electron Desktop Architecture",
       "description": "Electron main and renderer processes, IPC security, native bridges, WebCodecs and canvas acceleration.",
       "category": "platform",
-      "requires": ["core"],
-      "recommends": ["react", "typescript"],
+      "requires": [
+        "core"
+      ],
+      "recommends": [
+        "react",
+        "typescript"
+      ],
       "conflicts": [],
       "rules": [],
       "skills": [
@@ -334,7 +474,11 @@
         "dev": "electron ."
       },
       "detectionHints": [
-        { "type": "packageDependency", "package": "electron", "confidence": "certain" }
+        {
+          "type": "packageDependency",
+          "package": "electron",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -342,8 +486,12 @@
       "name": "Windows Desktop & Native Client",
       "description": "Win32, WPF, WinUI 3, single-threaded apartments (STA), unmanaged handles and WinApp CLI automation.",
       "category": "platform",
-      "requires": ["core"],
-      "recommends": ["hardware-qa"],
+      "requires": [
+        "core"
+      ],
+      "recommends": [
+        "hardware-qa"
+      ],
       "conflicts": [],
       "rules": [
         "windows-desktop.md"
@@ -358,9 +506,21 @@
       "mcps": [],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "globExists", "pattern": "**/*Windows*.csproj", "confidence": "certain" },
-        { "type": "globExists", "pattern": "**/*WinUI*.csproj", "confidence": "certain" },
-        { "type": "globExists", "pattern": "**/*Wpf*.csproj", "confidence": "certain" }
+        {
+          "type": "globExists",
+          "pattern": "**/*Windows*.csproj",
+          "confidence": "certain"
+        },
+        {
+          "type": "globExists",
+          "pattern": "**/*WinUI*.csproj",
+          "confidence": "certain"
+        },
+        {
+          "type": "globExists",
+          "pattern": "**/*Wpf*.csproj",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -368,7 +528,9 @@
       "name": "Browser & E2E Testing (Playwright)",
       "description": "End-to-end browser testing, accessibility testing, network mocking and visual regression.",
       "category": "testing",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],
@@ -383,9 +545,21 @@
         "e2e": "npx playwright test"
       },
       "detectionHints": [
-        { "type": "fileExists", "pattern": "playwright.config.ts", "confidence": "certain" },
-        { "type": "fileExists", "pattern": "playwright.config.js", "confidence": "certain" },
-        { "type": "packageDependency", "package": "@playwright/test", "confidence": "certain" }
+        {
+          "type": "fileExists",
+          "pattern": "playwright.config.ts",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": "playwright.config.js",
+          "confidence": "certain"
+        },
+        {
+          "type": "packageDependency",
+          "package": "@playwright/test",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -393,7 +567,9 @@
       "name": "Security Audit & Threat Modeling",
       "description": "Security reviews, threat modeling, ethical hacking PoCs (Strix) and SAST scanner (Semgrep).",
       "category": "security",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [
@@ -413,8 +589,16 @@
       ],
       "validationDefaults": {},
       "detectionHints": [
-        { "type": "globExists", "pattern": "strix_runs/*", "confidence": "certain" },
-        { "type": "fileExists", "pattern": ".semgrep.yml", "confidence": "certain" }
+        {
+          "type": "globExists",
+          "pattern": "strix_runs/*",
+          "confidence": "certain"
+        },
+        {
+          "type": "fileExists",
+          "pattern": ".semgrep.yml",
+          "confidence": "certain"
+        }
       ]
     },
     {
@@ -422,7 +606,9 @@
       "name": "Hardware & Physical Verification Gates",
       "description": "Physical display capture, multi-monitor topology, audio/input simulation and manual hardware checkpoints.",
       "category": "specialized",
-      "requires": ["core"],
+      "requires": [
+        "core"
+      ],
       "recommends": [],
       "conflicts": [],
       "rules": [],

@@ -1,4 +1,4 @@
-# AI-Dev-Machine — Instalação Global, Governança e Organização do Workspace
+﻿# AI-Dev-Machine — Instalação Global, Governança e Organização do Workspace
 
 Você atuará como Engenheiro de Software Sênior e Arquiteto de Sistemas para realizar o **diagnóstico, a instalação global do AI-Dev-Machine e a organização de governança** neste computador e no projeto indicado.
 
@@ -46,7 +46,7 @@ Apresente ao usuário um relatório claro e estruturado contendo:
 1. **Inventário Factual**: Ferramentas encontradas, estado global do Antigravity e diagnóstico do projeto.
 2. **Plano de Instalação Global**:
    - Sincronização da biblioteca canônica em `%USERPROFILE%\.agents\skills` e `%USERPROFILE%\.agents\agents`.
-   - Materialização física das 33 Skills em `%USERPROFILE%\.gemini\config\skills` para descoberta nativa automática pelo Antigravity.
+   - Materialização física das 35 Skills em `%USERPROFILE%\.gemini\config\skills` para descoberta nativa automática pelo Antigravity.
    - Ativação da regra global `skill-routing.md` em `%USERPROFILE%\.gemini\config\rules\skill-routing.md` (ativação contínua e dinâmica ao longo de todas as fases da tarefa).
    - Sincronização dos especialistas cognitivos (`researcher`, `reviewer`, `security-reviewer`) em `%USERPROFILE%\.gemini\config\agents`.
 3. **Plano de Preservação**:
@@ -65,7 +65,7 @@ Após o "Sim" ou aprovação do usuário, execute de ponta a ponta:
      ```powershell
      powershell -ExecutionPolicy Bypass -File .\aidev.ps1 sync
      ```
-   - Garanta que todas as 33 Skills estejam fisicamente expostas em `%USERPROFILE%\.gemini\config\skills` e a regra `skill-routing.md` esteja ativa em `%USERPROFILE%\.gemini\config\rules`.
+   - Garanta que todas as 35 Skills estejam fisicamente expostas em `%USERPROFILE%\.gemini\config\skills` e a regra `skill-routing.md` esteja ativa em `%USERPROFILE%\.gemini\config\rules`.
 2. **Organização do Projeto Alvo (se aplicável)**:
    - Execute `.\aidev.ps1 detect "<caminho>"` para identificar todas as capacidades reais do projeto (`core`, `typescript`, `react`, `nextjs`, `supabase`, `postgres`, `sqlite`, `python`, `electron`, `desktop-win`, `browser-testing`, `monorepo`, `security-high`, etc.).
    - Se for um projeto novo (Greenfield): execute `.\aidev.ps1 init "<caminho>" [-Preset <preset>]`.
@@ -87,7 +87,7 @@ Após o "Sim" ou aprovação do usuário, execute de ponta a ponta:
 
 ### ETAPA 5: Entrega Conclusiva e Guia para Novos Projetos
 Entregue um resumo final com:
-1. **Evidência de Instalação**: Confirmação da exposição global das 33 Skills e regra dinâmica no Antigravity.
+1. **Evidência de Instalação**: Confirmação da exposição global das 35 Skills e regra dinâmica no Antigravity.
 2. **Estado do Projeto**: Governança configurada e pronta para desenvolvimento.
 3. **Instruções para Workspaces Futuros**:
    - Explique que o Antigravity agora reconhece automaticamente todo o catálogo global de Skills e a regra de roteamento dinâmico em qualquer novo workspace sem necessidade de reinstalação.

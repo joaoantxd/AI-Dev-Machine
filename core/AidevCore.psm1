@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # AI-Dev-Machine Core Module (Architecture v2.1 -- Capability-Driven Framework)
 # ==============================================================================
 Set-StrictMode -Version Latest
@@ -1593,7 +1593,7 @@ function Invoke-AidevAgentSynthesis {
         [System.IO.File]::WriteAllText($cf.FullName, $updated, $utf8NoBom)
     }
 
-    # 2. Synthesize custom project-specific domain subagents from project-owned rules + 33 downloaded skills
+    # 2. Synthesize custom project-specific domain subagents from project-owned rules + 35 downloaded skills
     $synthesizedFiles = [System.Collections.Generic.List[string]]::new()
     foreach ($ruleFile in $projectDomainRules) {
         $ruleRaw = (Get-Content -LiteralPath $ruleFile.FullName -Raw -Encoding utf8).TrimStart([char]0xFEFF)

@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # AI-Dev-Machine Architecture v2.1 — Comprehensive Capability Test Suite
 # ==============================================================================
 Set-StrictMode -Version Latest
@@ -73,9 +73,9 @@ Assert-Test "profiles.json acts as presets referencing only registered capabilit
     }
 }
 
-Assert-Test "Core baseline supplies all 33 physical skills and coordinator routing for every stack" {
+Assert-Test "Core baseline supplies all 35 physical skills and coordinator routing for every stack" {
     $coreCapability = (Get-RegistryData -Type 'capabilities').capabilities | Where-Object { $_.id -eq 'core' }
-    if (@($coreCapability.skills | Select-Object -Unique).Count -ne 33) { throw 'Core baseline must include all 33 downloaded skills' }
+    if (@($coreCapability.skills | Select-Object -Unique).Count -ne 35) { throw 'Core baseline must include all 35 downloaded skills' }
     if ($coreCapability.rules -notcontains 'orchestration.md') { throw 'Core baseline must include coordinator-only orchestration' }
 }
 
@@ -673,10 +673,10 @@ try {
         & powershell -ExecutionPolicy Bypass -File $agentsScript -UserProfileOverride $simUserHome
         if ($LASTEXITCODE -ne 0) { throw 'install-agents.ps1 failed in simulated environment' }
 
-        # Verify physical discovery directory has 33 skills + custom skill
+        # Verify physical discovery directory has 35 skills + custom skill
         $geminiSkills = Join-Path $simUserHome '.gemini\config\skills'
         $installedSkills = @(Get-ChildItem -LiteralPath $geminiSkills -Directory)
-        if ($installedSkills.Count -lt 34) { throw ('Expected at least 34 skills, found ' + $installedSkills.Count) }
+        if ($installedSkills.Count -lt 36) { throw ('Expected at least 36 skills, found ' + $installedSkills.Count) }
 
         # Verify custom skill was preserved
         if (-not (Test-Path -LiteralPath (Join-Path $customSkillDir 'SKILL.md'))) {
@@ -1085,7 +1085,7 @@ try {
         }
     }
 
-    Assert-Test "Invoke-AidevAgentSynthesis automatically synthesizes project-specific domain specialists paired with 33 downloaded skills and contextualizes core subagents" {
+    Assert-Test "Invoke-AidevAgentSynthesis automatically synthesizes project-specific domain specialists paired with 35 downloaded skills and contextualizes core subagents" {
         $synWs = Join-Path $tempBase 'AgentSynthesisProject'
         $null = New-Item -ItemType Directory -Path $synWs -Force
         Set-Content -LiteralPath (Join-Path $synWs '.aidev.json') -Value (@'

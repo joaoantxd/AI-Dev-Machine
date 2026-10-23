@@ -1,4 +1,4 @@
-# AI-Dev-Machine — Architecture v2.1
+﻿# AI-Dev-Machine — Architecture v2.1
 
 > **Capability-Driven Framework & Multi-Agent Governance Platform**
 > Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
@@ -17,7 +17,7 @@ Os arquivos de prompts na pasta `docs/` contêm **exclusivamente o texto final a
 
 | Documento | Destino de Aplicação | Função Principal |
 | :--- | :--- | :--- |
-| **[`docs/INSTALAR-E-ORGANIZAR.md`](docs/INSTALAR-E-ORGANIZAR.md)** | Painel de chat do **Google Antigravity IDE** (Primeira vez na máquina ou onboarding). | Executa o **diagnóstico, instalação global e governança** de ponta a ponta com inventário seguro (read-only), plano aprovado e configuração automática do catálogo de 33 Skills. |
+| **[`docs/INSTALAR-E-ORGANIZAR.md`](docs/INSTALAR-E-ORGANIZAR.md)** | Painel de chat do **Google Antigravity IDE** (Primeira vez na máquina ou onboarding). | Executa o **diagnóstico, instalação global e governança** de ponta a ponta com inventário seguro (read-only), plano aprovado e configuração automática do catálogo de 35 Skills. |
 | **[`docs/PRIMEIRO-PROMPT.md`](docs/PRIMEIRO-PROMPT.md)** | Painel de chat do **Google Antigravity IDE** ao abrir qualquer workspace de projeto novo ou existente. | Executa a **Fase 0: Inventário, Compreensão e Organização** em modo estritamente *somente leitura*, mapeando a estrutura e governança antes de qualquer código. |
 | **[`docs/PROMPT-MESTRE-CHATGPT.md`](docs/PROMPT-MESTRE-CHATGPT.md)** | Primeira mensagem de uma nova conversa no **ChatGPT**, **Claude**, **Gemini**, ou instruções de um **Custom GPT / Projeto**. | Ativa a atuação de **Arquiteto de Instruções e Engenheiro de Prompts de Elite** para qualquer modelo, ferramenta, mídia (imagem, vídeo, áudio, código) ou finalidade. |
 | **[`docs/CHATGPT-INSTRUCOES-GLOBAIS.md`](docs/CHATGPT-INSTRUCOES-GLOBAIS.md)** | **ChatGPT** → *Configurações* → *Personalizar ChatGPT* → Campo *"Como você gostaria que o ChatGPT respondesse?"* | Transforma o ChatGPT de forma permanente em um **Engenheiro Universal de Prompts**, com especialização em software (AI-Dev-Machine e Antigravity) para todas as conversas da conta. |
@@ -52,7 +52,7 @@ git clone https://github.com/joaoantxd/AI-Dev-Machine.git
 ### 5. Como o Agente Opera
 1. **Inventário Read-Only**: O agente investiga ferramentas instaladas, ambiente global do Antigravity e estado do projeto.
 2. **Apresentação do Plano**: O agente exibe o diagnóstico e pede autorização explícita para aplicar as mudanças globais e locais.
-3. **Execução Segura**: Após sua aprovação, o agente sincroniza a biblioteca canônica (`%USERPROFILE%\.agents`), expõe as 33 Skills fisicamente em `%USERPROFILE%\.gemini\config\skills\` e ativa a regra de roteamento dinâmico em `%USERPROFILE%\.gemini\config\rules\skill-routing.md`.
+3. **Execução Segura**: Após sua aprovação, o agente sincroniza a biblioteca canônica (`%USERPROFILE%\.agents`), expõe as 35 Skills fisicamente em `%USERPROFILE%\.gemini\config\skills\` e ativa a regra de roteamento dinâmico em `%USERPROFILE%\.gemini\config\rules\skill-routing.md`.
 4. **Preservação de Dados**: Skills, regras e arquivos customizados pré-existentes são integralmente preservados com backups automáticos.
 
 ### 6. Como Validar a Instalação
@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\aidev.ps1 sync -Update
 O ecossistema AI-Dev-Machine elimina a necessidade de ativação manual ou injeção forçada de contexto através de uma arquitetura de 4 pilares:
 
 ```text
-%USERPROFILE%\.gemini\config\skills\ (33 Diretórios Físicos)
+%USERPROFILE%\.gemini\config\skills\ (35 Diretórios Físicos)
               ↓
   Descoberta Nativa do Antigravity (Injeção automática em <skills>)
               ↓
@@ -96,7 +96,7 @@ O ecossistema AI-Dev-Machine elimina a necessidade de ativação manual ou inje�
 1. **Diretórios Físicos em `%USERPROFILE%\.gemini\config\skills`**:
    - Em vez de depender de junctions ou symlinks que falham em certas versões do Windows, o materializer mantém diretórios físicos sincronizados com `SKILL.md` padronizado.
 2. **Descoberta Global Nativa**:
-   - O Antigravity IDE varre nativamente o diretório global e disponibiliza todas as 33 Skills na seção `<skills>` do system prompt em qualquer workspace.
+   - O Antigravity IDE varre nativamente o diretório global e disponibiliza todas as 35 Skills na seção `<skills>` do system prompt em qualquer workspace.
 3. **Regra Global `skill-routing.md` (`trigger: always_on`)**:
    - Reside em `%USERPROFILE%\.gemini\config\rules\skill-routing.md`. É injetada em todas as conversas sem necessidade de configuração por workspace.
 4. **Ativação Dinâmica em Todo o Ciclo de Vida**:

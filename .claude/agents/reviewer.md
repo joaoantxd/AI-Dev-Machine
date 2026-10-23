@@ -28,9 +28,9 @@ You are an **adversarial, quality-focused review subagent**. Your role is to exa
    - **Blocking Issues**: Must-fix bugs, regressions, or security leaks.
    - **Non-blocking Improvements**: Optional polish or maintainability suggestions.
 
-## Project-Specific Context (AI DEV SKILLS)
+## Project-Specific Context (AI-Dev-Machine)
 
-- **Workspace**: `AI DEV SKILLS` (Capabilities: `core`)
+- **Workspace**: `AI-Dev-Machine` (Capabilities: `core`)
 - **Step 0 -- Worktree-Safe Graphify Fast-Path (`always_on`)**: Ensure `graphify-out/graph.json` exists (`if (-not (Test-Path "graphify-out/graph.json")) { graphify extract . --code-only ; graphify cluster-only . --no-label --no-viz }`), then run `graphify query "<topic>" --budget 1200` and `rg -n "<symbol>" <file>` via `run_command` BEFORE opening source files.
 - **Surgical Token Economy (Zero `#L1-800` Blind Dumps)**: NEVER call `view_file` / `Read` on 1-800 lines across multiple files. Always read surgical `StartLine`--`EndLine` windows (`60-150 lines`) around the exact line numbers returned by `graphify query` and `rg -n`. Load `graphify/SKILL.md` + ONLY the 1-2 skills matching your active subtask.
 - **Project Domain Rules to Enforce**:

@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [switch]$DryRun,
     [switch]$Update,
@@ -278,7 +278,7 @@ try {
 }
 
 # --- Global Exposure in Antigravity IDE (~/.gemini/config/skills) ---
-# Synchronize canonical skills as physical directories so Antigravity IDE natively discovers all 33 skills
+# Synchronize canonical skills as physical directories so Antigravity IDE natively discovers all 35 skills
 $globalGeminiSkills = Join-Path $effectiveUserProfile '.gemini\config\skills'
 if (-not (Test-Path -LiteralPath $globalGeminiSkills -PathType Container)) {
     if (-not $DryRun) {
@@ -308,6 +308,8 @@ if (Test-Path -LiteralPath $SkillsRoot) {
         'context-engineering'           = 'Use proactively when organizing project governance (AGENTS.md, GEMINI.md, .agents/rules), structuring context for large codebases, or optimizing progressive disclosure.'
         'review-skills'                 = 'Use proactively when auditing, organizing, or validating skill directories (.agents/skills) for duplicates, broken references, frontmatter validity, composability issues, and skill gaps.'
         'prompt-master'                 = 'Use whenever writing, refining, or calibrating system prompts, agent instructions, LLM prompts, rules, or subagent prompts.'
+        'graft'                         = 'Use proactively FIRST on Turn 1 before broad grep or file searches as a co-equal structural navigation engine with Graphify. Fast-path tree-sitter AST call graphs (graft callers <symbol>), API signatures without reading full files (graft skeleton <file>), diff blast radius (graft blast), directory maps (graft map), and linked markdown context graphs (graft ask "<query>").'
+        'harness'                       = 'Principal skill for recursive agent behavioral calibration, transcript forensics (transcript.jsonl), Propose-Probe-Compose methodology, multi-agent orchestration, and anti-tool-bypass enforcement.'
     }
 
     function Optimize-SkillFrontmatter {

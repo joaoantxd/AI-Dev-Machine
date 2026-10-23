@@ -1,4 +1,4 @@
----
+﻿---
 name: architecture-invariants
 description: Architectural invariants, deep module design, and blast radius control.
 trigger: model_decision
