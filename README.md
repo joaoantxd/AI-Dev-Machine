@@ -1,7 +1,17 @@
-﻿# AI-Dev-Machine — Architecture v2.1
+﻿# AI-Dev-Machine — Architecture v3.0 (Gold Release 🏆)
 
-> **Capability-Driven Framework & Multi-Agent Governance Platform**
-> Um kit determinístico, genérico e portátil para configurar, auditar e materializar ambientes e projetos de desenvolvimento de software assistidos por IA no Windows, nativamente compatível com Google Antigravity, OpenAI Codex, Claude Code e Gemini CLI.
+[![Release](https://img.shields.io/badge/Release-Gold%20v3.0-FFD700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/joaoantxd/AI-Dev-Machine)
+[![Architecture](https://img.shields.io/badge/Architecture-Gold%20Standard-brightgreen?style=for-the-badge)](https://github.com/joaoantxd/AI-Dev-Machine)
+[![Physical Skills](https://img.shields.io/badge/Physical%20Skills-35%2F35-blue?style=for-the-badge)](.agents/skills)
+[![Specialists](https://img.shields.io/badge/Core%20Agents-10%2B-blueviolet?style=for-the-badge)](.agents/agents)
+[![Tests](https://img.shields.io/badge/Tests-46%2F46%20Passing-success?style=for-the-badge)](tests/run-tests.ps1)
+
+> 🏆 **VERSÃO GOLD (Canonical Production Release — v3.0 Gold)**  
+> **AI-Dev-Machine v3.0 Gold** consolida a arquitetura definitiva de governança determinística e materialização multiagente para desenvolvimento de software assistido por IA no Windows e cross-platform.
+> - **35 Skills Físicas**: Catálogo unificado com discovery nativo e zero junctions.
+> - **Paridade Estrutural Co-Igual**: **Graft** (Tree-sitter AST, callers, signatures, blast radius) e **Graphify** (topologia macro, god-nodes, path tracing) no mesmo nível de prioridade arquitetural para navegação sem perda de tokens.
+> - **Harness como Skill Principal**: Autoavaliação comportamental recursiva, forense de `transcript.jsonl`, Propose-Probe-Compose e supervisão contínua contra tool-bypass.
+> - **Multi-IA Nativo**: Suporte unificado e materialização sincronizada para **Google Antigravity**, **Claude Code**, **OpenAI Codex**, **Cursor**, **Windsurf** e **Gemini CLI**.
 >
 > 📦 **Instalação Global e Organização**: [docs/INSTALAR-E-ORGANIZAR.md](docs/INSTALAR-E-ORGANIZAR.md) — Prompt único de onboarding para instalar e configurar o AI-Dev-Machine em qualquer máquina Windows via Antigravity IDE.
 > 🚀 **Primeiro Prompt por Projeto**: [docs/PRIMEIRO-PROMPT.md](docs/PRIMEIRO-PROMPT.md) — Fase 0 de inventário e organização do workspace (read-only).

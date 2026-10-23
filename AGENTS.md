@@ -22,7 +22,7 @@
 ## 2. Project Metadata & Stack
 
 - **Project Name**: AI-Dev-Machine
-- **Description**: Capability-Driven AI Governance & Multi-Agent Materialization Engine (v2.1)
+- **Description**: Capability-Driven AI Governance & Multi-Agent Materialization Engine (Gold Release v3.0 🏆)
 - **Profile**: base
 - **Primary Runtime / Language**: PowerShell 5.1+ / 7+ (`core/AidevCore.psm1`, `aidev.ps1`)
 - **Target OS**: Windows
