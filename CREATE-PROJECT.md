@@ -69,3 +69,4 @@ powershell -ExecutionPolicy Bypass -File .\aidev.ps1 apply "c:\caminho\para\meu-
 1. Abra o workspace no **Antigravity IDE**.
 2. Personalize a seção `validationGates.commands` em `.aidev.json` e `Canonical Commands` em `AGENTS.md`.
 3. Desenvolva com segurança através de **Progressive Disclosure**.
+4. No primeiro trabalho no projeto, crie `doc/README.md` como índice de uma **memória técnica viva**. Se o repositório já possui `docs/`, reutilize essa pasta: não mantenha `doc/` e `docs/` concorrentes. Consulte e atualize as notas durante o desenvolvimento, especialmente após decisões, mudanças de arquitetura, validações relevantes e handoffs.
